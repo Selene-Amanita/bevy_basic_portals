@@ -1,11 +1,11 @@
 [package]
 name = "bevy_basic_portals"
-version = "0.1.0"
+version = "0.1.1-dev"
 edition = "2021"
 categories = ["game-engines", "graphics", "rendering"]
+keywords = ["bevy", "portal", "mirror", "gamedev"]
 description = "A portal plugin for Bevy game engine"
-exclude = ["helpers/", "examples/cube/", "examples/shapes/"]
-keywords = ["bevy", "portal", "gamedev"]
+exclude = ["helpers/", "examples/cube/", "examples/shapes/", "examples/mirror/"]
 license = "EUPL-1.2"
 readme = "README.md"
 repository = "https://github.com/Selene-Amanita/bevy_basic_portals"

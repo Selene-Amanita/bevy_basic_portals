@@ -6,6 +6,7 @@ use bevy::{
         render_resource::*,
         view::RenderLayers,
     },
+    transform::TransformSystem
 };
 
 use super::process::*;
@@ -30,14 +31,14 @@ impl Plugin for PortalsPlugin {
     fn build(&self, app: &mut App) {
         app
             .add_plugin(MaterialPlugin::<PortalMaterial>::default())
-            .add_system(update_portal_cameras);
+            .add_system(update_portal_cameras.in_base_set(CoreSet::Last));
 
         if self.check_create != PortalsCheckMode::Manual {
-            app.add_system(create_portals.in_base_set(StartupSet::PostStartup));
+            app.add_startup_system(create_portals.in_base_set(StartupSet::PostStartup).after(TransformSystem::TransformPropagate));
         }
 
         if self.check_create == PortalsCheckMode::AlwaysCheck {
-            app.add_system(create_portals.in_base_set(CoreSet::PostUpdate));
+            app.add_system(create_portals.in_base_set(CoreSet::PostUpdate).after(TransformSystem::TransformPropagate));
         }
     }
 }
@@ -45,11 +46,11 @@ impl Plugin for PortalsPlugin {
 /// Whether and when [PortalsPlugin] should check for entities with [CreatePortal] components to create a portal using [create_portals].
 #[derive(PartialEq, Eq)]
 pub enum PortalsCheckMode {
-    /// Don't set up this check automatically with the plugin, set-up [create_portals] manually.
+    /// Don't set up this check automatically with the plugin, set-up [create_portals] manually, or use [CreatePortalCommand].
     Manual,
-    /// Set up the check during [StartupSet::PostStartup].
+    /// Set up the check during [StartupSet::PostStartup], after [TransformSystem::TransformPropagate].
     CheckAfterStartup,
-    /// Set up the check during [StartupSet::PostStartup] and [CoreSet::PostUpdate].
+    /// Set up the check during [StartupSet::PostStartup] and [CoreSet::Last], after [TransformSystem::TransformPropagate].
     AlwaysCheck
 }
 
@@ -86,7 +87,7 @@ pub struct CreatePortal {
     pub render_layer: RenderLayers,
     /// If Some(Face::Back), portal camera will get deactivated if camera is going behind the portal's transform.
     /// 
-    /// Defaults to Some(Face::Back).
+    /// Defaults to None temporarilly. 
     /// Some(Face::Front) deactivates the camera in front of the transform, and None never deactivates it.
     /// If your mesh isn't on a plane with cull_mode = Some(Face::Back), set this to None.
     pub plane_mode: Option<Face>,
@@ -101,17 +102,27 @@ impl Default for CreatePortal {
             main_camera: None,
             cull_mode: Some(Face::Back),
             render_layer: Default::default(),
-            plane_mode: Some(Face::Back),
+            plane_mode: None,
             debug: None,
         }
     }
 }
 
-/// Whether the portal destination should be created or use an already existing entity
+/// How to create the portal destination
 #[derive(Clone)]
 pub enum AsPortalDestination {
+    /// Use an already existing entity
     Use(Entity),
-    Create(CreatePortalDestination)
+    /// Create a portal destination with the given configuration
+    Create(CreatePortalDestination),
+    /// Create a portal destination to make a mirror
+    /// 
+    /// Warning: this uses the portal's [GlobalTransform] to infer the destination's [Transform].
+    /// Make sure that this GlobalTransform is set correctly when the portal is created.
+    /// This shouldn't be a problem if you are not using [PortalsCheckMode::Manual]
+    /// Warning: if the portal moves, the destination won't be updated
+    // TO FIX
+    CreateMirror
 }
 
 /// Portal destination to be created

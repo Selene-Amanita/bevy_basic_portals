@@ -23,14 +23,11 @@
 //! if you want a bidirectional portal you can crate two portals manually
 //! - this crate doesn't handle "portal recursion", as in viewing a portal through another portal
 //! - portals created by this crate have no visible borders (not counting aliasing artifacts), you can 'see" them with [DebugPortal]
-//! - this crate doesn't automatically handle mirrors,
-//! they have to be done manually by rotating the portal's transform 180° to use it as the destination's transform
 //! - this crate doesn't handle removing portals (it can be done manually to some extent)
 //! - this crate doesn't handle moving stuff through the portal, it is only visual, more like a crystal ball
 //! - this crate doesn't handle raycasting through the portal, it has to be done manually
 //! - this crate doesn't handle resizing window/viewport of the main camera
 //! - this crate doesn't handle changing the portal's or the destination's scale
-//! - this crate doesn't work if cameras, portals, or destinations are inside hierarchies (it uses Transform instead of GlobalTransform)
 
 pub mod portals;
 pub use portals::*;

@@ -8,7 +8,7 @@ Bevy Simple Portals is a Bevy game engine plugin aimed to create portals.
 
 Those portals are (for now) purely visual and can be used to make mirrors, indoor renderings, crystal balls, and more!
 
-![Peek 21-05-2023 04-19](https://github.com/Selene-Amanita/bevy_basic_portal/assets/134181069/9864c08c-7826-4b4a-bea1-082c4434fd74) ![Peek 21-05-2023 04-24](https://github.com/Selene-Amanita/bevy_basic_portal/assets/134181069/14474b43-c5df-41ca-9d60-cb604fb4997b)
+![Portal Cube example](https://github.com/Selene-Amanita/bevy_basic_portal/assets/134181069/9864c08c-7826-4b4a-bea1-082c4434fd74) ![Moving portals and destination example](https://github.com/Selene-Amanita/bevy_basic_portal/assets/134181069/14474b43-c5df-41ca-9d60-cb604fb4997b) ![Mirror example](https://github.com/Selene-Amanita/bevy_basic_portals/assets/134181069/c3e271cc-a02e-41fd-8454-23b9834936b8)
 
 ## Basic Usage
 This example illustrates how to create a simple portal, it uses a single sphere that will be displayed two times on screen thanks to the portal:
@@ -76,11 +76,8 @@ and also can reduce perfomance by rendering things that are not displayed
 if you want a bidirectional portal you can crate two portals manually
 - this crate doesn't handle "portal recursion", as in viewing a portal through another portal
 - portals created by this crate have no visible borders (not counting aliasing artifacts), you can 'see" them with DebugPortal
-- this crate doesn't automatically handle mirrors,
-they have to be done manually by rotating the portal's transform 180° to use it as the destination's transform
 - this crate doesn't handle removing portals (it can be done manually to some extent)
 - this crate doesn't handle moving stuff through the portal, it is only visual, more like a crystal ball
 - this crate doesn't handle raycasting through the portal, it has to be done manually
 - this crate doesn't handle resizing window/viewport of the main camera
 - this crate doesn't handle changing the portal's or the destination's scale
-- this crate doesn't work if cameras, portals, or destinations are inside hierarchies (it uses Transform instead of GlobalTransform)

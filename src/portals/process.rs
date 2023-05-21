@@ -9,10 +9,13 @@ use bevy::{
     reflect::TypeUuid,
     window::*,
     ecs::system::{EntityCommand, SystemState},
-    pbr::{MaterialPipelineKey, MaterialPipeline}
+    pbr::{MaterialPipelineKey, MaterialPipeline},
 };
+use std::f32::consts::PI;
 
 use super::api::*;
+
+const PLANE_MODE_TRIGGER: f32 = 0.2;
 
 /// Marker component for the portal.
 /// 
@@ -95,8 +98,10 @@ pub struct CreatePortalCommand {
 
 impl EntityCommand for CreatePortalCommand {
     fn write(self, id: Entity, world: &mut World) {
-        let mesh = world.query::<&Handle<Mesh>>().get(world, id)
-            .expect("You must provide a Transform and Handle<Mesh> components to the entity before using a CreatePortalCommand").clone();
+        let (portal_transform, mesh) = world.query::<(&GlobalTransform, &Handle<Mesh>)>().get(world, id)
+            .expect("You must provide a GlobalTransform and Handle<Mesh> components to the entity before using a CreatePortalCommand");
+        let portal_transform = portal_transform.clone();
+        let mesh = mesh.clone();
 
         let portal_create = match self.config {
             Some(config) => config,
@@ -139,6 +144,7 @@ impl EntityCommand for CreatePortalCommand {
             &windows_query,
             id,
             &portal_create,
+            &portal_transform,
             &mesh
         );
 
@@ -164,12 +170,12 @@ pub fn create_portals(
     main_camera_query: Query<(Entity, &Camera)>,
     primary_window_query: Query<&Window, With<PrimaryWindow>>,
     windows_query: Query<&Window>,
-    portals_to_create: Query<(Entity, &CreatePortal, &Handle<Mesh>)> // TOFIX should we use Added<CreatePortal> instead?
+    portals_to_create: Query<(Entity, &CreatePortal, &GlobalTransform, &Handle<Mesh>)>
 ) {
-    for (portal_entity, portal_create, mesh) in portals_to_create.iter() {
+    for (portal_entity, portal_create, portal_transform, mesh) in portals_to_create.iter() {
         create_portal(&mut commands, &mut images, &mut portal_materials, &mut meshes, &mut materials,
             &main_camera_query, &primary_window_query, &windows_query,
-            portal_entity, portal_create, mesh);
+            portal_entity, portal_create, portal_transform, mesh);
     }
 }
 
@@ -188,6 +194,7 @@ fn create_portal(
     windows_query: &Query<&Window>,
     portal_entity: Entity,
     create_portal: &CreatePortal,
+    portal_global_transform: &GlobalTransform,
     portal_mesh: &Handle<Mesh>
 ) {
     // Get main camera infos
@@ -246,8 +253,18 @@ fn create_portal(
         AsPortalDestination::Use(entity) => entity,
         AsPortalDestination::Create(CreatePortalDestination{transform}) => commands.spawn(SpatialBundle{
             transform,
+            global_transform: GlobalTransform::from(transform),
             ..default()
-        }).id()
+        }).id(),
+        AsPortalDestination::CreateMirror => {
+            let mut mirror_transform = portal_global_transform.compute_transform();
+            mirror_transform.rotate_local_axis(Vec3::Y, PI);
+            commands.spawn(SpatialBundle{
+                transform: mirror_transform,
+                global_transform: GlobalTransform::from(mirror_transform),
+                ..default()
+            }).id()
+        },
     };
     commands.entity(destination_entity).insert(PortalDestination);
 
@@ -259,11 +276,12 @@ fn create_portal(
                 target: RenderTarget::Image(portal_image.clone()),
                 ..default()
             },
-            // For the exact value of transform
+            // TOFIX set the exact value of Transform and GlobalTransform to avoid black screen at spawn
             // let portal_camera_transform = get_portal_camera_transform(main_camera_transform, portal_transform, &destination_transform);
-            // But this requires an extra Query to get destination_transform when FuturePortalDestination::Entity, is it worth it?
-            // Wouldn't matter if the portal camera is a child of the destination, should it?
+            // This requires an extra Query to get destination_transform when AsPortalDestination::Entity/CreateMirror
+            // Would still matter if the portal camera is a child of the destination
             //transform: portal_camera_transform,
+            //global_transorm: GlobalTransform::from(portal_camera_transform),
             ..default()
         },
         PortalCamera {
@@ -272,6 +290,10 @@ fn create_portal(
             destination: destination_entity,
             main_camera: main_camera_entity,
             plane_mode: create_portal.plane_mode
+        },
+        VisibilityBundle {
+            visibility: Visibility::Hidden,
+            ..default()
         },
         create_portal.render_layer
     )).id();
@@ -339,12 +361,12 @@ fn create_portal(
 
         // Put a sphere at the portal camera position, as a child of the portal camera
         if debug.show_portal_camera_point {
-            // Doesn't seem to work, maybe because of Visibility inheritance? Try using TransformBundle and VisibilityBundle
             commands.entity(portal_camera_entity).with_children(|parent| {
                 parent.spawn((
                     PbrBundle {
-                        mesh: meshes.add(shape::Icosphere {radius:10., ..default()}.try_into().unwrap()),
+                        mesh: meshes.add(shape::Icosphere {radius:0.1, ..default()}.try_into().unwrap()),
                         material: materials.add(debug_color.into()),
+                        visibility: Visibility::Visible,
                         ..default()
                     },
                     create_portal.render_layer
@@ -357,29 +379,36 @@ fn create_portal(
 /// Moves the [PortalCamera] to follow the main camera relative to the portal and the destination.
 pub fn update_portal_cameras(
     mut images: ResMut<Assets<Image>>,
-    mut portal_cameras: Query<(&PortalCamera, &mut Transform, &mut Camera)>,
-    portal_query: Query<&Transform,(With<Portal>, Without<Camera>)>,
-    destination_query: Query<&Transform, (With<PortalDestination>, Without<Camera>)>,
-    main_camera_query: Query<(&Transform, &Camera), Without<PortalCamera>>,
+    mut portal_cameras: Query<(&PortalCamera, &mut Transform, &mut GlobalTransform, &mut Camera)>,
+    portal_query: Query<&GlobalTransform,(With<Portal>, Without<Camera>)>,
+    destination_query: Query<&GlobalTransform, (With<PortalDestination>, Without<Camera>)>,
+    main_camera_query: Query<(&GlobalTransform, &Camera), Without<PortalCamera>>,
     primary_window_query: Query<&Window, With<PrimaryWindow>>,
     windows_query: Query<&Window>,
 ) {
-    for (portal_camera, mut portal_camera_transform, mut camera) in portal_cameras.iter_mut() {
+    for (portal_camera, mut portal_camera_transform, mut portal_camera_global_transform, mut camera)
+        in portal_cameras.iter_mut() {
         let (main_camera_transform, main_camera) = main_camera_query.get(portal_camera.main_camera).unwrap();
-        let destination_transform = destination_query.get(portal_camera.destination).unwrap();
+        let main_camera_transform = &main_camera_transform.compute_transform();
+
+        let portal_transform = portal_query.get(portal_camera.portal).unwrap();
+        let portal_transform = &portal_transform.compute_transform();
 
         let mut skip_update = false;
         if portal_camera.plane_mode.is_some() {
-            let dot_product = destination_transform.forward().dot(main_camera_transform.forward());
-            if portal_camera.plane_mode == Some(Face::Back) && dot_product < 0.
-                || portal_camera.plane_mode == Some(Face::Front) && dot_product > 0. {
+            // positive when the main camera is behind the portal plane
+            let behindness = portal_transform.forward().dot((main_camera_transform.translation - portal_transform.translation).normalize());
+
+            if portal_camera.plane_mode == Some(Face::Back) && behindness > PLANE_MODE_TRIGGER
+                || portal_camera.plane_mode == Some(Face::Front) && behindness < -PLANE_MODE_TRIGGER {
+                // TOFIX makes the app very jerky, why?
                 camera.is_active = false;
                 skip_update = true;
             }
             else {
                 camera.is_active = true;
             }
-        }
+        } // TOFIX deactivate camera when looking away from the portal
         if !skip_update {
             // TOFIX Resize (mutable access to the image makes it not update by the PortalCamera anymore for some reason)
             // Probably relevant
@@ -400,11 +429,13 @@ pub fn update_portal_cameras(
                 portal_image.resize(size);
             }
             
-            let portal_transform = portal_query.get(portal_camera.portal).unwrap();
+            let destination_transform = destination_query.get(portal_camera.destination).unwrap();
+            let destination_transform = &destination_transform.compute_transform();
 
             // Move camera
             let new_portal_camera_transform = get_portal_camera_transform(main_camera_transform, portal_transform, destination_transform);
             portal_camera_transform.set(Box::new(new_portal_camera_transform)).unwrap();
+            portal_camera_global_transform.set(Box::new(GlobalTransform::from(new_portal_camera_transform))).unwrap();
         }
     }
 }

@@ -1,4 +1,4 @@
-//! This example illustrates the portal and destination moving
+//! This example illustrates the portal and destination moving, and tests for hierarchy
 
 use bevy::prelude::*;
 use bevy_basic_portals::*;
@@ -36,7 +36,7 @@ fn main() {
         .add_plugins(DefaultPlugins)
         .add_plugin(PortalsPlugin::default())
         .add_startup_system(setup)
-        .add_system(move_portal_destination)
+        .add_system(move_portal_and_destination)
         .run();
 }
 
@@ -44,22 +44,21 @@ fn setup(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
 ) {
-    let camera_transform: Transform = Transform::from_xyz(-20.0, 0., 20.0).looking_at(Vec3::ZERO, Vec3::Y);
+    let camera_transform: Transform = Transform::from_xyz(-20., 0., 20.).looking_at(Vec3::ZERO, Vec3::Y);
 
-    commands.spawn((
+    let main_camera = commands.spawn((
         Camera3dBundle {
             transform: camera_transform,
             ..default()
         },
         MainCamera
-    ));
+    )).id();
 
     let portal_mesh = meshes.add(Mesh::from(shape::Quad::new(Vec2::new(10., 10.))));
     commands.spawn(CreatePortalBundle {
         mesh: portal_mesh,
-        // This component will be deleted and things that are needed to create the portal will be created
         create_portal: CreatePortal {
-            // Uncomment this to see the portal
+            main_camera: Some(main_camera),
             debug: Some(DebugPortal {
                 show_window: false,
                 ..default()
@@ -77,7 +76,7 @@ fn setup(
     });
 }
 
-fn move_portal_destination (
+fn move_portal_and_destination (
     time: Res<Time>,
     mut portal_query: Query<&mut Transform, (With<Portal>, Without<PortalDestination>, Without<MainCamera>)>,
     mut destination_query: Query<&mut Transform, (With<PortalDestination>, Without<Portal>, Without<MainCamera>)>,
