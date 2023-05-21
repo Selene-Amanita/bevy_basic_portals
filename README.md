@@ -1,11 +1,14 @@
 # Portals for Bevy
 
+[![crates.io](https://img.shields.io/crates/v/bevy_basic_portals)](https://crates.io/crates/bevy_basic_portals)
 [![MIT/Apache 2.0](https://img.shields.io/badge/license-EUPL-blue.svg)](https://commission.europa.eu/content/european-union-public-licence_en)
 [![Bevy tracking](https://img.shields.io/badge/Bevy%20tracking-released%20version-lightblue)](https://github.com/bevyengine/bevy/blob/main/docs/plugins_guidelines.md#main-branch-tracking)
 
 Bevy Simple Portals is a Bevy game engine plugin aimed to create portals.
 
 Those portals are (for now) purely visual and can be used to make mirrors, indoor renderings, crystal balls, and more!
+
+![Peek 21-05-2023 04-19](https://github.com/Selene-Amanita/bevy_basic_portal/assets/134181069/9864c08c-7826-4b4a-bea1-082c4434fd74) ![Peek 21-05-2023 04-24](https://github.com/Selene-Amanita/bevy_basic_portal/assets/134181069/14474b43-c5df-41ca-9d60-cb604fb4997b)
 
 ## Basic Usage
 This example illustrates how to create a simple portal, it uses a single sphere that will be displayed two times on screen thanks to the portal:

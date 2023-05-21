@@ -6,7 +6,7 @@
 //! ```rust
 #![doc = include_str!("../examples/basic/main.rs")]
 //! ```
-//! More complex examples are available in the git project.
+//! More complex examples are available in the [git project](https://github.com/Selene-Amanita/bevy_basic_portals).
 //! 
 //! ## Vocabulary
 //! - A Portal is an entity used to visualise the effect

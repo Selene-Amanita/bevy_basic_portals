@@ -8,7 +8,8 @@ exclude = ["helpers/"]
 keywords = ["bevy", "portal", "gamedev"]
 license = "EUPL-1.2-or-later"
 readme = "README.md"
-authors = [""]
+repository = "https://github.com/Selene-Amanita/bevy_basic_portals"
+authors = ["Selene Amanita"]
 [workspace]
 members = [
     "helpers"

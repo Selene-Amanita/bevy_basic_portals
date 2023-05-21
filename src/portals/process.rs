@@ -22,7 +22,7 @@ pub struct Portal;
 
 /// Marker component for the destination.
 /// 
-/// Will be added to the entity if [CreatePortal]'s destination is [FuturePortalDestination::Entity]
+/// Will be added to the entity if [CreatePortal]'s destination is [AsPortalDestination::Use]
 #[derive(Component)]
 pub struct PortalDestination;
 
