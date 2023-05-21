@@ -441,7 +441,5 @@ fn get_portal_camera_transform(main_camera_transform: &Transform, portal_transfo
         scale: main_camera_transform.scale
     };
     portal_camera_transform.rotate_around(destination_transform.translation, rotation);
-    //portal_camera_transform.rotate_around(destination_transform.translation, portal_transform.rotation.inverse());
-    //portal_camera_transform.rotate_around(destination_transform.translation, destination_transform.rotation);
     portal_camera_transform
 }
