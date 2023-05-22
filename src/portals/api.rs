@@ -33,6 +33,8 @@ impl Plugin for PortalsPlugin {
             .add_plugin(MaterialPlugin::<PortalMaterial>::default())
             .add_system(update_portal_cameras.in_base_set(CoreSet::Last));
 
+        app.register_type::<PortalCamera>();
+
         if self.check_create != PortalsCheckMode::Manual {
             app.add_startup_system(create_portals.in_base_set(StartupSet::PostStartup).after(TransformSystem::TransformPropagate));
         }
@@ -109,7 +111,7 @@ impl Default for CreatePortal {
 }
 
 /// How to create the portal destination
-#[derive(Clone)]
+#[derive(Clone, Reflect, FromReflect)]
 pub enum AsPortalDestination {
     /// Use an already existing entity
     Use(Entity),
@@ -126,7 +128,7 @@ pub enum AsPortalDestination {
 }
 
 /// Portal destination to be created
-#[derive(Clone, Default)]
+#[derive(Clone, Reflect, FromReflect, Default)]
 pub struct CreatePortalDestination {
     /// Where to create the destination of the portal
     pub transform: Transform,
@@ -134,7 +136,7 @@ pub struct CreatePortalDestination {
 }
 
 /// Configuration of debug elements.
-#[derive(Clone)]
+#[derive(Clone, Reflect, FromReflect)]
 pub struct DebugPortal {
     /// Name of the portal, used in the debug window's title.
     pub name: Option<String>,
