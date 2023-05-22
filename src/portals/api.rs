@@ -111,7 +111,7 @@ impl Default for CreatePortal {
 }
 
 /// How to create the portal destination
-#[derive(Clone, Reflect, FromReflect)]
+#[derive(Clone)]
 pub enum AsPortalDestination {
     /// Use an already existing entity
     Use(Entity),
@@ -128,7 +128,7 @@ pub enum AsPortalDestination {
 }
 
 /// Portal destination to be created
-#[derive(Clone, Reflect, FromReflect, Default)]
+#[derive(Clone, Default)]
 pub struct CreatePortalDestination {
     /// Where to create the destination of the portal
     pub transform: Transform,
@@ -136,7 +136,7 @@ pub struct CreatePortalDestination {
 }
 
 /// Configuration of debug elements.
-#[derive(Clone, Reflect, FromReflect)]
+#[derive(Clone)]
 pub struct DebugPortal {
     /// Name of the portal, used in the debug window's title.
     pub name: Option<String>,
