@@ -60,6 +60,8 @@ impl Plugin for PortalsPlugin {
 
         app.add_system(update_portal_cameras.in_base_set(CoreSet::Last));
 
+        app.register_type::<PortalCamera>();
+
         if self.check_create != PortalsCheckMode::Manual {
             app.add_startup_system(create_portals.in_base_set(StartupSet::PostStartup).after(TransformSystem::TransformPropagate));
         }
