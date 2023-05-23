@@ -16,22 +16,49 @@ pub struct PortalsPlugin {
     /// Whether and when to check for entities with [CreatePortal] components to create a portal.
     /// 
     /// Defaults to [PortalsCheckMode::AlwaysCheck].
-    pub check_create: PortalsCheckMode
+    pub check_create: PortalsCheckMode,
+    /// If true, should add a system to check if a [PortalCamera] despawned or has the wrong components
+    pub check_portal_camera_despawn: bool,
+    /// What to do when there is a problem getting a [PortalParts]
+    /// 
+    /// Can happen when :
+    /// - a part (main camera, [Portal], [PortalDestination]) has despawned but the [PortalCamera] still exists,
+    /// - a part is missing a key component (see [update_portal_cameras]'s implementation).
+    /// - check_portal_camera_despawn is true and a portal camera has despawned or missing a key component but the [Portal] or [PortalDestination] still exist
+    /// 
+    /// Defaults to despawn all entities and children with a warning, except for the main camera.
+    /// Will be added as a Resource, can be changed during execution.
+    pub despawn_strategy: PortalPartsDespawnStrategy,
 }
 
 impl Default for PortalsPlugin {
     fn default() -> Self {
         PortalsPlugin {
-            check_create: PortalsCheckMode::AlwaysCheck
+            check_create: PortalsCheckMode::AlwaysCheck,
+            check_portal_camera_despawn: true,
+            despawn_strategy: default(),
         }
     }
+}
+
+impl PortalsPlugin {
+    pub const MINIMAL: Self = Self {
+        check_create: PortalsCheckMode::CheckAfterStartup,
+        check_portal_camera_despawn: false,
+        despawn_strategy: PortalPartsDespawnStrategy::PANIC,
+    };
 }
 
 impl Plugin for PortalsPlugin {
     fn build(&self, app: &mut App) {
         app
             .add_plugin(MaterialPlugin::<PortalMaterial>::default())
-            .add_system(update_portal_cameras.in_base_set(CoreSet::Last));
+            .insert_resource(self.despawn_strategy)
+            .register_type::<Portal>()
+            .register_type::<PortalDestination>()
+            .register_type::<PortalCamera>();
+
+        app.add_system(update_portal_cameras.in_base_set(CoreSet::Last));
 
         if self.check_create != PortalsCheckMode::Manual {
             app.add_startup_system(create_portals.in_base_set(StartupSet::PostStartup).after(TransformSystem::TransformPropagate));
@@ -39,6 +66,10 @@ impl Plugin for PortalsPlugin {
 
         if self.check_create == PortalsCheckMode::AlwaysCheck {
             app.add_system(create_portals.in_base_set(CoreSet::PostUpdate).after(TransformSystem::TransformPropagate));
+        }
+        
+        if self.check_portal_camera_despawn {
+            app.add_system(check_portal_camera_despawn);
         }
     }
 }
@@ -52,6 +83,87 @@ pub enum PortalsCheckMode {
     CheckAfterStartup,
     /// Set up the check during [StartupSet::PostStartup] and [CoreSet::Last], after [TransformSystem::TransformPropagate].
     AlwaysCheck
+}
+
+/// Strategy to despawn portal parts.
+/// 
+/// Defaults to despawn all parts with a warning (without their children), except for the main camera.
+#[derive(Resource, Clone, Copy)]
+pub struct PortalPartsDespawnStrategy {
+    pub main_camera: PortalPartDespawnStrategy,
+    pub portal: PortalPartDespawnStrategy,
+    pub destination: PortalPartDespawnStrategy,
+    pub portal_camera: PortalPartDespawnStrategy,
+}
+
+impl Default for PortalPartsDespawnStrategy {
+    fn default() -> Self {
+        PortalPartsDespawnStrategy {
+            main_camera: PortalPartDespawnStrategy::Leave,
+            portal: default(),
+            destination: default(),
+            portal_camera: default(),
+        }
+    }
+}
+
+impl PortalPartsDespawnStrategy {
+    pub const PANIC: Self = Self {
+        main_camera: PortalPartDespawnStrategy::Leave,
+        portal: PortalPartDespawnStrategy::Panic,
+        destination: PortalPartDespawnStrategy::Panic,
+        portal_camera: PortalPartDespawnStrategy::Panic,
+    };
+
+    pub const DESPAWN_SILENTLY: Self = Self {
+        main_camera: PortalPartDespawnStrategy::Leave,
+        portal: PortalPartDespawnStrategy::DespawnEntity,
+        destination: PortalPartDespawnStrategy::DespawnEntity,
+        portal_camera: PortalPartDespawnStrategy::DespawnEntity,
+    };
+
+    pub const DESPAWN_WITH_CHILDREN_SILENTLY: Self = Self {
+        main_camera: PortalPartDespawnStrategy::Leave,
+        portal: PortalPartDespawnStrategy::DespawnWithChildren,
+        destination: PortalPartDespawnStrategy::DespawnWithChildren,
+        portal_camera: PortalPartDespawnStrategy::DespawnWithChildren,
+    };
+}
+
+/// Strategy to despawn a portal part if it is not yet despawned
+#[derive(Default, PartialEq, Eq, Clone, Copy)]
+pub enum PortalPartDespawnStrategy {
+    /// Despawn the entity and all of its children with a warning
+    WarnThenDespawnWithChildren,
+    /// Despawn the entity and all of its children
+    DespawnWithChildren,
+    /// Despawn only the entity with a warning
+    #[default]
+    WarnThenDespawnEntity,
+    /// Despawn only the entity
+    DespawnEntity,
+    /// Don't despawn
+    Leave,
+    /// Panic
+    Panic,
+}
+
+impl PortalPartDespawnStrategy {
+    pub(super) fn should_panic(&self) -> bool {
+        self == &Self::Panic
+    }
+
+    pub(super) fn should_despawn(&self) -> bool {
+        self != &Self::Leave && self != &Self::Panic
+    }
+
+    pub(super) fn should_despawn_children(&self) -> bool {
+        self == &Self::WarnThenDespawnWithChildren || self == &Self::DespawnWithChildren
+    }
+
+    pub(super) fn should_warn(&self) -> bool {
+        self == &Self::WarnThenDespawnWithChildren || self == &Self::WarnThenDespawnEntity
+    }
 }
 
 /// Bundle to create a portal with all the components needed.
@@ -68,7 +180,7 @@ pub struct CreatePortalBundle {
     pub computed_visibility: ComputedVisibility,
 }
 
-/// Component to create a portal, containing the informations needed.
+/// Component to create a [Portal] and everything needed to make it work.
 /// 
 /// The portal will be created after the next check (see [PortalsCheckMode]), if it has the other components in [CreatePortalBundle].
 #[derive(Component, Clone)]
@@ -108,28 +220,26 @@ impl Default for CreatePortal {
     }
 }
 
-/// How to create the portal destination
+/// How to create the [PortalDestination].
 #[derive(Clone)]
 pub enum AsPortalDestination {
-    /// Use an already existing entity
+    /// Use an already existing entity.
     Use(Entity),
-    /// Create a portal destination with the given configuration
+    /// Create a [PortalDestination] with the given configuration.
     Create(CreatePortalDestination),
-    /// Create a portal destination to make a mirror
+    /// Create a [PortalDestination] to make a mirror.
     /// 
-    /// Warning: this uses the portal's [GlobalTransform] to infer the destination's [Transform].
-    /// Make sure that this GlobalTransform is set correctly when the portal is created.
-    /// This shouldn't be a problem if you are not using [PortalsCheckMode::Manual]
-    /// Warning: if the portal moves, the destination won't be updated
-    // TO FIX
+    /// Will set the [PortalDestination] as a child of the [Portal] entity
     CreateMirror
 }
 
-/// Portal destination to be created
+/// [PortalDestination] to be created
 #[derive(Clone, Default)]
 pub struct CreatePortalDestination {
     /// Where to create the destination of the portal
     pub transform: Transform,
+    ///Entity to use as a parent of the [PortalDestination]
+    pub parent: Option<Entity>,
     //TODO: pub spawn_as_children: something like an EntityCommand?
 }
 

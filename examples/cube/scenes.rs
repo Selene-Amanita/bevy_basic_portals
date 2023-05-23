@@ -26,6 +26,7 @@ pub fn setup_portal_cube_face (
     let create_portal = portals::CreatePortal {
         destination: AsPortalDestination::Create(CreatePortalDestination {
             transform: destination_transform,
+            ..default()
         }),
         main_camera: Some(main_camera),
         render_layer,

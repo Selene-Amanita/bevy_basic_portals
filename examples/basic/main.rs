@@ -28,6 +28,7 @@ fn setup(
         create_portal: CreatePortal {
             destination: AsPortalDestination::Create(CreatePortalDestination {
                 transform: Transform::from_xyz(20., 0., 0.),
+                ..default()
             }),
             // Uncomment this to see the portal
             /*debug: Some(DebugPortal {

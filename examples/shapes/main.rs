@@ -10,7 +10,7 @@ use helpers::{textures, pivot_cameras};
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
-        .add_plugin(PortalsPlugin{check_create: portals::PortalsCheckMode::CheckAfterStartup})
+        .add_plugin(PortalsPlugin::MINIMAL)
         .add_plugin(pivot_cameras::PivotCamerasPlugin::default())
         .add_startup_system(setup)
         .run();
@@ -38,7 +38,7 @@ fn setup(
     // Lights
     commands.insert_resource(AmbientLight {
         color: Color::WHITE,
-        brightness: 0.1,
+        brightness: 0.3,
     });
 
     commands.insert_resource(ClearColor(Color::rgb(0., 0., 0.)));
@@ -86,6 +86,7 @@ fn setup_object_and_portal(
             main_camera: Some(main_camera),
             destination: AsPortalDestination::Create(CreatePortalDestination {
                 transform: destination_transform,
+                ..default()
             }),
             cull_mode,
             plane_mode: None,

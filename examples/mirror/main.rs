@@ -6,8 +6,10 @@ use helpers::{textures, pivot_cameras};
 
 fn main() {
     App::new()
-        .add_plugins(DefaultPlugins)
-        .add_plugin(PortalsPlugin::default())
+        .add_plugins(DefaultPlugins
+            .set(ImagePlugin::default_nearest()
+        ))
+        .add_plugin(PortalsPlugin::MINIMAL)
         .add_plugin(pivot_cameras::PivotCamerasPlugin::default())
         .add_startup_system(setup)
         .run();

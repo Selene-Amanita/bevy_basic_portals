@@ -4,8 +4,7 @@
 
 use bevy::{
     prelude::*,
-    render::{view::RenderLayers, render_resource::Face},
-    window::ExitCondition
+    render::{view::RenderLayers, render_resource::Face}
 };
 
 use bevy_basic_portals::*;
@@ -16,13 +15,9 @@ pub mod scenes;
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins
-            .set(WindowPlugin {
-                exit_condition: ExitCondition::OnAllClosed,
-                ..default()
-            })
             .set(ImagePlugin::default_nearest()
         ))
-        .add_plugin(PortalsPlugin{check_create: portals::PortalsCheckMode::CheckAfterStartup})
+        .add_plugin(PortalsPlugin::MINIMAL)
         .add_plugin(pivot_cameras::PivotCamerasPlugin::default())
         .add_startup_system(setup)
         .run();

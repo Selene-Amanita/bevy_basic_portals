@@ -22,8 +22,7 @@
 //! - portals created by this crate are uni-directionnal, you can only look from one space to the other,
 //! if you want a bidirectional portal you can crate two portals manually
 //! - this crate doesn't handle "portal recursion", as in viewing a portal through another portal
-//! - portals created by this crate have no visible borders (not counting aliasing artifacts), you can 'see" them with [DebugPortal]
-//! - this crate doesn't handle removing portals (it can be done manually to some extent)
+//! - portals created by this crate have no visible borders (not counting aliasing artifacts), you can "see" them with [DebugPortal]
 //! - this crate doesn't handle moving stuff through the portal, it is only visual, more like a crystal ball
 //! - this crate doesn't handle raycasting through the portal, it has to be done manually
 //! - this crate doesn't handle resizing window/viewport of the main camera
@@ -36,3 +35,5 @@ pub use portals::{PortalsPlugin, CreatePortalBundle};
 
 //TODO examples:
 // - should handle multiple main cameras
+// - portal or destination in a hierarchy should work
+// - spawning portals, despawning portal parts, removing necessary components
