@@ -51,6 +51,13 @@ impl PortalsPlugin {
 
 impl Plugin for PortalsPlugin {
     fn build(&self, app: &mut App) {
+        bevy::asset::load_internal_asset!(
+            app,
+            PORTAL_SHADER_HANDLE,
+            concat!(env!("CARGO_MANIFEST_DIR"), "/assets/portal.wgsl"),
+            Shader::from_wgsl
+        );
+
         app
             .add_plugin(MaterialPlugin::<PortalMaterial>::default())
             .insert_resource(self.despawn_strategy)
@@ -59,8 +66,6 @@ impl Plugin for PortalsPlugin {
             .register_type::<PortalCamera>();
 
         app.add_system(update_portal_cameras.in_base_set(CoreSet::Last));
-
-        app.register_type::<PortalCamera>();
 
         if self.check_create != PortalsCheckMode::Manual {
             app.add_startup_system(create_portals.in_base_set(StartupSet::PostStartup).after(TransformSystem::TransformPropagate));
