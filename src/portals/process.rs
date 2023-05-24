@@ -66,7 +66,7 @@ pub struct Portal {
 
 /// Marker component for the destination.
 /// 
-/// Will be added to the entity if [CreatePortal]'s destination is [AsPortalDestination::Use]
+/// Will be added to the entity defined by [CreatePortal.destination](CreatePortal)
 #[derive(Component, Reflect)]
 pub struct PortalDestination {
     pub parts: PortalParts,
@@ -101,7 +101,7 @@ impl EntityCommand for CreatePortalCommand {
     fn write(self, id: Entity, world: &mut World) {
         let (portal_transform, mesh) = world.query::<(&GlobalTransform, &Handle<Mesh>)>().get(world, id)
             .expect("You must provide a GlobalTransform and Handle<Mesh> components to the entity before using a CreatePortalCommand");
-        let portal_transform = portal_transform.clone();
+        let portal_transform = *portal_transform;
         let mesh = mesh.clone();
 
         let portal_create = match self.config {
@@ -391,6 +391,7 @@ fn create_portal(
 }
 
 /// Moves the [PortalCamera] to follow the main camera relative to the portal and the destination.
+#[allow(clippy::too_many_arguments)]
 pub fn update_portal_cameras(
     mut commands: Commands,
     mut images: ResMut<Assets<Image>>,
@@ -499,7 +500,7 @@ fn get_viewport_size(
             RenderTarget::Window(window_ref) => {
                 let window = match window_ref {
                     WindowRef::Primary => primary_window_query.get_single().unwrap(),
-                    WindowRef::Entity(entity) => windows_query.get(entity.to_owned()).unwrap()
+                    WindowRef::Entity(entity) => windows_query.get(entity.clone()).unwrap()
                 };
                 UVec2::new(window.physical_width(),window.physical_height())
             },
@@ -572,7 +573,7 @@ fn despawn_portal_part (
     if strategy.should_despawn() {
         if let Some(mut camera_commands) = commands.get_entity(entity) {
             if strategy.should_warn() {
-                panic!("{} {}", entity_type, error_message);
+                warn!("{entity_type} {error_message}");
             }
             if strategy.should_despawn_children() {
                 camera_commands.despawn_descendants();
@@ -581,7 +582,7 @@ fn despawn_portal_part (
         }
     }
     else if strategy.should_panic() {
-        panic!("{} {}", entity_type, error_message);
+        panic!("{entity_type} {error_message}");
     }
 }
 

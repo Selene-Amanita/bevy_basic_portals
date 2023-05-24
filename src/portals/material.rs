@@ -23,7 +23,6 @@ impl Plugin for PortalsMaterialPlugin {
     }
 }
 
-
 /// Material with the portal shader (renders the image without deformation using the mesh as a mask).
 #[derive(AsBindGroup, Clone, TypeUuid)]
 #[bind_group_data(PortalMaterialKey)]

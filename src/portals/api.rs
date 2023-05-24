@@ -61,9 +61,9 @@ impl Plugin for PortalsPlugin {
 pub enum PortalsCheckMode {
     /// Don't set up this check automatically with the plugin, set-up [create_portals] manually, or use [CreatePortalCommand].
     Manual,
-    /// Set up the check during [StartupSet::PostStartup], after [TransformSystem::TransformPropagate].
+    /// Set up the check during [StartupSet::PostStartup], after [TransformPropagate](bevy::transform::TransformSystem::TransformPropagate).
     CheckAfterStartup,
-    /// Set up the check during [StartupSet::PostStartup] and [CoreSet::Last], after [TransformSystem::TransformPropagate].
+    /// Set up the check during [StartupSet::PostStartup] and [CoreSet::Last], after [TransformPropagate](bevy::transform::TransformSystem::TransformPropagate).
     AlwaysCheck
 }
 
@@ -179,11 +179,11 @@ pub struct CreatePortal {
     pub cull_mode: Option<Face>,
     /// Render layer used by the [PortalCamera], and debug elements.
     pub render_layer: RenderLayers,
-    /// If Some(Face::Back), portal camera will get deactivated if camera is going behind the portal's transform.
+    /// If `Some(Face::Back)`, portal camera will get deactivated if camera is going behind the portal's transform.
     /// 
     /// Defaults to None temporarilly. 
-    /// Some(Face::Front) deactivates the camera in front of the transform, and None never deactivates it.
-    /// If your mesh isn't on a plane with cull_mode = Some(Face::Back), set this to None.
+    /// `Some(Face::Front)` deactivates the camera in front of the transform, and None never deactivates it.
+    /// If your mesh isn't on a plane with `cull_mode = Some(Face::Back)`, set this to None.
     pub plane_mode: Option<Face>,
     /// Configures debug elements, defaults to None.
     pub debug: Option<DebugPortal>,
@@ -192,10 +192,10 @@ pub struct CreatePortal {
 impl Default for CreatePortal {
     fn default() -> Self {
         CreatePortal {
-            destination: AsPortalDestination::Create(Default::default()),
+            destination: AsPortalDestination::Create(default()),
             main_camera: None,
             cull_mode: Some(Face::Back),
-            render_layer: Default::default(),
+            render_layer: default(),
             plane_mode: None,
             debug: None,
         }
