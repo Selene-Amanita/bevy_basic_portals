@@ -4,21 +4,48 @@ use bevy::{
     prelude::*,
     render::{
         render_resource::*,
-        camera::RenderTarget, mesh::MeshVertexBufferLayout,
+        camera::RenderTarget,
     },
-    reflect::TypeUuid,
     window::*,
     ecs::{
         system::{EntityCommand, SystemState},
         query::QueryEntityError
     },
-    pbr::{MaterialPipelineKey, MaterialPipeline},
+    transform::TransformSystem
 };
 use std::f32::consts::PI;
 
-use super::api::*;
+use super::*;
 
 const PLANE_MODE_TRIGGER: f32 = 0.2;
+
+pub(super) struct PortalsProcessPlugin {
+    pub config: PortalsPlugin
+}
+
+impl Plugin for PortalsProcessPlugin {
+    fn build(&self, app: &mut App) {
+        app
+            .insert_resource(self.config.despawn_strategy)
+            .register_type::<Portal>()
+            .register_type::<PortalDestination>()
+            .register_type::<PortalCamera>();
+
+        app.add_system(update_portal_cameras.in_base_set(CoreSet::Last));
+
+        if self.config.check_create != PortalsCheckMode::Manual {
+            app.add_startup_system(create_portals.in_base_set(StartupSet::PostStartup).after(TransformSystem::TransformPropagate));
+        }
+
+        if self.config.check_create == PortalsCheckMode::AlwaysCheck {
+            app.add_system(create_portals.in_base_set(CoreSet::PostUpdate).after(TransformSystem::TransformPropagate));
+        }
+        
+        if self.config.check_portal_camera_despawn {
+            app.add_system(check_portal_camera_despawn);
+        }
+    }
+}
 
 /// References to the entities that make a portal work
 #[derive(Clone, Reflect)]
@@ -57,49 +84,6 @@ pub struct PortalCamera {
 /// Marker component for the debug camera when [DebugPortal::show_window] is true.
 #[derive(Component)]
 pub struct PortalDebugCamera;
-
-/// Material with the portal shader (renders the image without deformation using the mesh as a mask).
-#[derive(AsBindGroup, Clone, TypeUuid)]
-#[bind_group_data(PortalMaterialKey)]
-#[uuid = "436e9734-867f-4faf-9b5f-81703017a018"]
-pub struct PortalMaterial {
-    #[texture(0)]
-    #[sampler(1)]
-    color_texture: Option<Handle<Image>>,
-    cull_mode: Option<Face>
-}
-
-pub(super) const PORTAL_SHADER_HANDLE: HandleUntyped =
-  HandleUntyped::weak_from_u64(Shader::TYPE_UUID, 0x792531383ac40e25);
-
-impl Material for PortalMaterial {
-    fn fragment_shader() -> ShaderRef {
-        PORTAL_SHADER_HANDLE.typed().into()
-    }
-
-    fn specialize(
-        _: &MaterialPipeline<Self>,
-        descriptor: &mut RenderPipelineDescriptor,
-        _: &MeshVertexBufferLayout,
-        key: MaterialPipelineKey<Self>,
-    ) -> Result<(), SpecializedMeshPipelineError> {
-        descriptor.primitive.cull_mode = key.bind_group_data.cull_mode;
-        Ok(())
-    }
-}
-
-#[derive(Clone, PartialEq, Eq, Hash)]
-pub struct PortalMaterialKey {
-    cull_mode: Option<Face>,
-}
-
-impl From<&PortalMaterial> for PortalMaterialKey {
-    fn from(material: &PortalMaterial) -> Self {
-        PortalMaterialKey {
-            cull_mode: material.cull_mode,
-        }
-    }
-}
 
 /// Command to create a portal manually.
 /// 

@@ -6,12 +6,12 @@ use bevy::{
         render_resource::*,
         view::RenderLayers,
     },
-    transform::TransformSystem
 };
 
-use super::process::*;
+use super::*;
 
 /// Adds support for portals to a bevy App.
+#[derive(Clone)]
 pub struct PortalsPlugin {
     /// Whether and when to check for entities with [CreatePortal] components to create a portal.
     /// 
@@ -51,38 +51,13 @@ impl PortalsPlugin {
 
 impl Plugin for PortalsPlugin {
     fn build(&self, app: &mut App) {
-        bevy::asset::load_internal_asset!(
-            app,
-            PORTAL_SHADER_HANDLE,
-            concat!(env!("CARGO_MANIFEST_DIR"), "/assets/portal.wgsl"),
-            Shader::from_wgsl
-        );
-
-        app
-            .add_plugin(MaterialPlugin::<PortalMaterial>::default())
-            .insert_resource(self.despawn_strategy)
-            .register_type::<Portal>()
-            .register_type::<PortalDestination>()
-            .register_type::<PortalCamera>();
-
-        app.add_system(update_portal_cameras.in_base_set(CoreSet::Last));
-
-        if self.check_create != PortalsCheckMode::Manual {
-            app.add_startup_system(create_portals.in_base_set(StartupSet::PostStartup).after(TransformSystem::TransformPropagate));
-        }
-
-        if self.check_create == PortalsCheckMode::AlwaysCheck {
-            app.add_system(create_portals.in_base_set(CoreSet::PostUpdate).after(TransformSystem::TransformPropagate));
-        }
-        
-        if self.check_portal_camera_despawn {
-            app.add_system(check_portal_camera_despawn);
-        }
+        app.add_plugin(PortalsMaterialPlugin)
+           .add_plugin(PortalsProcessPlugin{config: self.clone()});
     }
 }
 
 /// Whether and when [PortalsPlugin] should check for entities with [CreatePortal] components to create a portal using [create_portals].
-#[derive(PartialEq, Eq)]
+#[derive(PartialEq, Eq, Clone)]
 pub enum PortalsCheckMode {
     /// Don't set up this check automatically with the plugin, set-up [create_portals] manually, or use [CreatePortalCommand].
     Manual,
