@@ -1,8 +1,8 @@
 //! Pivot camera allows a camera to move around a pivot point
 
 use bevy::{
+    input::mouse::{MouseMotion, MouseScrollUnit, MouseWheel},
     prelude::*,
-    input::mouse::{MouseMotion, MouseWheel, MouseScrollUnit},
 };
 
 pub const DEFAULT_KEYBOARD_SPEED: f32 = 3.;
@@ -11,13 +11,13 @@ pub const DEFAULT_MOUSE_SPEED: f32 = 0.3;
 pub const DEFAULT_MOUSE_ZOOM_SPEED: f32 = 40.;
 
 pub struct PivotCamerasPlugin {
-    pub config: PivotCamerasConfig
+    pub config: PivotCamerasConfig,
 }
 
 impl Default for PivotCamerasPlugin {
     fn default() -> Self {
         PivotCamerasPlugin {
-            config: Default::default()
+            config: Default::default(),
         }
     }
 }
@@ -31,7 +31,6 @@ impl Plugin for PivotCamerasPlugin {
     }
 }
 
-
 #[derive(Resource, Copy, Clone)]
 pub struct PivotCamerasConfig {
     pub keyboard_speed: f32,
@@ -42,7 +41,7 @@ pub struct PivotCamerasConfig {
 
 impl Default for PivotCamerasConfig {
     fn default() -> Self {
-        PivotCamerasConfig { 
+        PivotCamerasConfig {
             keyboard_speed: DEFAULT_KEYBOARD_SPEED,
             keyboard_zoom_speed: DEFAULT_KEYBOARD_ZOOM_SPEED,
             mouse_speed: DEFAULT_MOUSE_SPEED,
@@ -64,13 +63,16 @@ fn move_cameras(
     mouse_input: Res<Input<MouseButton>>,
     mut motion_evr: EventReader<MouseMotion>,
     mut scroll_evr: EventReader<MouseWheel>,
-    mut main_camera_query: Query<(&mut Transform, &PivotCamera)>
+    mut main_camera_query: Query<(&mut Transform, &PivotCamera)>,
 ) {
     let mut move_h = 0.;
     let mut move_v = 0.;
     let mut move_f = 0.;
 
-    if mouse_input.pressed(MouseButton::Left) || mouse_input.pressed(MouseButton::Right) || mouse_input.pressed(MouseButton::Middle) {
+    if mouse_input.pressed(MouseButton::Left)
+        || mouse_input.pressed(MouseButton::Right)
+        || mouse_input.pressed(MouseButton::Middle)
+    {
         for ev in motion_evr.iter() {
             move_h -= ev.delta.x * config.mouse_speed;
             move_v -= ev.delta.y * config.mouse_speed;

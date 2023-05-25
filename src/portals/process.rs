@@ -1,17 +1,13 @@
 ///! Components, systems and others for the implementation of portals, or doing something specific with them like manual creation
-
 use bevy::{
-    prelude::*,
-    render::{
-        render_resource::*,
-        camera::RenderTarget,
-    },
-    window::*,
     ecs::{
+        query::QueryEntityError,
         system::{EntityCommand, SystemState},
-        query::QueryEntityError
     },
-    transform::TransformSystem
+    prelude::*,
+    render::{camera::RenderTarget, render_resource::*},
+    transform::TransformSystem,
+    window::*,
 };
 use std::f32::consts::PI;
 
@@ -20,13 +16,12 @@ use super::*;
 const PLANE_MODE_TRIGGER: f32 = 0.2;
 
 pub(super) struct PortalsProcessPlugin {
-    pub config: PortalsPlugin
+    pub config: PortalsPlugin,
 }
 
 impl Plugin for PortalsProcessPlugin {
     fn build(&self, app: &mut App) {
-        app
-            .insert_resource(self.config.despawn_strategy)
+        app.insert_resource(self.config.despawn_strategy)
             .register_type::<Portal>()
             .register_type::<PortalDestination>()
             .register_type::<PortalCamera>();
@@ -34,13 +29,21 @@ impl Plugin for PortalsProcessPlugin {
         app.add_system(update_portal_cameras.in_base_set(CoreSet::Last));
 
         if self.config.check_create != PortalsCheckMode::Manual {
-            app.add_startup_system(create_portals.in_base_set(StartupSet::PostStartup).after(TransformSystem::TransformPropagate));
+            app.add_startup_system(
+                create_portals
+                    .in_base_set(StartupSet::PostStartup)
+                    .after(TransformSystem::TransformPropagate),
+            );
         }
 
         if self.config.check_create == PortalsCheckMode::AlwaysCheck {
-            app.add_system(create_portals.in_base_set(CoreSet::PostUpdate).after(TransformSystem::TransformPropagate));
+            app.add_system(
+                create_portals
+                    .in_base_set(CoreSet::PostUpdate)
+                    .after(TransformSystem::TransformPropagate),
+            );
         }
-        
+
         if self.config.check_portal_camera_despawn {
             app.add_system(check_portal_camera_despawn);
         }
@@ -57,7 +60,7 @@ pub struct PortalParts {
 }
 
 /// Marker component for the portal.
-/// 
+///
 /// Will replace [CreatePortal] after [create_portals].
 #[derive(Component, Reflect)]
 pub struct Portal {
@@ -65,7 +68,7 @@ pub struct Portal {
 }
 
 /// Marker component for the destination.
-/// 
+///
 /// Will be added to the entity defined by [CreatePortal.destination](CreatePortal)
 #[derive(Component, Reflect)]
 pub struct PortalDestination {
@@ -86,7 +89,7 @@ pub struct PortalCamera {
 pub struct PortalDebugCamera;
 
 /// Command to create a portal manually.
-/// 
+///
 /// Warning: If [`PortalsPlugin::check_create`](PortalsPlugin) is not [PortalsCheckMode::Manual],
 /// and you add this command with a config (not None) to an entity which already has a [CreatePortal] component,
 /// this component should be ignored and removed.
@@ -94,7 +97,7 @@ pub struct PortalDebugCamera;
 /// the command was added during [CoreSet::PostUpdate], in which case two portal cameras may be created. Don't do that.
 #[derive(Default)]
 pub struct CreatePortalCommand {
-    pub config: Option<CreatePortal>
+    pub config: Option<CreatePortal>,
 }
 
 impl EntityCommand for CreatePortalCommand {
@@ -128,7 +131,7 @@ impl EntityCommand for CreatePortalCommand {
             mut materials,
             main_camera_query,
             primary_window_query,
-            windows_query
+            windows_query,
         ) = system_state.get_mut(world);
 
         create_portal(
@@ -143,7 +146,7 @@ impl EntityCommand for CreatePortalCommand {
             id,
             &portal_create,
             &portal_transform,
-            &mesh
+            &mesh,
         );
 
         system_state.apply(world);
@@ -151,12 +154,12 @@ impl EntityCommand for CreatePortalCommand {
 }
 
 /// System that will find entities with the components of [CreatePortalBundle] and create a portal.
-/// 
+///
 /// It will create a [PortalCamera] at the destination, and put a portal material on the mesh of the entity with [CreatePortal].
 /// The [PortalCamera] will render to that material.
 /// It will also create debug elements if needed.
 /// It will then remove the [CreatePortal] component.
-/// 
+///
 /// This system can be automatically added by [PortalsPlugin] depending on [PortalsCheckMode].
 #[allow(clippy::too_many_arguments)]
 pub fn create_portals(
@@ -168,17 +171,28 @@ pub fn create_portals(
     main_camera_query: Query<(Entity, &Camera)>,
     primary_window_query: Query<&Window, With<PrimaryWindow>>,
     windows_query: Query<&Window>,
-    portals_to_create: Query<(Entity, &CreatePortal, &GlobalTransform, &Handle<Mesh>)>
+    portals_to_create: Query<(Entity, &CreatePortal, &GlobalTransform, &Handle<Mesh>)>,
 ) {
     for (portal_entity, portal_create, portal_transform, mesh) in portals_to_create.iter() {
-        create_portal(&mut commands, &mut images, &mut portal_materials, &mut meshes, &mut materials,
-            &main_camera_query, &primary_window_query, &windows_query,
-            portal_entity, portal_create, portal_transform, mesh);
+        create_portal(
+            &mut commands,
+            &mut images,
+            &mut portal_materials,
+            &mut meshes,
+            &mut materials,
+            &main_camera_query,
+            &primary_window_query,
+            &windows_query,
+            portal_entity,
+            portal_create,
+            portal_transform,
+            mesh,
+        );
     }
 }
 
 /// Creates a portal.
-/// 
+///
 /// Called from [create_portals] or [CreatePortalCommand].
 #[allow(clippy::too_many_arguments)]
 fn create_portal(
@@ -193,18 +207,17 @@ fn create_portal(
     portal_entity: Entity,
     create_portal: &CreatePortal,
     _portal_global_transform: &GlobalTransform,
-    portal_mesh: &Handle<Mesh>
+    portal_mesh: &Handle<Mesh>,
 ) {
     // Get main camera infos
-    let (main_camera_entity, main_camera) = 
-        if let Some(camera_entity) = create_portal.main_camera {
-            main_camera_query.get(camera_entity).unwrap()
-        }
-        else {
-            main_camera_query.get_single().unwrap()
-        };
+    let (main_camera_entity, main_camera) = if let Some(camera_entity) = create_portal.main_camera {
+        main_camera_query.get(camera_entity).unwrap()
+    } else {
+        main_camera_query.get_single().unwrap()
+    };
 
-    let main_camera_viewport_size = get_viewport_size(main_camera, primary_window_query, windows_query, images);
+    let main_camera_viewport_size =
+        get_viewport_size(main_camera, primary_window_query, windows_query, images);
 
     let size = Extent3d {
         width: main_camera_viewport_size.x,
@@ -237,14 +250,14 @@ fn create_portal(
     // Material that the portal camera will render to
     let portal_material = portal_materials.add(PortalMaterial {
         color_texture: Some(portal_image.clone()),
-        cull_mode: create_portal.cull_mode
+        cull_mode: create_portal.cull_mode,
     });
 
     // Create or get the destination entity
     let destination_entity = match create_portal.destination {
         AsPortalDestination::Use(entity) => entity,
-        AsPortalDestination::Create(CreatePortalDestination{transform, parent}) => {
-            let mut destination_commands = commands.spawn(SpatialBundle{
+        AsPortalDestination::Create(CreatePortalDestination { transform, parent }) => {
+            let mut destination_commands = commands.spawn(SpatialBundle {
                 transform,
                 global_transform: GlobalTransform::from(transform),
                 ..default()
@@ -255,37 +268,39 @@ fn create_portal(
             destination_commands.id()
         }
         AsPortalDestination::CreateMirror => {
-            let mut destination_commands = commands.spawn(SpatialBundle{
+            let mut destination_commands = commands.spawn(SpatialBundle {
                 transform: Transform::from_rotation(Quat::from_axis_angle(Vec3::Y, PI)),
                 ..default()
             });
             destination_commands.set_parent(portal_entity);
             destination_commands.id()
-        },
+        }
     };
 
     // Create the portal camera
-    let portal_camera_entity = commands.spawn((
-        Camera3dBundle {
-            camera: Camera {
-                order: -1,
-                target: RenderTarget::Image(portal_image.clone()),
+    let portal_camera_entity = commands
+        .spawn((
+            Camera3dBundle {
+                camera: Camera {
+                    order: -1,
+                    target: RenderTarget::Image(portal_image.clone()),
+                    ..default()
+                },
+                // TOFIX set the exact value of Transform and GlobalTransform to avoid black screen at spawn
+                // let portal_camera_transform = get_portal_camera_transform(main_camera_transform, portal_transform, &destination_transform);
+                // This requires an extra Query to get destination_transform when AsPortalDestination::Entity/CreateMirror
+                // Would still matter if the portal camera is a child of the destination
+                //transform: portal_camera_transform,
+                //global_transorm: GlobalTransform::from(portal_camera_transform),
                 ..default()
             },
-            // TOFIX set the exact value of Transform and GlobalTransform to avoid black screen at spawn
-            // let portal_camera_transform = get_portal_camera_transform(main_camera_transform, portal_transform, &destination_transform);
-            // This requires an extra Query to get destination_transform when AsPortalDestination::Entity/CreateMirror
-            // Would still matter if the portal camera is a child of the destination
-            //transform: portal_camera_transform,
-            //global_transorm: GlobalTransform::from(portal_camera_transform),
-            ..default()
-        },
-        VisibilityBundle {
-            visibility: Visibility::Hidden,
-            ..default()
-        },
-        create_portal.render_layer
-    )).id();
+            VisibilityBundle {
+                visibility: Visibility::Hidden,
+                ..default()
+            },
+            create_portal.render_layer,
+        ))
+        .id();
 
     // Add portal components
     let parts = PortalParts {
@@ -308,9 +323,9 @@ fn create_portal(
         parts: parts.clone(),
     });
 
-    commands.entity(destination_entity).insert(PortalDestination{
-        parts,
-    });
+    commands
+        .entity(destination_entity)
+        .insert(PortalDestination { parts });
 
     // Debug
     if let Some(debug) = &create_portal.debug {
@@ -320,27 +335,34 @@ fn create_portal(
 
         // Create the debug camera as a child of the portal camera in a new window
         if debug.show_window {
-            let debug_window = commands.spawn(Window {
-                title: (match &debug.name {Some(name) => name, _ => "Debug"}).to_owned(),
-                resolution: WindowResolution::new(size.width as f32, size.height as f32),
-                window_level: WindowLevel::AlwaysOnBottom,
-                ..default()
-            }).id();
-            commands.entity(portal_camera_entity).with_children(|parent| {
-                parent.spawn((
-                    Camera3dBundle {
-                        camera: Camera {
-                            order: -1,
-                            target: RenderTarget::Window(WindowRef::Entity(debug_window)),
+            let debug_window = commands
+                .spawn(Window {
+                    title: (match &debug.name {
+                        Some(name) => name,
+                        _ => "Debug",
+                    })
+                    .to_owned(),
+                    resolution: WindowResolution::new(size.width as f32, size.height as f32),
+                    window_level: WindowLevel::AlwaysOnBottom,
+                    ..default()
+                })
+                .id();
+            commands
+                .entity(portal_camera_entity)
+                .with_children(|parent| {
+                    parent.spawn((
+                        Camera3dBundle {
+                            camera: Camera {
+                                order: -1,
+                                target: RenderTarget::Window(WindowRef::Entity(debug_window)),
+                                ..default()
+                            },
                             ..default()
                         },
-                        ..default()
-                    },
-                    PortalDebugCamera {
-                    },
-                    create_portal.render_layer
-                ));
-            });
+                        PortalDebugCamera {},
+                        create_portal.render_layer,
+                    ));
+                });
         }
 
         // Put a sphere at destination_transform.translation, as a child of the destination
@@ -348,11 +370,18 @@ fn create_portal(
             commands.entity(destination_entity).with_children(|parent| {
                 parent.spawn((
                     PbrBundle {
-                        mesh: meshes.add(shape::Icosphere {radius:0.1, ..default()}.try_into().unwrap()),
+                        mesh: meshes.add(
+                            shape::Icosphere {
+                                radius: 0.1,
+                                ..default()
+                            }
+                            .try_into()
+                            .unwrap(),
+                        ),
                         material: materials.add(debug_color.into()),
                         ..default()
                     },
-                    create_portal.render_layer
+                    create_portal.render_layer,
                 ));
             });
         }
@@ -368,24 +397,33 @@ fn create_portal(
                         material: materials.add(portal_copy_material),
                         ..default()
                     },
-                    create_portal.render_layer
+                    create_portal.render_layer,
                 ));
             });
         }
 
         // Put a sphere at the portal camera position, as a child of the portal camera
         if debug.show_portal_camera_point {
-            commands.entity(portal_camera_entity).with_children(|parent| {
-                parent.spawn((
-                    PbrBundle {
-                        mesh: meshes.add(shape::Icosphere {radius:0.1, ..default()}.try_into().unwrap()),
-                        material: materials.add(debug_color.into()),
-                        visibility: Visibility::Visible,
-                        ..default()
-                    },
-                    create_portal.render_layer
-                ));
-            });
+            commands
+                .entity(portal_camera_entity)
+                .with_children(|parent| {
+                    parent.spawn((
+                        PbrBundle {
+                            mesh: meshes.add(
+                                shape::Icosphere {
+                                    radius: 0.1,
+                                    ..default()
+                                }
+                                .try_into()
+                                .unwrap(),
+                            ),
+                            material: materials.add(debug_color.into()),
+                            visibility: Visibility::Visible,
+                            ..default()
+                        },
+                        create_portal.render_layer,
+                    ));
+                });
         }
     }
 }
@@ -396,21 +434,36 @@ pub fn update_portal_cameras(
     mut commands: Commands,
     mut images: ResMut<Assets<Image>>,
     strategy: Res<PortalPartsDespawnStrategy>,
-    mut portal_cameras: Query<(&PortalCamera, &mut Transform, &mut GlobalTransform, &mut Camera)>,
+    mut portal_cameras: Query<(
+        &PortalCamera,
+        &mut Transform,
+        &mut GlobalTransform,
+        &mut Camera,
+    )>,
     main_camera_query: Query<(&GlobalTransform, &Camera), Without<PortalCamera>>,
-    portal_query: Query<&GlobalTransform,(With<Portal>, Without<Camera>)>,
+    portal_query: Query<&GlobalTransform, (With<Portal>, Without<Camera>)>,
     destination_query: Query<&GlobalTransform, (With<PortalDestination>, Without<Camera>)>,
     primary_window_query: Query<&Window, With<PrimaryWindow>>,
     windows_query: Query<&Window>,
 ) {
     // For every portal camera
-    for (portal_camera, mut portal_camera_transform, mut portal_camera_global_transform, mut camera)
-        in portal_cameras.iter_mut() {
-
+    for (
+        portal_camera,
+        mut portal_camera_transform,
+        mut portal_camera_global_transform,
+        mut camera,
+    ) in portal_cameras.iter_mut()
+    {
         // Main Camera
         let main_camera_result = main_camera_query.get(portal_camera.parts.main_camera);
         if let Err(query_error) = main_camera_result {
-            deal_with_part_query_error(&mut commands, &portal_camera.parts, &strategy, &query_error, "Main Camera");
+            deal_with_part_query_error(
+                &mut commands,
+                &portal_camera.parts,
+                &strategy,
+                &query_error,
+                "Main Camera",
+            );
             return;
         }
         let (main_camera_transform, main_camera) = main_camera_result.unwrap();
@@ -419,7 +472,13 @@ pub fn update_portal_cameras(
         // Portal
         let portal_result = portal_query.get(portal_camera.parts.portal);
         if let Err(query_error) = portal_result {
-            deal_with_part_query_error(&mut commands, &portal_camera.parts, &strategy, &query_error, "Portal");
+            deal_with_part_query_error(
+                &mut commands,
+                &portal_camera.parts,
+                &strategy,
+                &query_error,
+                "Portal",
+            );
             return;
         }
         let portal_transform = portal_result.unwrap();
@@ -429,15 +488,17 @@ pub fn update_portal_cameras(
         let mut skip_update = false;
         if portal_camera.plane_mode.is_some() {
             // behindness is positive when the main camera is behind the portal plane
-            let behindness = portal_transform.forward().dot((main_camera_transform.translation - portal_transform.translation).normalize());
+            let behindness = portal_transform.forward().dot(
+                (main_camera_transform.translation - portal_transform.translation).normalize(),
+            );
 
             if portal_camera.plane_mode == Some(Face::Back) && behindness > PLANE_MODE_TRIGGER
-                || portal_camera.plane_mode == Some(Face::Front) && behindness < -PLANE_MODE_TRIGGER {
+                || portal_camera.plane_mode == Some(Face::Front) && behindness < -PLANE_MODE_TRIGGER
+            {
                 // TOFIX makes the app very jerky, why?
                 camera.is_active = false;
                 skip_update = true;
-            }
-            else {
+            } else {
                 camera.is_active = true;
             }
         } // TODO deactivate camera when looking away from the portal
@@ -449,9 +510,16 @@ pub fn update_portal_cameras(
             // https://discord.com/channels/691052431525675048/1019697973933899910/threads/1093930187802017953
             let portal_image = images.get(&portal_camera.image).unwrap();
             let portal_image_size = portal_image.size();
-            let main_camera_viewport_size = get_viewport_size(main_camera, &primary_window_query, &windows_query, &mut images);
+            let main_camera_viewport_size = get_viewport_size(
+                main_camera,
+                &primary_window_query,
+                &windows_query,
+                &mut images,
+            );
 
-            if (portal_image_size.x / portal_image_size.y) != ((main_camera_viewport_size.x as f32)/(main_camera_viewport_size.y as f32)) {
+            if (portal_image_size.x / portal_image_size.y)
+                != ((main_camera_viewport_size.x as f32) / (main_camera_viewport_size.y as f32))
+            {
                 let size = Extent3d {
                     width: main_camera_viewport_size.x,
                     height: main_camera_viewport_size.y,
@@ -461,11 +529,17 @@ pub fn update_portal_cameras(
                 portal_image.texture_descriptor.size = size;
                 portal_image.resize(size);
             }
-            
+
             // Destination
             let destination_result = destination_query.get(portal_camera.parts.destination);
             if let Err(query_error) = destination_result {
-                deal_with_part_query_error(&mut commands, &portal_camera.parts, &strategy, &query_error, "Destination");
+                deal_with_part_query_error(
+                    &mut commands,
+                    &portal_camera.parts,
+                    &strategy,
+                    &query_error,
+                    "Destination",
+                );
                 return;
             }
             let destination_transform = destination_result.unwrap();
@@ -474,15 +548,23 @@ pub fn update_portal_cameras(
             // TODO check if any portal part transform changed before updating the portal camera one
 
             // Move portal camera
-            let new_portal_camera_transform = get_portal_camera_transform(main_camera_transform, portal_transform, destination_transform);
-            portal_camera_transform.set(Box::new(new_portal_camera_transform)).unwrap();
+            let new_portal_camera_transform = get_portal_camera_transform(
+                main_camera_transform,
+                portal_transform,
+                destination_transform,
+            );
+            portal_camera_transform
+                .set(Box::new(new_portal_camera_transform))
+                .unwrap();
             // We update the global transform manually here for two reasons:
             // 1) This system is run after global transform propagation
             // so if we don't do that the portal camera's global transform would be lagging behind one frame
             // 2) it is not updated nor propagated automatically in Bevy 0.10.1, for some reason
             // (I tried compying the queries of propagate_transforms and have the portal camera and its child in the results).
             // Since the set-up of TransformPlugin will change in Bevy 0.11, this is a WONTFIX until Bevy 0.11
-            portal_camera_global_transform.set(Box::new(GlobalTransform::from(new_portal_camera_transform))).unwrap();
+            portal_camera_global_transform
+                .set(Box::new(GlobalTransform::from(new_portal_camera_transform)))
+                .unwrap();
         }
     }
 }
@@ -495,75 +577,124 @@ fn get_viewport_size(
     images: &mut ResMut<Assets<Image>>,
 ) -> UVec2 {
     match main_camera.viewport.as_ref() {
-        |Some(viewport) => viewport.physical_size,
-        |None => match &main_camera.target {
+        Some(viewport) => viewport.physical_size,
+        None => match &main_camera.target {
             RenderTarget::Window(window_ref) => {
                 let window = match window_ref {
                     WindowRef::Primary => primary_window_query.get_single().unwrap(),
-                    WindowRef::Entity(entity) => windows_query.get(entity.clone()).unwrap()
+                    WindowRef::Entity(entity) => windows_query.get(entity.clone()).unwrap(),
                 };
-                UVec2::new(window.physical_width(),window.physical_height())
-            },
-            RenderTarget::Image(handle) => images.get(handle).unwrap().size().as_uvec2()
-        }
+                UVec2::new(window.physical_width(), window.physical_height())
+            }
+            RenderTarget::Image(handle) => images.get(handle).unwrap().size().as_uvec2(),
+        },
     }
 }
 
 /// Helper function to get the transform to change the main camera's transform into the portal camera's transform.
-fn get_portal_camera_transform(main_camera_transform: &Transform, portal_transform: &Transform, destination_transform: &Transform) -> Transform {
-    let portal_camera_translation = main_camera_transform.translation - portal_transform.translation + destination_transform.translation;
-    let rotation = portal_transform.rotation.inverse().mul_quat(destination_transform.rotation);
+fn get_portal_camera_transform(
+    main_camera_transform: &Transform,
+    portal_transform: &Transform,
+    destination_transform: &Transform,
+) -> Transform {
+    let portal_camera_translation = main_camera_transform.translation
+        - portal_transform.translation
+        + destination_transform.translation;
+    let rotation = portal_transform
+        .rotation
+        .inverse()
+        .mul_quat(destination_transform.rotation);
     let mut portal_camera_transform = Transform {
         translation: portal_camera_translation,
         rotation: main_camera_transform.rotation,
-        scale: main_camera_transform.scale
+        scale: main_camera_transform.scale,
     };
     portal_camera_transform.rotate_around(destination_transform.translation, rotation);
     portal_camera_transform
 }
 
 /// Despawns portal parts according to a strategy
-pub fn despawn_portal_parts (
+pub fn despawn_portal_parts(
     commands: &mut Commands,
     parts: &PortalParts,
     strategy: &PortalPartsDespawnStrategy,
 ) {
-    despawn_portal_parts_with_message(commands, parts, strategy,
+    despawn_portal_parts_with_message(
+        commands,
+        parts,
+        strategy,
         "is a part of portal parts being despawned but should have been despawned before",
     );
 }
 
-fn deal_with_part_query_error (
+fn deal_with_part_query_error(
     commands: &mut Commands,
     parts: &PortalParts,
     strategy: &PortalPartsDespawnStrategy,
     query_error: &QueryEntityError,
-    name_of_part: &str
+    name_of_part: &str,
 ) {
     let error_message = match query_error {
-        QueryEntityError::QueryDoesNotMatch(entity) =>
-            format!("is a part of portal parts where {} #{} is missing key components", name_of_part, entity.index()),
-        QueryEntityError::NoSuchEntity(entity) =>
-            format!("is a part of portal parts where {} #{} has despawned", name_of_part, entity.index()),
-        QueryEntityError::AliasedMutability(entity) => // No idea what this means
-            format!("is a part of portal parts where's {} #{} mutability is aliased", name_of_part, entity.index()),
+        QueryEntityError::QueryDoesNotMatch(entity) => format!(
+            "is a part of portal parts where {} #{} is missing key components",
+            name_of_part,
+            entity.index()
+        ),
+        QueryEntityError::NoSuchEntity(entity) => format!(
+            "is a part of portal parts where {} #{} has despawned",
+            name_of_part,
+            entity.index()
+        ),
+        QueryEntityError::AliasedMutability(entity) =>
+        // No idea what this means
+        {
+            format!(
+                "is a part of portal parts where's {} #{} mutability is aliased",
+                name_of_part,
+                entity.index()
+            )
+        }
     };
     despawn_portal_parts_with_message(commands, parts, strategy, &error_message);
 }
 
-fn despawn_portal_parts_with_message (
+fn despawn_portal_parts_with_message(
     commands: &mut Commands,
     parts: &PortalParts,
     strategy: &PortalPartsDespawnStrategy,
     error_message: &str,
 ) {
-    despawn_portal_part(commands, parts.portal_camera, &strategy.portal_camera, error_message, "Portal Camera");
-    despawn_portal_part(commands, parts.destination, &strategy.destination, error_message, "Destination");
-    despawn_portal_part(commands, parts.portal, &strategy.portal, error_message, "Portal");
-    despawn_portal_part(commands, parts.main_camera, &strategy.main_camera, error_message, "Main Camera");
+    despawn_portal_part(
+        commands,
+        parts.portal_camera,
+        &strategy.portal_camera,
+        error_message,
+        "Portal Camera",
+    );
+    despawn_portal_part(
+        commands,
+        parts.destination,
+        &strategy.destination,
+        error_message,
+        "Destination",
+    );
+    despawn_portal_part(
+        commands,
+        parts.portal,
+        &strategy.portal,
+        error_message,
+        "Portal",
+    );
+    despawn_portal_part(
+        commands,
+        parts.main_camera,
+        &strategy.main_camera,
+        error_message,
+        "Main Camera",
+    );
 }
 
-fn despawn_portal_part (
+fn despawn_portal_part(
     commands: &mut Commands,
     entity: Entity,
     strategy: &PortalPartDespawnStrategy,
@@ -580,8 +711,7 @@ fn despawn_portal_part (
             }
             camera_commands.despawn();
         }
-    }
-    else if strategy.should_panic() {
+    } else if strategy.should_panic() {
         panic!("{entity_type} {error_message}");
     }
 }
@@ -595,12 +725,24 @@ pub(super) fn check_portal_camera_despawn(
 ) {
     for portal in portal_query.iter() {
         if let Err(query_error) = portal_camera_query.get(portal.parts.portal_camera) {
-            deal_with_part_query_error(&mut commands, &portal.parts, &strategy, &query_error, "Portal Camera");
+            deal_with_part_query_error(
+                &mut commands,
+                &portal.parts,
+                &strategy,
+                &query_error,
+                "Portal Camera",
+            );
         }
     }
     for destination in destination_query.iter() {
         if let Err(query_error) = portal_camera_query.get(destination.parts.portal_camera) {
-            deal_with_part_query_error(&mut commands, &destination.parts, &strategy, &query_error, "Portal Camera");
+            deal_with_part_query_error(
+                &mut commands,
+                &destination.parts,
+                &strategy,
+                &query_error,
+                "Portal Camera",
+            );
         }
     }
 }
