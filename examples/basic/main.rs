@@ -12,10 +12,7 @@ fn main() {
         .run();
 }
 
-fn setup(
-    mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-) {
+fn setup(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>) {
     commands.spawn(Camera3dBundle {
         transform: Transform::from_xyz(-20.0, 0., 20.0).looking_at(Vec3::ZERO, Vec3::Y),
         ..default()
@@ -40,10 +37,13 @@ fn setup(
         ..default()
     });
 
-    let sphere_mesh = meshes.add(Mesh::from(shape::UVSphere{radius: 2., ..default()}));
+    let sphere_mesh = meshes.add(Mesh::from(shape::UVSphere {
+        radius: 2.,
+        ..default()
+    }));
     commands.spawn(PbrBundle {
         mesh: sphere_mesh,
-        transform: Transform::from_xyz(20.,0.,-5.),
+        transform: Transform::from_xyz(20., 0., -5.),
         ..default()
     });
 }

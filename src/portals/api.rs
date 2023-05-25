@@ -1,11 +1,7 @@
 ///! Components and structs to create portals without caring about their implementation
-
 use bevy::{
     prelude::*,
-    render::{
-        render_resource::*,
-        view::RenderLayers,
-    },
+    render::{render_resource::*, view::RenderLayers},
 };
 
 use super::*;
@@ -14,18 +10,18 @@ use super::*;
 #[derive(Clone)]
 pub struct PortalsPlugin {
     /// Whether and when to check for entities with [CreatePortal] components to create a portal.
-    /// 
+    ///
     /// Defaults to [PortalsCheckMode::AlwaysCheck].
     pub check_create: PortalsCheckMode,
     /// If true, should add a system to check if a [PortalCamera] despawned or has the wrong components
     pub check_portal_camera_despawn: bool,
     /// What to do when there is a problem getting a [PortalParts]
-    /// 
+    ///
     /// Can happen when :
     /// - a part (main camera, [Portal], [PortalDestination]) has despawned but the [PortalCamera] still exists,
     /// - a part is missing a key component (see [update_portal_cameras]'s implementation).
     /// - check_portal_camera_despawn is true and a portal camera has despawned or missing a key component but the [Portal] or [PortalDestination] still exist
-    /// 
+    ///
     /// Defaults to despawn all entities and children with a warning, except for the main camera.
     /// Will be added as a Resource, can be changed during execution.
     pub despawn_strategy: PortalPartsDespawnStrategy,
@@ -52,7 +48,9 @@ impl PortalsPlugin {
 impl Plugin for PortalsPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugin(PortalsMaterialPlugin)
-           .add_plugin(PortalsProcessPlugin{config: self.clone()});
+            .add_plugin(PortalsProcessPlugin {
+                config: self.clone(),
+            });
     }
 }
 
@@ -64,11 +62,11 @@ pub enum PortalsCheckMode {
     /// Set up the check during [StartupSet::PostStartup], after [TransformPropagate](bevy::transform::TransformSystem::TransformPropagate).
     CheckAfterStartup,
     /// Set up the check during [StartupSet::PostStartup] and [CoreSet::Last], after [TransformPropagate](bevy::transform::TransformSystem::TransformPropagate).
-    AlwaysCheck
+    AlwaysCheck,
 }
 
 /// Strategy to despawn portal parts.
-/// 
+///
 /// Defaults to despawn all parts with a warning (without their children), except for the main camera.
 #[derive(Resource, Clone, Copy)]
 pub struct PortalPartsDespawnStrategy {
@@ -163,7 +161,7 @@ pub struct CreatePortalBundle {
 }
 
 /// Component to create a [Portal] and everything needed to make it work.
-/// 
+///
 /// The portal will be created after the next check (see [PortalsCheckMode]), if it has the other components in [CreatePortalBundle].
 #[derive(Component, Clone)]
 pub struct CreatePortal {
@@ -172,16 +170,16 @@ pub struct CreatePortal {
     /// The camera that will see this portal, defaults to the first camera found.
     pub main_camera: Option<Entity>,
     /// Whether to cull the “front”, “back” or neither side of a the portal mesh.
-    /// 
+    ///
     /// If set to None, the two sides of the portal are visible and work as a portal.
-    /// 
+    ///
     /// Defaults to Some(Face::Back), see [StandardMaterial].
     pub cull_mode: Option<Face>,
     /// Render layer used by the [PortalCamera], and debug elements.
     pub render_layer: RenderLayers,
     /// If `Some(Face::Back)`, portal camera will get deactivated if camera is going behind the portal's transform.
-    /// 
-    /// Defaults to None temporarilly. 
+    ///
+    /// Defaults to None temporarilly.
     /// `Some(Face::Front)` deactivates the camera in front of the transform, and None never deactivates it.
     /// If your mesh isn't on a plane with `cull_mode = Some(Face::Back)`, set this to None.
     pub plane_mode: Option<Face>,
@@ -210,9 +208,9 @@ pub enum AsPortalDestination {
     /// Create a [PortalDestination] with the given configuration.
     Create(CreatePortalDestination),
     /// Create a [PortalDestination] to make a mirror.
-    /// 
+    ///
     /// Will set the [PortalDestination] as a child of the [Portal] entity
-    CreateMirror
+    CreateMirror,
 }
 
 /// [PortalDestination] to be created
@@ -239,7 +237,7 @@ pub struct DebugPortal {
     /// If true, displays a copy of the portal mesh at the destination.
     pub show_portal_copy: bool,
     /// If true, displays a small sphere at the [PortalCamera] position.
-    pub show_portal_camera_point: bool
+    pub show_portal_camera_point: bool,
 }
 
 impl Default for DebugPortal {
@@ -250,7 +248,7 @@ impl Default for DebugPortal {
             show_window: true,
             show_destination_point: true,
             show_portal_copy: true,
-            show_portal_camera_point: true
+            show_portal_camera_point: true,
         }
     }
 }

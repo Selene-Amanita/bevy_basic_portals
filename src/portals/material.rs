@@ -1,11 +1,8 @@
 use bevy::{
+    pbr::{MaterialPipeline, MaterialPipelineKey},
     prelude::*,
-    render::{
-        mesh::MeshVertexBufferLayout,
-        render_resource::*
-    },
     reflect::TypeUuid,
-    pbr::{MaterialPipelineKey, MaterialPipeline},
+    render::{mesh::MeshVertexBufferLayout, render_resource::*},
 };
 
 pub(super) struct PortalsMaterialPlugin;
@@ -31,11 +28,11 @@ pub struct PortalMaterial {
     #[texture(0)]
     #[sampler(1)]
     pub color_texture: Option<Handle<Image>>,
-    pub cull_mode: Option<Face>
+    pub cull_mode: Option<Face>,
 }
 
 pub const PORTAL_SHADER_HANDLE: HandleUntyped =
-  HandleUntyped::weak_from_u64(Shader::TYPE_UUID, 0x792531383ac40e25);
+    HandleUntyped::weak_from_u64(Shader::TYPE_UUID, 0x792531383ac40e25);
 
 impl Material for PortalMaterial {
     fn fragment_shader() -> ShaderRef {
