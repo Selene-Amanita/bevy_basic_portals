@@ -201,7 +201,7 @@ fn create_portal(
             main_camera_query.get(camera_entity).unwrap()
         }
         else {
-            main_camera_query.get_single().unwrap()
+            main_camera_query.iter().next().unwrap()
         };
 
     let main_camera_viewport_size = get_viewport_size(main_camera, primary_window_query, windows_query, images);
