@@ -1,27 +1,25 @@
-use bevy::{
-    app::prelude::*,
-    asset::prelude::*,
-    pbr::prelude::*,
-    render::{
-        prelude::*,
-        mesh::MeshVertexBufferLayout,
-        render_resource::{
-            AsBindGroup,
-            Face,
-            RenderPipelineDescriptor,
-            ShaderRef,
-            SpecializedMeshPipelineError,
-        },
+use bevy_app::prelude::*;
+use bevy_asset::prelude::*;
+use bevy_pbr::prelude::*;
+use bevy_render::{
+    prelude::*,
+    mesh::MeshVertexBufferLayout,
+    render_resource::{
+        AsBindGroup,
+        Face,
+        RenderPipelineDescriptor,
+        ShaderRef,
+        SpecializedMeshPipelineError,
     },
-    reflect::TypeUuid,
-    pbr::{MaterialPipelineKey, MaterialPipeline},
 };
+use bevy_reflect::TypeUuid;
+use bevy_pbr::{MaterialPipelineKey, MaterialPipeline};
 
 pub(super) struct PortalsMaterialPlugin;
 
 impl Plugin for PortalsMaterialPlugin {
     fn build(&self, app: &mut App) {
-        bevy::asset::load_internal_asset!(
+        bevy_asset::load_internal_asset!(
             app,
             PORTAL_SHADER_HANDLE,
             concat!(env!("CARGO_MANIFEST_DIR"), "/assets/portal.wgsl"),

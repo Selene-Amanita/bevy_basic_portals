@@ -11,12 +11,20 @@ repository = "https://github.com/Selene-Amanita/bevy_basic_portals"
 authors = ["Selene Amanita"]
 
 [dependencies]
-bevy = { version = "0.10.*", default-features = false, features = [
-    "bevy_asset",
-    "bevy_core_pipeline",
-    "bevy_pbr",
-    "bevy_render",
-] }
+bevy_app = "0.10.*"
+bevy_asset = "0.10.*"
+bevy_core_pipeline = "0.10.*"
+bevy_ecs = "0.10.*"
+bevy_hierarchy = "0.10.*"
+bevy_math = "0.10.*"
+bevy_pbr = "0.10.*"
+bevy_reflect = "0.10.*" # Could potentially be under a feature?
+bevy_render = "0.10.*"
+bevy_transform = "0.10.*"
+bevy_window = "0.10.*"
+tracing = { version = "0.1", default-features = false, features = ["std"] } # From bevy_utils
+# All of the above can be replaced by:
+# bevy = { version = "0.10.*", default-features = false, features = ["bevy_asset", "bevy_core_pipeline", "bevy_pbr", "bevy_render", ] }
 
 [dev-dependencies]
 bevy = { version = "0.10.*", default-features = false, features = [

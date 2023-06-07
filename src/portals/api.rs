@@ -1,17 +1,15 @@
 ///! Components and structs to create portals without caring about their implementation
 
-use bevy::{
-    app::prelude::*,
-    asset::Handle,
-    ecs::prelude::*,
-    reflect::Reflect,
-    render::{
-        prelude::*,
-        render_resource::Face,
-        view::RenderLayers,
-    },
-    transform::prelude::*,
+use bevy_app::prelude::*;
+use bevy_asset::Handle;
+use bevy_ecs::prelude::*;
+use bevy_reflect::Reflect;
+use bevy_render::{
+    prelude::*,
+    render_resource::Face,
+    view::RenderLayers,
 };
+use bevy_transform::prelude::*;
 
 use super::*;
 

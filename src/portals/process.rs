@@ -1,42 +1,40 @@
 ///! Components, systems and others for the implementation of portals, or doing something specific with them like manual creation
 
-use bevy::{
-    app::prelude::*,
-    asset::prelude::*,
-    core_pipeline::prelude::*,
-    ecs::{
-        prelude::*,
-        system::{EntityCommand, SystemState},
-        query::QueryEntityError
-    },
-    hierarchy::prelude::*,
-    math::prelude::*,
-    pbr::prelude::*,
-    reflect::Reflect,
-    render::{
-        prelude::*,
-        render_resource::{
-            Extent3d,
-            Face,
-            TextureDescriptor,
-            TextureDimension,
-            TextureFormat,
-            TextureUsages,
-        },
-        camera::RenderTarget,
-    },
-    transform::{
-        prelude::*,
-        TransformSystem,
-    },
-    window::{
-        PrimaryWindow,
-        Window,
-        WindowLevel,
-        WindowResolution, WindowRef,
-    }
+use bevy_app::prelude::*;
+use bevy_asset::prelude::*;
+use bevy_core_pipeline::prelude::*;
+use bevy_ecs::{
+    prelude::*,
+    system::{EntityCommand, SystemState},
+    query::QueryEntityError
 };
-use bevy::log::warn; // Could be replaced with tracing
+use bevy_hierarchy::prelude::*;
+use bevy_math::prelude::*;
+use bevy_pbr::prelude::*;
+use bevy_reflect::Reflect;
+use bevy_render::{
+    prelude::*,
+    render_resource::{
+        Extent3d,
+        Face,
+        TextureDescriptor,
+        TextureDimension,
+        TextureFormat,
+        TextureUsages,
+    },
+    camera::RenderTarget,
+};
+use bevy_transform::{
+    prelude::*,
+    TransformSystem,
+};
+use bevy_window::{
+    PrimaryWindow,
+    Window,
+    WindowLevel,
+    WindowResolution, WindowRef,
+};
+use tracing::warn;
 use std::f32::consts::PI;
 
 use super::*;
