@@ -8,7 +8,11 @@ use bevy::{
 };
 
 use bevy_basic_portals::*;
-use helpers::{pivot_cameras, textures};
+
+#[path = "../../helpers/textures.rs"]
+mod textures;
+#[path = "../../helpers/pivot_cameras.rs"]
+mod pivot_cameras;
 
 pub mod scenes;
 
@@ -111,7 +115,7 @@ fn setup(
     let spawn_portal_dir = -Vec3::Y;
     let spawn_portal_up = -Vec3::Z;
     let render_layer = RenderLayers::layer(6);
-    let shape = meshes.add(shape::Capsule {radius: 3., depth: 3., ..default()}.into());
+    let shape = meshes.add(shape::Torus {radius: 3., ring_radius: 1., ..default()}.into());
     let color = Color::CYAN;
     scenes::setup_portal_cube_face(&mut commands, spawn_portal_dir, spawn_portal_up, main_camera, render_layer, portal_mesh.clone(), false);
     scenes::setup_scene_test(&mut commands, spawn_portal_dir, spawn_portal_up, render_layer, portal_mesh.clone(),

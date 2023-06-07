@@ -1,8 +1,17 @@
 use bevy::{
-    prelude::*,
+    app::prelude::*,
+    asset::prelude::*,
+    pbr::prelude::*,
     render::{
+        prelude::*,
         mesh::MeshVertexBufferLayout,
-        render_resource::*
+        render_resource::{
+            AsBindGroup,
+            Face,
+            RenderPipelineDescriptor,
+            ShaderRef,
+            SpecializedMeshPipelineError,
+        },
     },
     reflect::TypeUuid,
     pbr::{MaterialPipelineKey, MaterialPipeline},

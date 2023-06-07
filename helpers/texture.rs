@@ -1,5 +1,4 @@
 //! Debug textures
-
 use bevy::{
     prelude::*,
     render::{
@@ -16,7 +15,6 @@ pub fn uv_debug_texture(darkness: u8) -> Image {
         198, 255, 102, 198, 255, 255, 121, 102, 255, 255, 236, 102, 255, 255,
     ];
 
-    //palette = palette.map(|c| if c<darkness {0} else {c - darkness});
     palette = palette.map(|c| c/darkness);
 
     let mut texture_data = [0; TEXTURE_SIZE * TEXTURE_SIZE * 4];

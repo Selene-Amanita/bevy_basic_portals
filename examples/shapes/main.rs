@@ -5,7 +5,11 @@
 
 use bevy::{prelude::*, render::render_resource::Face};
 use bevy_basic_portals::*;
-use helpers::{textures, pivot_cameras};
+
+#[path = "../../helpers/textures.rs"]
+mod textures;
+#[path = "../../helpers/pivot_cameras.rs"]
+mod pivot_cameras;
 
 fn main() {
     App::new()

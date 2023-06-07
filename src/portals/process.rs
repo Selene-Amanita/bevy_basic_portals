@@ -1,18 +1,42 @@
 ///! Components, systems and others for the implementation of portals, or doing something specific with them like manual creation
 
 use bevy::{
-    prelude::*,
-    render::{
-        render_resource::*,
-        camera::RenderTarget,
-    },
-    window::*,
+    app::prelude::*,
+    asset::prelude::*,
+    core_pipeline::prelude::*,
     ecs::{
+        prelude::*,
         system::{EntityCommand, SystemState},
         query::QueryEntityError
     },
-    transform::TransformSystem
+    hierarchy::prelude::*,
+    math::prelude::*,
+    pbr::prelude::*,
+    reflect::Reflect,
+    render::{
+        prelude::*,
+        render_resource::{
+            Extent3d,
+            Face,
+            TextureDescriptor,
+            TextureDimension,
+            TextureFormat,
+            TextureUsages,
+        },
+        camera::RenderTarget,
+    },
+    transform::{
+        prelude::*,
+        TransformSystem,
+    },
+    window::{
+        PrimaryWindow,
+        Window,
+        WindowLevel,
+        WindowResolution, WindowRef,
+    }
 };
+use bevy::log::warn; // Could be replaced with tracing
 use std::f32::consts::PI;
 
 use super::*;
@@ -209,7 +233,7 @@ fn create_portal(
     let size = Extent3d {
         width: main_camera_viewport_size.x,
         height: main_camera_viewport_size.y,
-        ..default()
+        ..Extent3d::default()
     };
 
     // Image that the PortalCamera will render to
@@ -226,7 +250,7 @@ fn create_portal(
                 | TextureUsages::RENDER_ATTACHMENT,
             view_formats: &[],
         },
-        ..default()
+        ..Image::default()
     };
 
     // Fill portal_image.data with zeroes
@@ -247,7 +271,7 @@ fn create_portal(
             let mut destination_commands = commands.spawn(SpatialBundle{
                 transform,
                 global_transform: GlobalTransform::from(transform),
-                ..default()
+                ..SpatialBundle::default()
             });
             if let Some(parent) = parent {
                 destination_commands.set_parent(parent);
@@ -257,7 +281,7 @@ fn create_portal(
         AsPortalDestination::CreateMirror => {
             let mut destination_commands = commands.spawn(SpatialBundle{
                 transform: Transform::from_rotation(Quat::from_axis_angle(Vec3::Y, PI)),
-                ..default()
+                ..SpatialBundle::default()
             });
             destination_commands.set_parent(portal_entity);
             destination_commands.id()
@@ -270,7 +294,7 @@ fn create_portal(
             camera: Camera {
                 order: -1,
                 target: RenderTarget::Image(portal_image.clone()),
-                ..default()
+                ..Camera::default()
             },
             // TOFIX set the exact value of Transform and GlobalTransform to avoid black screen at spawn
             // let portal_camera_transform = get_portal_camera_transform(main_camera_transform, portal_transform, &destination_transform);
@@ -278,11 +302,11 @@ fn create_portal(
             // Would still matter if the portal camera is a child of the destination
             //transform: portal_camera_transform,
             //global_transorm: GlobalTransform::from(portal_camera_transform),
-            ..default()
+            ..Camera3dBundle::default()
         },
         VisibilityBundle {
             visibility: Visibility::Hidden,
-            ..default()
+            ..VisibilityBundle::default()
         },
         create_portal.render_layer
     )).id();
@@ -324,7 +348,7 @@ fn create_portal(
                 title: (match &debug.name {Some(name) => name, _ => "Debug"}).to_owned(),
                 resolution: WindowResolution::new(size.width as f32, size.height as f32),
                 window_level: WindowLevel::AlwaysOnBottom,
-                ..default()
+                ..Window::default()
             }).id();
             commands.entity(portal_camera_entity).with_children(|parent| {
                 parent.spawn((
@@ -332,9 +356,9 @@ fn create_portal(
                         camera: Camera {
                             order: -1,
                             target: RenderTarget::Window(WindowRef::Entity(debug_window)),
-                            ..default()
+                            ..Camera::default()
                         },
-                        ..default()
+                        ..Camera3dBundle::default()
                     },
                     PortalDebugCamera {
                     },
@@ -348,9 +372,9 @@ fn create_portal(
             commands.entity(destination_entity).with_children(|parent| {
                 parent.spawn((
                     PbrBundle {
-                        mesh: meshes.add(shape::Icosphere {radius:0.1, ..default()}.try_into().unwrap()),
+                        mesh: meshes.add(shape::Icosphere {radius:0.1, ..shape::Icosphere::default()}.try_into().unwrap()),
                         material: materials.add(debug_color.into()),
-                        ..default()
+                        ..PbrBundle::default()
                     },
                     create_portal.render_layer
                 ));
@@ -366,7 +390,7 @@ fn create_portal(
                     PbrBundle {
                         mesh: portal_mesh.clone(),
                         material: materials.add(portal_copy_material),
-                        ..default()
+                        ..PbrBundle::default()
                     },
                     create_portal.render_layer
                 ));
@@ -378,10 +402,10 @@ fn create_portal(
             commands.entity(portal_camera_entity).with_children(|parent| {
                 parent.spawn((
                     PbrBundle {
-                        mesh: meshes.add(shape::Icosphere {radius:0.1, ..default()}.try_into().unwrap()),
+                        mesh: meshes.add(shape::Icosphere {radius:0.1, ..shape::Icosphere::default()}.try_into().unwrap()),
                         material: materials.add(debug_color.into()),
                         visibility: Visibility::Visible,
-                        ..default()
+                        ..PbrBundle::default()
                     },
                     create_portal.render_layer
                 ));
@@ -433,7 +457,7 @@ pub fn update_portal_cameras(
 
             if portal_camera.plane_mode == Some(Face::Back) && behindness > PLANE_MODE_TRIGGER
                 || portal_camera.plane_mode == Some(Face::Front) && behindness < -PLANE_MODE_TRIGGER {
-                // TOFIX makes the app very jerky, why?
+                // TOFIX https://github.com/bevyengine/bevy/issues/8777
                 camera.is_active = false;
                 skip_update = true;
             }
@@ -444,6 +468,7 @@ pub fn update_portal_cameras(
         if !skip_update {
             // Resize the image if needed
             // TOFIX (mutable access to the image makes it not update by the PortalCamera anymore for some reason)
+            // see https://github.com/bevyengine/bevy/issues/8767
             // Probably relevant
             // https://github.com/bevyengine/bevy/blob/9d1193df6c300dede75b00ab092caa119a7e80ad/examples/shader/post_process_pass.rs
             // https://discord.com/channels/691052431525675048/1019697973933899910/threads/1093930187802017953
@@ -455,7 +480,7 @@ pub fn update_portal_cameras(
                 let size = Extent3d {
                     width: main_camera_viewport_size.x,
                     height: main_camera_viewport_size.y,
-                    ..default()
+                    ..Extent3d::default()
                 };
                 let portal_image = images.get_mut(&portal_camera.image).unwrap(); // This doesn't work :(
                 portal_image.texture_descriptor.size = size;

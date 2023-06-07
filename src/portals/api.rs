@@ -1,11 +1,16 @@
 ///! Components and structs to create portals without caring about their implementation
 
 use bevy::{
-    prelude::*,
+    app::prelude::*,
+    asset::Handle,
+    ecs::prelude::*,
+    reflect::Reflect,
     render::{
-        render_resource::*,
+        prelude::*,
+        render_resource::Face,
         view::RenderLayers,
     },
+    transform::prelude::*,
 };
 
 use super::*;
@@ -36,7 +41,7 @@ impl Default for PortalsPlugin {
         PortalsPlugin {
             check_create: PortalsCheckMode::AlwaysCheck,
             check_portal_camera_despawn: true,
-            despawn_strategy: default(),
+            despawn_strategy: PortalPartsDespawnStrategy::default(),
         }
     }
 }
@@ -70,7 +75,7 @@ pub enum PortalsCheckMode {
 /// Strategy to despawn portal parts.
 /// 
 /// Defaults to despawn all parts with a warning (without their children), except for the main camera.
-#[derive(Resource, Clone, Copy)]
+#[derive(Resource, Clone, Copy, Reflect)]
 pub struct PortalPartsDespawnStrategy {
     pub main_camera: PortalPartDespawnStrategy,
     pub portal: PortalPartDespawnStrategy,
@@ -82,9 +87,9 @@ impl Default for PortalPartsDespawnStrategy {
     fn default() -> Self {
         PortalPartsDespawnStrategy {
             main_camera: PortalPartDespawnStrategy::Leave,
-            portal: default(),
-            destination: default(),
-            portal_camera: default(),
+            portal: PortalPartDespawnStrategy::default(),
+            destination: PortalPartDespawnStrategy::default(),
+            portal_camera: PortalPartDespawnStrategy::default(),
         }
     }
 }
@@ -113,7 +118,7 @@ impl PortalPartsDespawnStrategy {
 }
 
 /// Strategy to despawn a portal part if it is not yet despawned
-#[derive(Default, PartialEq, Eq, Clone, Copy)]
+#[derive(Default, PartialEq, Eq, Clone, Copy, Reflect)]
 pub enum PortalPartDespawnStrategy {
     /// Despawn the entity and all of its children with a warning
     WarnThenDespawnWithChildren,
@@ -181,7 +186,7 @@ pub struct CreatePortal {
     pub render_layer: RenderLayers,
     /// If `Some(Face::Back)`, portal camera will get deactivated if camera is going behind the portal's transform.
     /// 
-    /// Defaults to None temporarilly. 
+    /// Defaults to None until [#8777](https://github.com/bevyengine/bevy/issues/8777) is solved. 
     /// `Some(Face::Front)` deactivates the camera in front of the transform, and None never deactivates it.
     /// If your mesh isn't on a plane with `cull_mode = Some(Face::Back)`, set this to None.
     pub plane_mode: Option<Face>,
@@ -192,10 +197,10 @@ pub struct CreatePortal {
 impl Default for CreatePortal {
     fn default() -> Self {
         CreatePortal {
-            destination: AsPortalDestination::Create(default()),
+            destination: AsPortalDestination::Create(CreatePortalDestination::default()),
             main_camera: None,
             cull_mode: Some(Face::Back),
-            render_layer: default(),
+            render_layer: RenderLayers::default(),
             plane_mode: None,
             debug: None,
         }
