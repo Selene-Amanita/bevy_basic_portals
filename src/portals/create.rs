@@ -37,7 +37,8 @@ use std::f32::consts::PI;
 
 use super::*;
 
-pub(crate) fn build_create(app: &mut App, check_create: &PortalsCheckMode) {
+/// Add the create logic to [PortalsPlugin]
+pub(super) fn build_create(app: &mut App, check_create: &PortalsCheckMode) {
     app
         .register_type::<Portal>()
         .register_type::<PortalDestination>()
@@ -61,7 +62,7 @@ pub struct PortalParts {
     pub portal_camera: Entity,
 }
 
-/// Marker component for the portal.
+/// Marker [Component] for the portal.
 /// 
 /// Will replace [CreatePortal] after [create_portals].
 #[derive(Component, Reflect)]
@@ -69,7 +70,7 @@ pub struct Portal {
     pub parts: PortalParts,
 }
 
-/// Marker component for the destination.
+/// Marker [Component] for the destination.
 /// 
 /// Will be added to the entity defined by [CreatePortal.destination](CreatePortal)
 #[derive(Component, Reflect)]
@@ -77,7 +78,7 @@ pub struct PortalDestination {
     pub parts: PortalParts,
 }
 
-/// Component for a portal camera, the camera that is used to see through a portal.
+/// [Component] for a portal camera, the camera that is used to see through a portal.
 #[derive(Component, Reflect)]
 pub struct PortalCamera {
     pub image: Handle<Image>,
@@ -86,11 +87,11 @@ pub struct PortalCamera {
     pub parts: PortalParts,
 }
 
-/// Marker component for the debug camera when [DebugPortal::show_window] is true.
+/// Marker [Component] for the debug camera when [DebugPortal::show_window] is true.
 #[derive(Component)]
 pub struct PortalDebugCamera;
 
-/// Command to create a portal manually.
+/// [EntityCommand] to create a portal manually.
 /// 
 /// Warning: If [`PortalsPlugin::check_create`](PortalsPlugin) is not [PortalsCheckMode::Manual],
 /// and you add this command with a config (not None) to an entity which already has a [CreatePortal] component,
@@ -130,7 +131,7 @@ impl EntityCommand for CreatePortalCommand {
     }
 }
 
-/// System that will find entities with the components of [CreatePortalBundle] and create a portal.
+/// [System] that will find entities with the components of [CreatePortalBundle] and create a portal.
 /// 
 /// It will create a [PortalCamera] at the destination, and put a portal material on the mesh of the entity with [CreatePortal].
 /// The [PortalCamera] will render to that material.
@@ -371,7 +372,7 @@ fn create_portal(
     }
 }
 
-/// Parameters needed for [create_portals]
+/// [SystemParam] needed for [create_portals]
 #[derive(SystemParam)]
 pub struct CreatePortalParams<'w, 's> {
     commands: Commands<'w, 's>,

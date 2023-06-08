@@ -12,7 +12,8 @@ use tracing::warn;
 
 use super::*;
 
-pub(crate) fn build_despawn(app: &mut App, despawn_strategy: PortalPartsDespawnStrategy, should_check_portal_camera_despawn: bool) {
+/// Add the despawn logic to [PortalsPlugin]
+pub(super) fn build_despawn(app: &mut App, despawn_strategy: PortalPartsDespawnStrategy, should_check_portal_camera_despawn: bool) {
     app
         .insert_resource(despawn_strategy)
         .register_type::<PortalPartsDespawnStrategy>();
@@ -68,6 +69,7 @@ fn despawn_portal_part (
     }
 }
 
+/// [System] which checks if a [PortalCamera] despawned or has the wrong components, but the [Portal] or [PortalDestination] still exist
 pub fn check_portal_camera_despawn(
     mut commands: Commands,
     strategy: Res<PortalPartsDespawnStrategy>,
@@ -87,7 +89,8 @@ pub fn check_portal_camera_despawn(
     }
 }
 
-/// System that will find portal parts with a missing part and de
+/// Helper function to deal with "missing" portal parts,
+/// see [PortalsPlugin](struct.PortalsPlugin.html#structfield.despawn_strategy)
 pub(super) fn deal_with_part_query_error (
     commands: &mut Commands,
     parts: &PortalParts,

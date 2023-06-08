@@ -17,7 +17,8 @@ use bevy_render::{
 use bevy_reflect::TypeUuid;
 use bevy_pbr::{MaterialPipelineKey, MaterialPipeline};
 
-pub(crate) fn build_material(app: &mut App) {
+/// Add the material logic to [PortalsPlugin](super::PortalsPlugin)
+pub(super) fn build_material(app: &mut App) {
     bevy_asset::load_internal_asset!(
         app,
         PORTAL_SHADER_HANDLE,

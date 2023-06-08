@@ -27,7 +27,8 @@ use super::*;
 
 const PLANE_MODE_TRIGGER: f32 = 0.2;
 
-pub(crate) fn build_update(app: &mut App) {
+/// Add the update logic to [PortalsPlugin]
+pub(super) fn build_update(app: &mut App) {
     app.add_system(update_portal_cameras.in_base_set(CoreSet::Last));
 }
 
@@ -99,6 +100,9 @@ pub fn update_portal_cameras(
     }
 }
 
+/// Checks if the portal camera should update (move and render)
+/// 
+/// This will return false if the main camera is "behind" a portal visible only from the front, or looking away from the portal
 fn camera_should_update(
     portal_camera: &PortalCamera,
     portal_transform: &Transform,
@@ -116,6 +120,7 @@ fn camera_should_update(
     true
 }
 
+/// Resize the image used to render a portal, if needed
 fn resize_image_if_needed(
     portal_camera: &PortalCamera,
     main_camera: &Camera,
@@ -143,7 +148,7 @@ fn resize_image_if_needed(
 }
 
 /// Helper function to get the size of the viewport of the main camera, to be used for the size of the render image.
-pub(crate) fn get_viewport_size (
+pub(super) fn get_viewport_size (
     main_camera: &Camera,
     size_params: &PortalImageSizeParams,
 ) -> UVec2 {
@@ -162,10 +167,10 @@ pub(crate) fn get_viewport_size (
     }
 }
 
-/// Parameters needed to compute the size of the portal image
+/// [SystemParam] needed to compute the size of the portal image
 #[derive(SystemParam)]
 pub struct PortalImageSizeParams<'w, 's> {
-    pub(crate) images: ResMut<'w, Assets<Image>>,
+    pub(super) images: ResMut<'w, Assets<Image>>,
     primary_window_query: Query<'w, 's, &'static Window, With<PrimaryWindow>>,
     windows_query: Query<'w, 's, &'static Window>,
 }

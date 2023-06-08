@@ -13,23 +13,23 @@ use bevy_transform::prelude::*;
 
 use super::*;
 
-/// Adds support for portals to a bevy App.
+/// [Plugin] to add support for portals to a bevy App.
 pub struct PortalsPlugin {
     /// Whether and when to check for entities with [CreatePortal] components to create a portal.
     /// 
     /// Defaults to [PortalsCheckMode::AlwaysCheck].
     pub check_create: PortalsCheckMode,
-    /// If true, should add a system to check if a [PortalCamera] despawned or has the wrong components
+    /// If true, should check if a [PortalCamera] despawned or has the wrong components with [check_portal_camera_despawn]
     pub check_portal_camera_despawn: bool,
     /// What to do when there is a problem getting a [PortalParts]
     /// 
     /// Can happen when :
     /// - a part (main camera, [Portal], [PortalDestination]) has despawned but the [PortalCamera] still exists,
-    /// - a part is missing a key component (see [update_portal_cameras]'s implementation).
+    /// - a part is missing a key component (see [CreatePortalParams], entities should be returned by the relevant queries).
     /// - check_portal_camera_despawn is true and a portal camera has despawned or missing a key component but the [Portal] or [PortalDestination] still exist
     /// 
     /// Defaults to despawn all entities and children with a warning, except for the main camera.
-    /// Will be added as a Resource, can be changed during execution.
+    /// Will be added as a [Resource], can be changed during execution.
     pub despawn_strategy: PortalPartsDespawnStrategy,
 }
 
@@ -65,9 +65,9 @@ impl Plugin for PortalsPlugin {
 pub enum PortalsCheckMode {
     /// Don't set up this check automatically with the plugin, set-up [create_portals] manually, or use [CreatePortalCommand].
     Manual,
-    /// Set up the check during [StartupSet::PostStartup], after [TransformPropagate](bevy::transform::TransformSystem::TransformPropagate).
+    /// Set up the check during [StartupSet::PostStartup], after [TransformPropagate](bevy_transform::TransformSystem::TransformPropagate).
     CheckAfterStartup,
-    /// Set up the check during [StartupSet::PostStartup] and [CoreSet::Last], after [TransformPropagate](bevy::transform::TransformSystem::TransformPropagate).
+    /// Set up the check during [StartupSet::PostStartup] and [CoreSet::Last], after [TransformPropagate](bevy_transform::TransformSystem::TransformPropagate).
     AlwaysCheck
 }
 
@@ -153,7 +153,7 @@ impl PortalPartDespawnStrategy {
     }
 }
 
-/// Bundle to create a portal with all the components needed.
+/// [Bundle] to create a portal with all the components needed.
 #[derive(Bundle, Default)]
 pub struct CreatePortalBundle {
     /// Mesh of the portal.
@@ -167,7 +167,7 @@ pub struct CreatePortalBundle {
     pub computed_visibility: ComputedVisibility,
 }
 
-/// Component to create a [Portal] and everything needed to make it work.
+/// [Component] to create a [Portal] and everything needed to make it work.
 /// 
 /// The portal will be created after the next check (see [PortalsCheckMode]), if it has the other components in [CreatePortalBundle].
 #[derive(Component, Clone)]
@@ -178,16 +178,18 @@ pub struct CreatePortal {
     pub main_camera: Option<Entity>,
     /// Whether to cull the “front”, “back” or neither side of a the portal mesh.
     /// 
-    /// If set to None, the two sides of the portal are visible and work as a portal.
+    /// If set to `None`, the two sides of the portal are visible and work as a portal.
     /// 
-    /// Defaults to Some(Face::Back), see [StandardMaterial].
+    /// Defaults to `Some(Face::Back)`, see [StandardMaterial](bevy_pbr::StandardMaterial).
     pub cull_mode: Option<Face>,
     /// Render layer used by the [PortalCamera], and debug elements.
     pub render_layer: RenderLayers,
     /// If `Some(Face::Back)`, portal camera will get deactivated if camera is going behind the portal's transform.
     /// 
-    /// Defaults to None until [#8777](https://github.com/bevyengine/bevy/issues/8777) is solved. 
+    /// Defaults to `Some(Face::Back)`.
+    ///  
     /// `Some(Face::Front)` deactivates the camera in front of the transform, and None never deactivates it.
+    /// 
     /// If your mesh isn't on a plane with `cull_mode = Some(Face::Back)`, set this to None.
     pub plane_mode: Option<Face>,
     /// Configures debug elements, defaults to None.
@@ -201,7 +203,7 @@ impl Default for CreatePortal {
             main_camera: None,
             cull_mode: Some(Face::Back),
             render_layer: RenderLayers::default(),
-            plane_mode: None,
+            plane_mode: Some(Face::Back),
             debug: None,
         }
     }
