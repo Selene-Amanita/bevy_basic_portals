@@ -5,7 +5,7 @@ use bevy_asset::prelude::*;
 use bevy_core_pipeline::prelude::*;
 use bevy_ecs::{
     prelude::*,
-    system::{EntityCommand, SystemState},
+    system::{EntityCommand, SystemState, SystemParam},
 };
 use bevy_hierarchy::prelude::*;
 use bevy_math::prelude::*;
@@ -28,7 +28,6 @@ use bevy_transform::{
     TransformSystem,
 };
 use bevy_window::{
-    PrimaryWindow,
     Window,
     WindowLevel,
     WindowResolution,
@@ -116,36 +115,11 @@ impl EntityCommand for CreatePortalCommand {
                 .expect("You must provide a CreatePortal component to the entity or to the CreatePortalCommand itself before using it").clone()
         };
 
-        let mut system_state = SystemState::<(
-            Commands,
-            ResMut<Assets<Image>>,
-            ResMut<Assets<PortalMaterial>>,
-            ResMut<Assets<Mesh>>,
-            ResMut<Assets<StandardMaterial>>,
-            Query<(Entity, &Camera)>,
-            Query<&Window, With<PrimaryWindow>>,
-            Query<&Window>,
-        )>::new(world);
-        let (
-            mut commands,
-            mut images,
-            mut portal_materials,
-            mut meshes,
-            mut materials,
-            main_camera_query,
-            primary_window_query,
-            windows_query
-        ) = system_state.get_mut(world);
+        let mut system_state = SystemState::<CreatePortalParams>::new(world);
+        let mut create_params = system_state.get_mut(world);
 
         create_portal(
-            &mut commands,
-            &mut images,
-            &mut portal_materials,
-            &mut meshes,
-            &mut materials,
-            &main_camera_query,
-            &primary_window_query,
-            &windows_query,
+            &mut create_params,
             id,
             &portal_create,
             &portal_transform,
@@ -166,20 +140,11 @@ impl EntityCommand for CreatePortalCommand {
 /// This system can be automatically added by [PortalsPlugin] depending on [PortalsCheckMode].
 #[allow(clippy::too_many_arguments)]
 pub fn create_portals(
-    mut commands: Commands,
-    mut images: ResMut<Assets<Image>>,
-    mut portal_materials: ResMut<Assets<PortalMaterial>>,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
-    main_camera_query: Query<(Entity, &Camera)>,
-    primary_window_query: Query<&Window, With<PrimaryWindow>>,
-    windows_query: Query<&Window>,
+    mut create_params: CreatePortalParams,
     portals_to_create: Query<(Entity, &CreatePortal, &GlobalTransform, &Handle<Mesh>)>
 ) {
     for (portal_entity, portal_create, portal_transform, mesh) in portals_to_create.iter() {
-        create_portal(&mut commands, &mut images, &mut portal_materials, &mut meshes, &mut materials,
-            &main_camera_query, &primary_window_query, &windows_query,
-            portal_entity, portal_create, portal_transform, mesh);
+        create_portal(&mut create_params, portal_entity, portal_create, portal_transform, mesh);
     }
 }
 
@@ -188,19 +153,29 @@ pub fn create_portals(
 /// Called from [create_portals] or [CreatePortalCommand].
 #[allow(clippy::too_many_arguments)]
 fn create_portal(
-    commands: &mut Commands,
-    images: &mut ResMut<Assets<Image>>,
-    portal_materials: &mut ResMut<Assets<PortalMaterial>>,
-    meshes: &mut ResMut<Assets<Mesh>>,
-    materials: &mut ResMut<Assets<StandardMaterial>>,
-    main_camera_query: &Query<(Entity, &Camera)>,
-    primary_window_query: &Query<&Window, With<PrimaryWindow>>,
-    windows_query: &Query<&Window>,
+    create_params: &mut CreatePortalParams,
     portal_entity: Entity,
     create_portal: &CreatePortal,
     _portal_global_transform: &GlobalTransform,
     portal_mesh: &Handle<Mesh>
 ) {
+    // Unroll create_params
+    let (
+        commands,
+        portal_materials,
+        meshes,
+        materials,
+        main_camera_query,
+        size_params,
+    ) = (
+        &mut create_params.commands,
+        &mut create_params.portal_materials,
+        &mut create_params.meshes,
+        &mut create_params.materials,
+        &create_params.main_camera_query,
+        &mut create_params.size_params,
+    );
+
     // Get main camera infos
     let (main_camera_entity, main_camera) = 
         if let Some(camera_entity) = create_portal.main_camera {
@@ -210,7 +185,7 @@ fn create_portal(
             main_camera_query.iter().next().unwrap()
         };
 
-    let main_camera_viewport_size = get_viewport_size(main_camera, primary_window_query, windows_query, images);
+    let main_camera_viewport_size = get_viewport_size(main_camera, size_params);
 
     let size = Extent3d {
         width: main_camera_viewport_size.x,
@@ -238,7 +213,7 @@ fn create_portal(
     // Fill portal_image.data with zeroes
     portal_image.resize(size);
 
-    let portal_image = images.add(portal_image);
+    let portal_image = size_params.images.add(portal_image);
 
     // Material that the portal camera will render to
     let portal_material = portal_materials.add(PortalMaterial {
@@ -394,4 +369,15 @@ fn create_portal(
             });
         }
     }
+}
+
+/// Parameters needed for [create_portals]
+#[derive(SystemParam)]
+pub struct CreatePortalParams<'w, 's> {
+    commands: Commands<'w, 's>,
+    portal_materials: ResMut<'w, Assets<PortalMaterial>>,
+    meshes: ResMut<'w, Assets<Mesh>>,
+    materials: ResMut<'w, Assets<StandardMaterial>>,
+    main_camera_query: Query<'w, 's, (Entity, &'static Camera)>,
+    size_params: PortalImageSizeParams<'w, 's>,
 }
