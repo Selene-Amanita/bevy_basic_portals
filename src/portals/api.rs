@@ -14,7 +14,6 @@ use bevy_transform::prelude::*;
 use super::*;
 
 /// Adds support for portals to a bevy App.
-#[derive(Clone)]
 pub struct PortalsPlugin {
     /// Whether and when to check for entities with [CreatePortal] components to create a portal.
     /// 
@@ -54,8 +53,10 @@ impl PortalsPlugin {
 
 impl Plugin for PortalsPlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugin(PortalsMaterialPlugin)
-           .add_plugin(PortalsProcessPlugin{config: self.clone()});
+        build_create(app, &self.check_create);
+        build_material(app);
+        build_update(app);
+        build_despawn(app, self.despawn_strategy.clone(), self.check_portal_camera_despawn);
     }
 }
 
@@ -73,7 +74,8 @@ pub enum PortalsCheckMode {
 /// Strategy to despawn portal parts.
 /// 
 /// Defaults to despawn all parts with a warning (without their children), except for the main camera.
-#[derive(Resource, Clone, Copy, Reflect)]
+#[derive(Resource, Clone, Reflect)]
+#[reflect(Resource)]
 pub struct PortalPartsDespawnStrategy {
     pub main_camera: PortalPartDespawnStrategy,
     pub portal: PortalPartDespawnStrategy,
@@ -116,7 +118,7 @@ impl PortalPartsDespawnStrategy {
 }
 
 /// Strategy to despawn a portal part if it is not yet despawned
-#[derive(Default, PartialEq, Eq, Clone, Copy, Reflect)]
+#[derive(Default, PartialEq, Eq, Clone, Reflect)]
 pub enum PortalPartDespawnStrategy {
     /// Despawn the entity and all of its children with a warning
     WarnThenDespawnWithChildren,

@@ -1,4 +1,6 @@
-use bevy_app::prelude::*;
+///! Material for portal rendering
+
+use bevy_app::App;
 use bevy_asset::prelude::*;
 use bevy_pbr::prelude::*;
 use bevy_render::{
@@ -15,19 +17,15 @@ use bevy_render::{
 use bevy_reflect::TypeUuid;
 use bevy_pbr::{MaterialPipelineKey, MaterialPipeline};
 
-pub(super) struct PortalsMaterialPlugin;
+pub(crate) fn build_material(app: &mut App) {
+    bevy_asset::load_internal_asset!(
+        app,
+        PORTAL_SHADER_HANDLE,
+        concat!(env!("CARGO_MANIFEST_DIR"), "/assets/portal.wgsl"),
+        Shader::from_wgsl
+    );
 
-impl Plugin for PortalsMaterialPlugin {
-    fn build(&self, app: &mut App) {
-        bevy_asset::load_internal_asset!(
-            app,
-            PORTAL_SHADER_HANDLE,
-            concat!(env!("CARGO_MANIFEST_DIR"), "/assets/portal.wgsl"),
-            Shader::from_wgsl
-        );
-
-        app.add_plugin(MaterialPlugin::<PortalMaterial>::default());
-    }
+    app.add_plugin(MaterialPlugin::<PortalMaterial>::default());
 }
 
 /// Material with the portal shader (renders the image without deformation using the mesh as a mask).
