@@ -150,19 +150,23 @@ fn resize_image_if_needed(
 /// Helper function to get the size of the viewport of the main camera, to be used for the size of the render image.
 pub(super) fn get_viewport_size (
     main_camera: &Camera,
-    size_params: &PortalImageSizeParams,
+    PortalImageSizeParams {
+        images,
+        primary_window_query,
+        windows_query,
+    }: &PortalImageSizeParams,
 ) -> UVec2 {
     match main_camera.viewport.as_ref() {
         |Some(viewport) => viewport.physical_size,
         |None => match &main_camera.target {
             RenderTarget::Window(window_ref) => {
                 let window = match window_ref {
-                    WindowRef::Primary => size_params.primary_window_query.get_single().unwrap(),
-                    WindowRef::Entity(entity) => size_params.windows_query.get(entity.clone()).unwrap()
+                    WindowRef::Primary => primary_window_query.get_single().unwrap(),
+                    WindowRef::Entity(entity) => windows_query.get(entity.clone()).unwrap()
                 };
                 UVec2::new(window.physical_width(),window.physical_height())
             },
-            RenderTarget::Image(handle) => size_params.images.get(handle).unwrap().size().as_uvec2()
+            RenderTarget::Image(handle) => images.get(handle).unwrap().size().as_uvec2()
         }
     }
 }

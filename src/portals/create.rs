@@ -154,29 +154,19 @@ pub fn create_portals(
 /// Called from [create_portals] or [CreatePortalCommand].
 #[allow(clippy::too_many_arguments)]
 fn create_portal(
-    create_params: &mut CreatePortalParams,
-    portal_entity: Entity,
-    create_portal: &CreatePortal,
-    _portal_global_transform: &GlobalTransform,
-    portal_mesh: &Handle<Mesh>
-) {
-    // Unroll create_params
-    let (
+    CreatePortalParams {
         commands,
         portal_materials,
         meshes,
         materials,
         main_camera_query,
-        size_params,
-    ) = (
-        &mut create_params.commands,
-        &mut create_params.portal_materials,
-        &mut create_params.meshes,
-        &mut create_params.materials,
-        &create_params.main_camera_query,
-        &mut create_params.size_params,
-    );
-
+        size_params
+    }: &mut CreatePortalParams,
+    portal_entity: Entity,
+    create_portal: &CreatePortal,
+    _portal_global_transform: &GlobalTransform,
+    portal_mesh: &Handle<Mesh>
+) {
     // Get main camera infos
     let (main_camera_entity, main_camera) = 
         if let Some(camera_entity) = create_portal.main_camera {
