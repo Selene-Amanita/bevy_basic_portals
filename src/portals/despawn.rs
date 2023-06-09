@@ -4,6 +4,11 @@ use bevy_app::App;
 use bevy_ecs::{
     prelude::*,
     query::QueryEntityError,
+    system::{
+        Command,
+        EntityCommand,
+        SystemState
+    },
 };
 use bevy_hierarchy::DespawnRecursiveExt;
 use bevy_render::camera::Camera;
@@ -20,6 +25,62 @@ pub(super) fn build_despawn(app: &mut App, despawn_strategy: PortalPartsDespawnS
 
     if should_check_portal_camera_despawn {
         app.add_system(check_portal_camera_despawn);
+    }
+}
+
+/// [Command] to despawn portal parts according to a strategy
+pub struct DespawnPortalPartsCommand {
+    portal_parts: PortalParts,
+    strategy: PortalPartsDespawnStrategy,
+}
+
+impl Command for DespawnPortalPartsCommand {
+    fn write(self, world: &mut World) {
+        let mut system_state = SystemState::<Commands>::new(world);
+        let mut commands = system_state.get_mut(world);
+
+        despawn_portal_parts(&mut commands, &self.portal_parts, &self.strategy);
+
+        system_state.apply(world);
+    }
+}
+
+/// [EntityCommand] to despawn the portal parts linked to the entity, according to a strategy
+#[derive(Default)]
+pub struct DespawnPortalPartsEntityCommand(PortalPartsDespawnStrategy);
+
+impl EntityCommand for DespawnPortalPartsCommand {
+    fn write(self, entity: Entity, world: &mut World) {
+        let mut system_state = SystemState::<(
+            Commands,
+            Query<&Portal>,
+            Query<&PortalDestination>,
+            Query<&PortalCamera>,
+        )>::new(world);
+        let (
+            mut commands,
+            portal_query,
+            portal_destination_query,
+            portal_camera_query
+        ) = system_state.get_mut(world);
+
+        let portal_parts =
+            portal_query.get(entity).map_or_else(|_|
+                portal_destination_query.get(entity).map_or_else(|_|
+                    portal_camera_query.get(entity).map_or_else(|_|
+                        None,
+                    |c| Some(&c.parts)),
+                |d| Some(&d.parts)),
+            |p| Some(&p.parts));
+
+        if let Some(portal_parts) = portal_parts {
+            despawn_portal_parts(&mut commands, portal_parts, &self.strategy);
+        }
+        else {
+            warn!("DespawnPortalPartsEntityCommand called on entity {} which is not a portal part", entity.index())
+        }
+
+        system_state.apply(world);
     }
 }
 
