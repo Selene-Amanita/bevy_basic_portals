@@ -18,10 +18,14 @@ use tracing::warn;
 use super::*;
 
 /// Add the despawn logic to [PortalsPlugin]
-pub(super) fn build_despawn(app: &mut App, despawn_strategy: PortalPartsDespawnStrategy, should_check_portal_camera_despawn: bool) {
-    app
-        .insert_resource(despawn_strategy)
-        .register_type::<PortalPartsDespawnStrategy>();
+pub(super) fn build_despawn(app: &mut App, despawn_strategy: Option<PortalPartsDespawnStrategy>, should_check_portal_camera_despawn: bool) {
+    app.register_type::<PortalPartsDespawnStrategy>();
+
+    if let Some(despawn_strategy) = despawn_strategy {
+        app.insert_resource(despawn_strategy);
+    } else {
+        app.init_resource::<PortalPartsDespawnStrategy>();
+    }
 
     if should_check_portal_camera_despawn {
         app.add_system(check_portal_camera_despawn);
@@ -164,8 +168,8 @@ pub(super) fn deal_with_part_query_error (
             format!("is a part of portal parts where {} #{} is missing key components", name_of_part, entity.index()),
         QueryEntityError::NoSuchEntity(entity) =>
             format!("is a part of portal parts where {} #{} has despawned", name_of_part, entity.index()),
-        QueryEntityError::AliasedMutability(entity) => // No idea what this means
-            format!("is a part of portal parts where's {} #{} mutability is aliased", name_of_part, entity.index()),
+        QueryEntityError::AliasedMutability(entity) => // Shouldn't happen
+            format!("is a part of portal parts where's {} #{} is accessed twice mutably", name_of_part, entity.index()),
     };
     despawn_portal_parts_with_message(commands, parts, strategy, &error_message);
 }

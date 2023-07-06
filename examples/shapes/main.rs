@@ -35,7 +35,8 @@ fn setup(
         },
         pivot_cameras::PivotCamera {
             pivot,
-            closest: 0.
+            closest: 0.,
+            ..default()
         },
     )).id();
 

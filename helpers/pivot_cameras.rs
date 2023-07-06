@@ -11,7 +11,7 @@ pub const DEFAULT_MOUSE_SPEED: f32 = 0.3;
 pub const DEFAULT_MOUSE_ZOOM_SPEED: f32 = 40.;
 
 pub struct PivotCamerasPlugin {
-    pub config: PivotCamerasConfig
+    pub config: Option<PivotCamerasConfig>
 }
 
 impl Default for PivotCamerasPlugin {
@@ -24,10 +24,12 @@ impl Default for PivotCamerasPlugin {
 
 impl Plugin for PivotCamerasPlugin {
     fn build(&self, app: &mut App) {
-        app
-            //https://discord.com/channels/691052431525675048/1094017707671822336/1094025591453401141
-            .insert_resource(self.config)
-            .add_system(move_cameras);
+        if let Some(config) = self.config {
+            app.insert_resource(config);
+        } else {
+            app.init_resource::<PivotCamerasConfig>();
+        }
+        app.add_system(update_pivot_cameras);
     }
 }
 
@@ -38,6 +40,12 @@ pub struct PivotCamerasConfig {
     pub keyboard_zoom_speed: f32,
     pub mouse_speed: f32,
     pub mouse_zoom_speed: f32,
+    pub keyboard_left_key: KeyCode,
+    pub keyboard_right_key: KeyCode,
+    pub keyboard_up_key: KeyCode,
+    pub keyboard_down_key: KeyCode,
+    pub keyboard_forward_key: KeyCode,
+    pub keyboard_backward_key: KeyCode,
 }
 
 impl Default for PivotCamerasConfig {
@@ -47,6 +55,12 @@ impl Default for PivotCamerasConfig {
             keyboard_zoom_speed: DEFAULT_KEYBOARD_ZOOM_SPEED,
             mouse_speed: DEFAULT_MOUSE_SPEED,
             mouse_zoom_speed: DEFAULT_MOUSE_ZOOM_SPEED,
+            keyboard_left_key: KeyCode::Left,
+            keyboard_right_key: KeyCode::Right,
+            keyboard_up_key: KeyCode::Up,
+            keyboard_down_key: KeyCode::Down,
+            keyboard_forward_key: KeyCode::Z,
+            keyboard_backward_key: KeyCode::A,
         }
     }
 }
@@ -55,80 +69,129 @@ impl Default for PivotCamerasConfig {
 pub struct PivotCamera {
     pub pivot: Vec3,
     pub closest: f32,
+    pub mouse_controlled: bool,
+    pub keyboard_controlled: bool,
 }
 
-fn move_cameras(
+impl Default for PivotCamera {
+    fn default() -> Self {
+        Self {
+            pivot: Vec3::ZERO,
+            closest: 0.1,
+            mouse_controlled: true,
+            keyboard_controlled: true,
+        }
+    }
+}
+
+#[derive(Default, PartialEq, Clone)]
+struct MoveForDevice {
+    h: f32,
+    v: f32,
+    f: f32,
+}
+impl Eq for MoveForDevice {}
+impl std::ops::MulAssign<f32> for MoveForDevice {
+    fn mul_assign(&mut self, rhs: f32) {
+        self.h *= rhs;
+        self.v *= rhs;
+        self.f *= rhs;
+    }
+}
+impl std::ops::AddAssign for MoveForDevice {
+    fn add_assign(&mut self, rhs: Self) {
+        self.h += rhs.h;
+        self.v += rhs.v;
+        self.f += rhs.f;
+    }
+}
+
+#[derive(Default, PartialEq, Eq)]
+struct Move {
+    mouse: MoveForDevice,
+    keyboard: MoveForDevice,
+}
+
+fn update_pivot_cameras(
     config: Res<PivotCamerasConfig>,
     time: Res<Time>,
     keyboard_input: Res<Input<KeyCode>>,
     mouse_input: Res<Input<MouseButton>>,
     mut motion_evr: EventReader<MouseMotion>,
     mut scroll_evr: EventReader<MouseWheel>,
-    mut main_camera_query: Query<(&mut Transform, &PivotCamera)>
+    mut pivot_camera_query: Query<(&mut Transform, &PivotCamera)>
 ) {
-    let mut move_h = 0.;
-    let mut move_v = 0.;
-    let mut move_f = 0.;
+    let still = Move::default();
+    let mut mov = Move::default();
 
     if mouse_input.pressed(MouseButton::Left) || mouse_input.pressed(MouseButton::Right) || mouse_input.pressed(MouseButton::Middle) {
         for ev in motion_evr.iter() {
-            move_h -= ev.delta.x * config.mouse_speed;
-            move_v -= ev.delta.y * config.mouse_speed;
+            mov.mouse.h -= ev.delta.x * config.mouse_speed;
+            mov.mouse.v -= ev.delta.y * config.mouse_speed;
         }
     }
 
     for ev in scroll_evr.iter() {
         match ev.unit {
             MouseScrollUnit::Line => {
-                move_f -= ev.y * config.mouse_zoom_speed;
+                mov.mouse.f -= ev.y * config.mouse_zoom_speed;
             }
             MouseScrollUnit::Pixel => {
-                move_f -= ev.y * config.mouse_zoom_speed;
+                mov.mouse.f -= ev.y * config.mouse_zoom_speed;
             }
         }
     }
 
-    if keyboard_input.pressed(KeyCode::Left) {
-        move_h += config.keyboard_speed;
+    if keyboard_input.pressed(config.keyboard_left_key) {
+        mov.keyboard.h += config.keyboard_speed;
     }
-    if keyboard_input.pressed(KeyCode::Right) {
-        move_h -= config.keyboard_speed;
+    if keyboard_input.pressed(config.keyboard_right_key) {
+        mov.keyboard.h -= config.keyboard_speed;
     }
-    if keyboard_input.pressed(KeyCode::Up) {
-        move_v += config.keyboard_speed;
+    if keyboard_input.pressed(config.keyboard_up_key) {
+        mov.keyboard.v += config.keyboard_speed;
     }
-    if keyboard_input.pressed(KeyCode::Down) {
-        move_v -= config.keyboard_speed;
+    if keyboard_input.pressed(config.keyboard_down_key) {
+        mov.keyboard.v -= config.keyboard_speed;
     }
-    if keyboard_input.pressed(KeyCode::A) {
-        move_f -= config.keyboard_zoom_speed;
+    if keyboard_input.pressed(config.keyboard_forward_key) {
+        mov.keyboard.f -= config.keyboard_zoom_speed;
     }
-    if keyboard_input.pressed(KeyCode::Z) {
-        move_f += config.keyboard_zoom_speed;
+    if keyboard_input.pressed(config.keyboard_backward_key) {
+        mov.keyboard.f += config.keyboard_zoom_speed;
     }
 
-    if move_h != 0. || move_v != 0. || move_f != 0. {
-        move_h *= time.delta_seconds();
-        move_v *= time.delta_seconds();
-        move_f *= time.delta_seconds();
+    if mov != still {
+        mov.keyboard *= time.delta_seconds();
+        mov.mouse *= time.delta_seconds();
 
-        let (mut transform, pivot_camera) = main_camera_query.get_single_mut().unwrap();
+        for (mut transform, pivot_camera) in pivot_camera_query.iter_mut() {
+            let mut move_cam = MoveForDevice::default();
 
-        // Horizontal movement
-        let local_x = transform.local_x();
-        transform.rotate_around(pivot_camera.pivot, Quat::from_axis_angle(local_x, move_v));
+            if pivot_camera.mouse_controlled {
+                move_cam += mov.mouse.clone();
+            }
 
-        // Vertical movement
-        // TODO (should maybe restrict to not go above?)
-        transform.rotate_around(pivot_camera.pivot, Quat::from_axis_angle(Vec3::Y, move_h));
+            if pivot_camera.keyboard_controlled {
+                move_cam += mov.keyboard.clone();
+            }
 
-        // Zoom
-        let local_z = transform.local_z();
-        transform.translation += local_z * move_f;
-        // Don't get too close to the pivot
-        let distance = transform.translation.distance(pivot_camera.pivot);
-        if distance < pivot_camera.closest {
-            transform.translation -= local_z * move_f;
+            // Vertical movement
+            // TODO (should maybe restrict to not go above?)
+            let local_x = transform.local_x();
+            transform.rotate_around(pivot_camera.pivot, Quat::from_axis_angle(local_x, move_cam.v));
+    
+            // Horizontal movement
+            transform.rotate_around(pivot_camera.pivot, Quat::from_axis_angle(Vec3::Y, move_cam.h));
+    
+            // Zoom
+            let local_z = transform.local_z();
+            transform.translation += local_z * move_cam.f;
+            // Don't get too close to the pivot
+            let distance = transform.translation.distance(pivot_camera.pivot);
+            if distance < pivot_camera.closest {
+                transform.translation -= local_z * move_cam.f;
+            }
         }
     }
 }

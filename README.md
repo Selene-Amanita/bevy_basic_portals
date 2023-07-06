@@ -1,6 +1,7 @@
 # Portals for Bevy
 
 [![crates.io](https://img.shields.io/crates/v/bevy_basic_portals)](https://crates.io/crates/bevy_basic_portals)
+[![docs.rs](https://img.shields.io/docsrs/bevy_basic_portals)](https://docs.rs/bevy_basic_portals/latest/bevy_basic_portals/)
 [![MIT/Apache 2.0](https://img.shields.io/badge/license-EUPL-blue.svg)](https://commission.europa.eu/content/european-union-public-licence_en)
 [![Bevy tracking](https://img.shields.io/badge/Bevy%20tracking-released%20version-lightblue)](https://github.com/bevyengine/bevy/blob/main/docs/plugins_guidelines.md#main-branch-tracking)
 

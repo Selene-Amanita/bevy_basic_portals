@@ -28,9 +28,9 @@ pub struct PortalsPlugin {
     /// - a part is missing a key component (see [CreatePortalParams], entities should be returned by the relevant queries).
     /// - check_portal_camera_despawn is true and a portal camera has despawned or missing a key component but the [Portal] or [PortalDestination] still exist
     /// 
-    /// Defaults to despawn all entities and children with a warning, except for the main camera.
+    /// Defaults/`None` to despawn all entities and children with a warning, except for the main camera.
     /// Will be added as a [Resource], can be changed during execution.
-    pub despawn_strategy: PortalPartsDespawnStrategy,
+    pub despawn_strategy: Option<PortalPartsDespawnStrategy>,
 }
 
 impl Default for PortalsPlugin {
@@ -38,7 +38,7 @@ impl Default for PortalsPlugin {
         PortalsPlugin {
             check_create: PortalsCheckMode::AlwaysCheck,
             check_portal_camera_despawn: true,
-            despawn_strategy: PortalPartsDespawnStrategy::default(),
+            despawn_strategy: None,
         }
     }
 }
@@ -47,7 +47,7 @@ impl PortalsPlugin {
     pub const MINIMAL: Self = Self {
         check_create: PortalsCheckMode::CheckAfterStartup,
         check_portal_camera_despawn: false,
-        despawn_strategy: PortalPartsDespawnStrategy::PANIC,
+        despawn_strategy: Some(PortalPartsDespawnStrategy::PANIC),
     };
 }
 
@@ -85,16 +85,18 @@ pub struct PortalPartsDespawnStrategy {
 
 impl Default for PortalPartsDespawnStrategy {
     fn default() -> Self {
-        PortalPartsDespawnStrategy {
-            main_camera: PortalPartDespawnStrategy::Leave,
-            portal: PortalPartDespawnStrategy::default(),
-            destination: PortalPartDespawnStrategy::default(),
-            portal_camera: PortalPartDespawnStrategy::default(),
-        }
+        PortalPartsDespawnStrategy::DESPAWN_AND_WARN
     }
 }
 
 impl PortalPartsDespawnStrategy {
+    pub const DESPAWN_AND_WARN: Self = Self {
+        main_camera: PortalPartDespawnStrategy::Leave,
+        portal: PortalPartDespawnStrategy::WarnThenDespawnEntity,
+        destination: PortalPartDespawnStrategy::WarnThenDespawnEntity,
+        portal_camera: PortalPartDespawnStrategy::WarnThenDespawnEntity,
+    };
+
     pub const PANIC: Self = Self {
         main_camera: PortalPartDespawnStrategy::Leave,
         portal: PortalPartDespawnStrategy::Panic,
@@ -198,7 +200,7 @@ pub struct CreatePortal {
 
 impl Default for CreatePortal {
     fn default() -> Self {
-        CreatePortal {
+        Self {
             destination: AsPortalDestination::Create(CreatePortalDestination::default()),
             main_camera: None,
             cull_mode: Some(Face::Back),

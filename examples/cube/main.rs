@@ -42,7 +42,8 @@ fn setup(
         },
         pivot_cameras::PivotCamera {
             pivot,
-            closest: 10. // half diagonal of the cube = sqrt(3) * 10 / 2 < 10.
+            closest: 10., // half diagonal of the cube = sqrt(3) * 10 / 2 < 10.
+            ..default()
         },
     )).id();
 
