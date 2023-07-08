@@ -93,8 +93,8 @@ fn setup_object_and_portal(
                 transform: destination_transform,
                 ..default()
             }),
+            portal_mode: PortalMode::MaskedImageNoFrustum,
             cull_mode,
-            plane_mode: None,
             debug: Some(DebugPortal {
                 show_window: false,
                 ..default()

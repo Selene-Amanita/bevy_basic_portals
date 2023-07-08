@@ -6,15 +6,13 @@ use bevy_ecs::{
     prelude::*,
     system::SystemParam
 };
-use bevy_math::UVec2;
+use bevy_math::{UVec2, Quat, Vec3};
 use bevy_reflect::Reflect;
 use bevy_render::{
     prelude::*,
-    render_resource::{
-        Extent3d,
-        Face,
-    },
-    camera::RenderTarget,
+    render_resource::Extent3d,
+    camera::{RenderTarget, CameraProjection},
+    primitives::{Frustum, Plane},
 };
 use bevy_transform::prelude::*;
 use bevy_window::{
@@ -24,8 +22,6 @@ use bevy_window::{
 };
 
 use super::*;
-
-const PLANE_MODE_TRIGGER: f32 = 0.2;
 
 /// Add the update logic to [PortalsPlugin]
 pub(super) fn build_update(app: &mut App) {
@@ -37,15 +33,20 @@ pub(super) fn build_update(app: &mut App) {
 pub fn update_portal_cameras(
     mut commands: Commands,
     strategy: Res<PortalPartsDespawnStrategy>,
-    mut portal_cameras: Query<(&PortalCamera, &mut Transform, &mut GlobalTransform, &mut Camera)>,
-    main_camera_query: Query<(&GlobalTransform, &Camera), Without<PortalCamera>>,
-    portal_query: Query<&GlobalTransform,(With<Portal>, Without<Camera>)>,
-    destination_query: Query<&GlobalTransform, (With<PortalDestination>, Without<Camera>)>,
+    mut portal_cameras: Query<(&PortalCamera, &mut Transform, &mut GlobalTransform, &mut Frustum, &PortalProjection), With<Camera>>,
+    main_camera_query: Query<(Ref<GlobalTransform>, &Camera), Without<PortalCamera>>,
+    portal_query: Query<Ref<GlobalTransform>, (With<Portal>, Without<Camera>)>,
+    destination_query: Query<Ref<GlobalTransform>, (With<PortalDestination>, Without<Camera>)>,
     mut resize_params: PortalImageSizeParams,
 ) {
     // For every portal camera
-    for (portal_camera, mut portal_camera_transform, mut portal_camera_global_transform, mut camera)
-        in portal_cameras.iter_mut() {
+    for (
+        portal_camera,
+        mut portal_camera_transform,
+        mut portal_camera_global_transform,
+        mut frustum,
+        projection,
+    ) in portal_cameras.iter_mut() {
 
         // Main Camera
         let main_camera_result = main_camera_query.get(portal_camera.parts.main_camera);
@@ -53,8 +54,7 @@ pub fn update_portal_cameras(
             deal_with_part_query_error(&mut commands, &portal_camera.parts, &strategy, &query_error, "Main Camera");
             return;
         }
-        let (main_camera_transform, main_camera) = main_camera_result.unwrap();
-        let main_camera_transform = &main_camera_transform.compute_transform();
+        let (main_camera_global_transform, main_camera) = main_camera_result.unwrap();
 
         // Portal
         let portal_result = portal_query.get(portal_camera.parts.portal);
@@ -62,29 +62,24 @@ pub fn update_portal_cameras(
             deal_with_part_query_error(&mut commands, &portal_camera.parts, &strategy, &query_error, "Portal");
             return;
         }
-        let portal_transform = portal_result.unwrap();
-        let portal_transform = &portal_transform.compute_transform();
-
-        let camera_should_update = camera_should_update(portal_camera, portal_transform, main_camera_transform);
-        if !camera_should_update {
-            // TOFIX https://github.com/bevyengine/bevy/issues/8777
-            //camera.is_active = false;
+        let portal_global_transform = portal_result.unwrap();
+        
+        // Destination
+        let destination_result = destination_query.get(portal_camera.parts.destination);
+        if let Err(query_error) = destination_result {
+            deal_with_part_query_error(&mut commands, &portal_camera.parts, &strategy, &query_error, "Destination");
+            return;
         }
-        else {
-            camera.is_active = true;
+        let destination_global_transform = destination_result.unwrap();
 
-            resize_image_if_needed(portal_camera, main_camera, &mut resize_params);
-            
-            // Destination
-            let destination_result = destination_query.get(portal_camera.parts.destination);
-            if let Err(query_error) = destination_result {
-                deal_with_part_query_error(&mut commands, &portal_camera.parts, &strategy, &query_error, "Destination");
-                return;
-            }
-            let destination_transform = destination_result.unwrap();
-            let destination_transform = &destination_transform.compute_transform();
+        resize_image_if_needed(portal_camera, main_camera, &mut resize_params);
 
-            // TODO check if any portal part transform changed before updating the portal camera one
+        if portal_global_transform.is_changed()
+        || destination_global_transform.is_changed()
+        || main_camera_global_transform.is_changed() {
+            let portal_transform = &portal_global_transform.compute_transform();
+            let destination_transform = &destination_global_transform.compute_transform();
+            let main_camera_transform = &main_camera_global_transform.compute_transform();
 
             // Move portal camera
             let new_portal_camera_transform = get_portal_camera_transform(main_camera_transform, portal_transform, destination_transform);
@@ -96,28 +91,19 @@ pub fn update_portal_cameras(
             // (I tried compying the queries of propagate_transforms and have the portal camera and its child in the results).
             // Since the set-up of TransformPlugin will change in Bevy 0.11, this is a WONTFIX until Bevy 0.11
             portal_camera_global_transform.set(Box::new(GlobalTransform::from(new_portal_camera_transform))).unwrap();
+
+            // Update frustum
+            let new_frustum = get_frustum(
+                portal_camera,
+                &portal_camera_transform,
+                destination_transform,
+                projection,
+            );
+            frustum.set(Box::new(new_frustum)).unwrap();
+
+            // TODO: Check if camera should update
         }
     }
-}
-
-/// Checks if the portal camera should update (move and render)
-/// 
-/// This will return false if the main camera is "behind" a portal visible only from the front, or looking away from the portal
-fn camera_should_update(
-    portal_camera: &PortalCamera,
-    portal_transform: &Transform,
-    main_camera_transform: &Transform,
-) -> bool {
-    if portal_camera.plane_mode.is_some() {
-        // behindness is positive when the main camera is behind the portal plane
-        let behindness = portal_transform.forward().dot((main_camera_transform.translation - portal_transform.translation).normalize());
-
-        if portal_camera.plane_mode == Some(Face::Back) && behindness > PLANE_MODE_TRIGGER
-            || portal_camera.plane_mode == Some(Face::Front) && behindness < -PLANE_MODE_TRIGGER {
-            return false;
-        }
-    } // TODO deactivate camera when looking away from the portal
-    true
 }
 
 /// Resize the image used to render a portal, if needed
@@ -145,6 +131,48 @@ fn resize_image_if_needed(
         portal_image.texture_descriptor.size = size;
         portal_image.resize(size);
     }
+}
+
+/// Get the [Frustum] for the [PortalCamera] from the [PortalProjection] and
+/// modifying it depending on the [PortalMode].
+fn get_frustum(
+    portal_camera: &PortalCamera,
+    portal_camera_transform: &Transform,
+    destination_transform: &Transform,
+    projection: &PortalProjection,
+) -> Frustum {
+    let view_projection =
+        projection.get_projection_matrix() * portal_camera_transform.compute_matrix().inverse();
+
+    let mut frustum = Frustum::from_view_projection_custom_far(
+        &view_projection,
+        &portal_camera_transform.translation,
+        &portal_camera_transform.back(),
+        projection.far(),
+    );
+
+    match portal_camera.portal_mode {
+        PortalMode::MaskedImagePlaneFrustum(Some(half_space)) => {
+            let rot = Quat::from_rotation_arc(
+                Vec3::NEG_Z,
+                destination_transform.forward(),
+            );
+            let near_half_space_normal = rot.mul_vec3(half_space.normal().into());
+
+            let dot = destination_transform.translation.dot(near_half_space_normal.normalize());
+            let near_half_space_distance = -(dot + half_space.d());
+
+            frustum.planes[4] = Plane::new(near_half_space_normal.extend(near_half_space_distance))
+        }
+        PortalMode::MaskedImagePlaneFrustum(None) => {
+            let near_half_space_normal = destination_transform.forward();
+            let near_half_space_distance = - destination_transform.translation.dot(near_half_space_normal);
+            frustum.planes[4] = Plane::new(near_half_space_normal.extend(near_half_space_distance))
+        }
+        _ => ()
+    };
+
+    frustum
 }
 
 /// Helper function to get the size of the viewport of the main camera, to be used for the size of the render image.

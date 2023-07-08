@@ -8,6 +8,7 @@ use bevy_render::{
     prelude::*,
     render_resource::Face,
     view::RenderLayers,
+    primitives::Plane,
 };
 use bevy_transform::prelude::*;
 
@@ -53,8 +54,9 @@ impl PortalsPlugin {
 
 impl Plugin for PortalsPlugin {
     fn build(&self, app: &mut App) {
-        build_create(app, &self.check_create);
         build_material(app);
+        build_projection(app);
+        build_create(app, &self.check_create);
         build_update(app);
         build_despawn(app, self.despawn_strategy.clone(), self.check_portal_camera_despawn);
     }
@@ -176,6 +178,9 @@ pub struct CreatePortalBundle {
 pub struct CreatePortal {
     /// Where the portal should lead to.
     pub destination: AsPortalDestination,
+    /// What technique to use to render the portal effect, and how to define the
+    /// frustum when applicable.
+    pub portal_mode: PortalMode,
     /// The camera that will see this portal, defaults to the first camera found.
     pub main_camera: Option<Entity>,
     /// Whether to cull the “front”, “back” or neither side of a the portal mesh.
@@ -186,14 +191,6 @@ pub struct CreatePortal {
     pub cull_mode: Option<Face>,
     /// Render layer used by the [PortalCamera], and debug elements.
     pub render_layer: RenderLayers,
-    /// If `Some(Face::Back)`, portal camera will get deactivated if camera is going behind the portal's transform.
-    /// 
-    /// Defaults to `Some(Face::Back)`.
-    ///  
-    /// `Some(Face::Front)` deactivates the camera in front of the transform, and None never deactivates it.
-    /// 
-    /// If your mesh isn't on a plane with `cull_mode = Some(Face::Back)`, set this to None.
-    pub plane_mode: Option<Face>,
     /// Configures debug elements, defaults to None.
     pub debug: Option<DebugPortal>,
 }
@@ -202,10 +199,10 @@ impl Default for CreatePortal {
     fn default() -> Self {
         Self {
             destination: AsPortalDestination::Create(CreatePortalDestination::default()),
+            portal_mode: PortalMode::default(),
             main_camera: None,
             cull_mode: Some(Face::Back),
             render_layer: RenderLayers::default(),
-            plane_mode: Some(Face::Back),
             debug: None,
         }
     }
@@ -233,6 +230,52 @@ pub struct CreatePortalDestination {
     pub parent: Option<Entity>,
     //TODO: pub spawn_as_children: something like an EntityCommand?
 }
+
+/// What technique to use to render the portal effect, and what entities are seen
+/// or not through it.
+#[derive(Clone)]
+pub enum PortalMode {
+    /// The portal effect will be rendered on a texture with the same size as
+    /// the main camera's viewport, and a shader will define the UV-mapping using
+    /// the portal viewed through the main camera as a mask.
+    /// 
+    /// The frustum will simply be defined from the projection matrix, which means
+    /// everything between the portal camera and the destination will be seen through
+    /// the portal
+    MaskedImageNoFrustum,
+    /// Same as [PortalMode::MaskedImageNoFrustum], but a frustum will be defined,
+    /// using a [Plane] in the mesh/entity local space (it later takes into account
+    /// the destination transform for calculations in global space).
+    /// 
+    /// `None` will assume the `Plane` is `{p, p.z < 0}` in local space, it should
+    /// be the same as `Some(Vec3::NEG_Z.extend(0.))`.
+    /// 
+    /// Note that this will *replace* the near plane of the frustum defined from
+    /// the projection matrix, which means that some objects might be considered
+    /// for rendering when they shouldn't be (for example, when the camera's forward
+    /// is almost parallel to the plane, objects behind the camera but in front of
+    /// the plane will be considered).
+    MaskedImagePlaneFrustum(Option<Plane>),
+    //TODO
+    //MaskedImageRectangleFrustum(PortalRectangleView),
+    //MaskedImageSpherePlaneFrustum(_)
+    //MaskedImageSphereRectangleFrustum(_)
+    // A projection matrix will be defined to fit.
+    //FittingProjectionRectangle(PortalRectangleView)
+}
+
+impl Default for PortalMode {
+    fn default() -> Self {
+        PortalMode::MaskedImagePlaneFrustum(None)
+    }
+}
+
+/*#[derive(Clone)]
+pub struct PortalRectangleView {
+    origin: Vec3,
+    normal: Vec3,
+    rectangle: Vec2,
+}*/
 
 /// Configuration of debug elements.
 #[derive(Clone)]
