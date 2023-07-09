@@ -16,9 +16,6 @@
 //!
 //! ## Known limitations
 //! (may be fixed in the future)
-//! - this crate doesn't define a correct frustum, which can pose a problem if an object is between the portal camera and the portal destination
-//! and also can reduce perfomance by rendering things that are not displayed
-//! (see <https://tomhulton.blogspot.com/2015/08/portal-rendering-with-offscreen-render.html> and <https://www.youtube.com/watch?v=cWpFZbjtSQg>)
 //! - portals created by this crate are uni-directionnal, you can only look from one space to the other,
 //! if you want a bidirectional portal you can crate two portals manually
 //! - this crate doesn't handle "portal recursion", as in viewing a portal through another portal

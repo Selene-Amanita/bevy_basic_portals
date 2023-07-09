@@ -25,7 +25,14 @@ use super::*;
 
 /// Add the update logic to [PortalsPlugin]
 pub(super) fn build_update(app: &mut App) {
-    app.add_system(update_portal_cameras.in_base_set(CoreSet::Last));
+    app.add_system(
+        update_portal_cameras
+            // TODO: once we can use PortalProjection, we can ignore update_frusta
+            .in_set(bevy_render::view::VisibilitySystems::UpdateProjectionFrusta)
+            .after(bevy_render::view::update_frusta::<Projection>)
+            //.in_base_set(CoreSet::PostUpdate)
+            //.after(bevy_transform::TransformSystem::TransformPropagate)
+    );
 }
 
 /// Moves the [PortalCamera] to follow the main camera relative to the portal and the destination.
@@ -33,7 +40,7 @@ pub(super) fn build_update(app: &mut App) {
 pub fn update_portal_cameras(
     mut commands: Commands,
     strategy: Res<PortalPartsDespawnStrategy>,
-    mut portal_cameras: Query<(&PortalCamera, &mut Transform, &mut GlobalTransform, &mut Frustum, &PortalProjection), With<Camera>>,
+    mut portal_cameras: Query<(&PortalCamera, &mut Transform, &mut GlobalTransform, &mut Frustum, &Projection), With<Camera>>, // TODO: use PortalProjection in the future
     main_camera_query: Query<(Ref<GlobalTransform>, &Camera), Without<PortalCamera>>,
     portal_query: Query<Ref<GlobalTransform>, (With<Portal>, Without<Camera>)>,
     destination_query: Query<Ref<GlobalTransform>, (With<PortalDestination>, Without<Camera>)>,
@@ -74,11 +81,13 @@ pub fn update_portal_cameras(
 
         resize_image_if_needed(portal_camera, main_camera, &mut resize_params);
 
+        // TODO: see Update frustum bellow
+        let destination_transform = &destination_global_transform.compute_transform();
+
         if portal_global_transform.is_changed()
         || destination_global_transform.is_changed()
         || main_camera_global_transform.is_changed() {
             let portal_transform = &portal_global_transform.compute_transform();
-            let destination_transform = &destination_global_transform.compute_transform();
             let main_camera_transform = &main_camera_global_transform.compute_transform();
 
             // Move portal camera
@@ -91,18 +100,20 @@ pub fn update_portal_cameras(
             // (I tried compying the queries of propagate_transforms and have the portal camera and its child in the results).
             // Since the set-up of TransformPlugin will change in Bevy 0.11, this is a WONTFIX until Bevy 0.11
             portal_camera_global_transform.set(Box::new(GlobalTransform::from(new_portal_camera_transform))).unwrap();
-
-            // Update frustum
-            let new_frustum = get_frustum(
-                portal_camera,
-                &portal_camera_transform,
-                destination_transform,
-                projection,
-            );
-            frustum.set(Box::new(new_frustum)).unwrap();
-
-            // TODO: Check if camera should update
         }
+
+        // Update frustum
+        // TODO: this had to get outside of the big if, because we can't use PortalProjection,
+        // and we have to fight against update_frusta, which runs every tick.
+        let new_frustum = get_frustum(
+            portal_camera,
+            &portal_camera_transform,
+            destination_transform,
+            projection,
+        );
+        frustum.set(Box::new(new_frustum)).unwrap();
+
+        // TODO: Check if camera should update
     }
 }
 
@@ -139,7 +150,7 @@ fn get_frustum(
     portal_camera: &PortalCamera,
     portal_camera_transform: &Transform,
     destination_transform: &Transform,
-    projection: &PortalProjection,
+    projection: &Projection, // TODO: use PortalProjection in the future
 ) -> Frustum {
     let view_projection =
         projection.get_projection_matrix() * portal_camera_transform.compute_matrix().inverse();

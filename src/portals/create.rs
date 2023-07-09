@@ -82,6 +82,8 @@ pub struct PortalDestination {
 }
 
 /// [Component] for a portal camera, the camera that is used to see through a portal.
+/// 
+/// Note: The entity this component is attached to is not supposed to be a child of another entity.
 #[derive(Component, Reflect)]
 pub struct PortalCamera {
     pub image: Handle<Image>,
@@ -249,7 +251,8 @@ fn create_portal(
 
     // Create the portal camera
     let camera_bundle = Camera3dBundle::default();
-    let projection: PortalProjection = main_camera_projection
+    // TODO: use PortalProjection in the future
+    let projection: Projection = main_camera_projection
         .unwrap_or(&camera_bundle.projection)
         .clone()
         .into();
