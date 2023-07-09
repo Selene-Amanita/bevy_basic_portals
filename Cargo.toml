@@ -1,6 +1,6 @@
 [package]
 name = "bevy_basic_portals"
-version = "0.2.0"
+version = "0.2.1"
 edition = "2021"
 categories = ["game-engines", "graphics", "rendering"]
 keywords = ["bevy", "portal", "mirror", "gamedev"]
