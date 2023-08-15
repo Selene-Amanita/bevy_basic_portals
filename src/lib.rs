@@ -1,4 +1,4 @@
-//! Bevy Simple Portals is a Bevy game engine plugin aimed to create portals.
+//! Bevy Basic Portals is a Bevy game engine plugin aimed to create portals.
 //! 
 //! Those portals are (for now) purely visual and can be used to make mirrors, indoor renderings, crystal balls, and more!
 //! 

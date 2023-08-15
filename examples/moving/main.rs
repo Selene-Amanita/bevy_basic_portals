@@ -33,10 +33,12 @@ struct MainCamera;
 
 fn main() {
     App::new()
-        .add_plugins(DefaultPlugins)
-        .add_plugin(PortalsPlugin::MINIMAL)
-        .add_startup_system(setup)
-        .add_system(move_portal_and_destination)
+        .add_plugins((
+            DefaultPlugins,
+            PortalsPlugin::MINIMAL,
+        ))
+        .add_systems(Startup, setup)
+        .add_systems(Update, move_portal_and_destination)
         .run();
 }
 

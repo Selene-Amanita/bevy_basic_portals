@@ -7,12 +7,11 @@ use bevy_ecs::{
     system::SystemParam
 };
 use bevy_math::{UVec2, Quat, Vec3};
-use bevy_reflect::Reflect;
 use bevy_render::{
     prelude::*,
     render_resource::Extent3d,
-    camera::{RenderTarget, CameraProjection},
-    primitives::{Frustum, Plane},
+    camera::{RenderTarget, CameraProjection, ManualTextureViews},
+    primitives::{Frustum, HalfSpace},
 };
 use bevy_transform::prelude::*;
 use bevy_window::{
@@ -25,13 +24,13 @@ use super::*;
 
 /// Add the update logic to [PortalsPlugin]
 pub(super) fn build_update(app: &mut App) {
-    app.add_system(
+    app.add_systems(
+        PostUpdate,
         update_portal_cameras
             // TODO: once we can use PortalProjection, we can ignore update_frusta
-            .in_set(bevy_render::view::VisibilitySystems::UpdateProjectionFrusta)
-            .after(bevy_render::view::update_frusta::<Projection>)
-            //.in_base_set(CoreSet::PostUpdate)
+            // see https://github.com/bevyengine/bevy/pull/9226
             //.after(bevy_transform::TransformSystem::TransformPropagate)
+            .after(bevy_render::view::update_frusta::<Projection>)
     );
 }
 
@@ -81,7 +80,7 @@ pub fn update_portal_cameras(
 
         resize_image_if_needed(portal_camera, main_camera, &mut resize_params);
 
-        // TODO: see Update frustum bellow
+        // Needed for update frustum later because of update_frusta
         let destination_transform = &destination_global_transform.compute_transform();
 
         if portal_global_transform.is_changed()
@@ -92,26 +91,26 @@ pub fn update_portal_cameras(
 
             // Move portal camera
             let new_portal_camera_transform = get_portal_camera_transform(main_camera_transform, portal_transform, destination_transform);
-            portal_camera_transform.set(Box::new(new_portal_camera_transform)).unwrap();
+            *portal_camera_transform = new_portal_camera_transform;
             // We update the global transform manually here for two reasons:
             // 1) This system is run after global transform propagation
             // so if we don't do that the portal camera's global transform would be lagging behind one frame
-            // 2) it is not updated nor propagated automatically in Bevy 0.10.1, for some reason
-            // (I tried compying the queries of propagate_transforms and have the portal camera and its child in the results).
-            // Since the set-up of TransformPlugin will change in Bevy 0.11, this is a WONTFIX until Bevy 0.11
-            portal_camera_global_transform.set(Box::new(GlobalTransform::from(new_portal_camera_transform))).unwrap();
+            // 2) The portal camera should not be in a hierarchy in theory (?)
+            *portal_camera_global_transform = GlobalTransform::from(new_portal_camera_transform);
         }
 
-        // Update frustum
-        // TODO: this had to get outside of the big if, because we can't use PortalProjection,
-        // and we have to fight against update_frusta, which runs every tick.
-        let new_frustum = get_frustum(
-            portal_camera,
-            &portal_camera_transform,
-            destination_transform,
-            projection,
-        );
-        frustum.set(Box::new(new_frustum)).unwrap();
+        // We can't put it in the block above because update_frusta will update it
+        // when the portal camera's global transform is updated, which will happen in the next tick
+        if portal_camera_global_transform.is_changed() {
+            // Update frustum
+            let new_frustum = get_frustum(
+                portal_camera,
+                &portal_camera_transform,
+                destination_transform,
+                projection,
+            );
+            *frustum = new_frustum;
+        }
 
         // TODO: Check if camera should update
     }
@@ -163,7 +162,7 @@ fn get_frustum(
     );
 
     match portal_camera.portal_mode {
-        PortalMode::MaskedImagePlaneFrustum(Some(half_space)) => {
+        PortalMode::MaskedImageHalfSpaceFrustum(Some(half_space)) => {
             let rot = Quat::from_rotation_arc(
                 Vec3::NEG_Z,
                 destination_transform.forward(),
@@ -173,12 +172,12 @@ fn get_frustum(
             let dot = destination_transform.translation.dot(near_half_space_normal.normalize());
             let near_half_space_distance = -(dot + half_space.d());
 
-            frustum.planes[4] = Plane::new(near_half_space_normal.extend(near_half_space_distance))
+            frustum.half_spaces[4] = HalfSpace::new(near_half_space_normal.extend(near_half_space_distance))
         }
-        PortalMode::MaskedImagePlaneFrustum(None) => {
+        PortalMode::MaskedImageHalfSpaceFrustum(None) => {
             let near_half_space_normal = destination_transform.forward();
             let near_half_space_distance = - destination_transform.translation.dot(near_half_space_normal);
-            frustum.planes[4] = Plane::new(near_half_space_normal.extend(near_half_space_distance))
+            frustum.half_spaces[4] = HalfSpace::new(near_half_space_normal.extend(near_half_space_distance))
         }
         _ => ()
     };
@@ -193,6 +192,7 @@ pub(super) fn get_viewport_size (
         images,
         primary_window_query,
         windows_query,
+        texture_views,
     }: &PortalImageSizeParams,
 ) -> UVec2 {
     match main_camera.viewport.as_ref() {
@@ -205,7 +205,8 @@ pub(super) fn get_viewport_size (
                 };
                 UVec2::new(window.physical_width(),window.physical_height())
             },
-            RenderTarget::Image(handle) => images.get(handle).unwrap().size().as_uvec2()
+            RenderTarget::Image(handle) => images.get(handle).unwrap().size().as_uvec2(),
+            RenderTarget::TextureView(handle) => texture_views.get(handle).unwrap().size
         }
     }
 }
@@ -216,6 +217,7 @@ pub struct PortalImageSizeParams<'w, 's> {
     pub(super) images: ResMut<'w, Assets<Image>>,
     primary_window_query: Query<'w, 's, &'static Window, With<PrimaryWindow>>,
     windows_query: Query<'w, 's, &'static Window>,
+    texture_views: Res<'w, ManualTextureViews>,
 }
 
 /// Helper function to get the transform to change the main camera's transform into the portal camera's transform.

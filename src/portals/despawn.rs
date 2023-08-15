@@ -1,6 +1,6 @@
 ///! System and helpers for the update of portal cameras
 
-use bevy_app::App;
+use bevy_app::prelude::*;
 use bevy_ecs::{
     prelude::*,
     query::QueryEntityError,
@@ -28,7 +28,7 @@ pub(super) fn build_despawn(app: &mut App, despawn_strategy: Option<PortalPartsD
     }
 
     if should_check_portal_camera_despawn {
-        app.add_system(check_portal_camera_despawn);
+        app.add_systems(Update, check_portal_camera_despawn);
     }
 }
 
@@ -39,7 +39,7 @@ pub struct DespawnPortalPartsCommand {
 }
 
 impl Command for DespawnPortalPartsCommand {
-    fn write(self, world: &mut World) {
+    fn apply(self, world: &mut World) {
         let mut system_state = SystemState::<Commands>::new(world);
         let mut commands = system_state.get_mut(world);
 
@@ -54,7 +54,7 @@ impl Command for DespawnPortalPartsCommand {
 pub struct DespawnPortalPartsEntityCommand(PortalPartsDespawnStrategy);
 
 impl EntityCommand for DespawnPortalPartsCommand {
-    fn write(self, entity: Entity, world: &mut World) {
+    fn apply(self, entity: Entity, world: &mut World) {
         let mut system_state = SystemState::<(
             Commands,
             Query<&Portal>,

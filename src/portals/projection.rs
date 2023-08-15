@@ -13,7 +13,7 @@ use bevy_render::{
 
 /// Add the projection logic to [PortalsPlugin](super::PortalsPlugin)
 pub(super) fn build_projection(app: &mut App) {
-    app.add_plugin(CameraProjectionPlugin::<PortalProjection>::default());
+    app.add_plugins(CameraProjectionPlugin::<PortalProjection>::default());
 }
 
 /// For now, almost a copy of Bevy's Projection, to avoid frustum being calculated
@@ -24,6 +24,7 @@ pub(super) fn build_projection(app: &mut App) {
 pub enum PortalProjection {
     Perspective(PerspectiveProjection),
     Orthographic(OrthographicProjection),
+    //Other(Box<dyn CameraProjection>),
     //Fitting
 }
 

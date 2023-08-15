@@ -5,7 +5,7 @@
 [![MIT/Apache 2.0](https://img.shields.io/badge/license-EUPL-blue.svg)](https://commission.europa.eu/content/european-union-public-licence_en)
 [![Bevy tracking](https://img.shields.io/badge/Bevy%20tracking-released%20version-lightblue)](https://github.com/bevyengine/bevy/blob/main/docs/plugins_guidelines.md#main-branch-tracking)
 
-Bevy Simple Portals is a Bevy game engine plugin aimed to create portals.
+Bevy Basic Portals is a Bevy game engine plugin aimed to create portals.
 
 Those portals are (for now) purely visual and can be used to make mirrors, indoor renderings, crystal balls, and more!
 
@@ -19,9 +19,12 @@ use bevy_basic_portals::*;
 
 fn main() {
     App::new()
-        .add_plugins(DefaultPlugins)
-        .add_plugin(PortalsPlugin::default())
-        .add_startup_system(setup)
+        .add_plugins((
+            DefaultPlugins,
+            pivot_cameras::PivotCamerasPlugin::default(),
+            PortalsPlugin::MINIMAL
+        ))
+        .add_systems(Startup, setup)
         .run();
 }
 
@@ -79,3 +82,9 @@ if you want a bidirectional portal you can crate two portals manually
 - this crate doesn't handle raycasting through the portal, it has to be done manually
 - this crate doesn't handle resizing window/viewport of the main camera
 - this crate doesn't handle changing the portal's or the destination's scale
+
+## Bevy versions
+| Bevy version | Bevy Basic Portals recommended version |
+|--------------|----------------------------------------|
+| 0.10.*       | 0.2.1                                  |
+| 0.11.1       | 0.3.0                                  |

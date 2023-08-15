@@ -8,7 +8,7 @@ use bevy_render::{
     prelude::*,
     render_resource::Face,
     view::RenderLayers,
-    primitives::Plane,
+    primitives::HalfSpace,
 };
 use bevy_transform::prelude::*;
 
@@ -244,7 +244,7 @@ pub enum PortalMode {
     /// the portal
     MaskedImageNoFrustum,
     /// Same as [PortalMode::MaskedImageNoFrustum], but a frustum will be defined,
-    /// using a [Plane] in the mesh/entity local space (it later takes into account
+    /// using a [HalfSpace] in the mesh/entity local space (it later takes into account
     /// the destination transform for calculations in global space).
     /// 
     /// `None` will assume the `Plane` is `{p, p.z < 0}` in local space, it should
@@ -255,10 +255,10 @@ pub enum PortalMode {
     /// for rendering when they shouldn't be (for example, when the camera's forward
     /// is almost parallel to the plane, objects behind the camera but in front of
     /// the plane will be considered).
-    MaskedImagePlaneFrustum(Option<Plane>),
+    MaskedImageHalfSpaceFrustum(Option<HalfSpace>),
     //TODO
     //MaskedImageRectangleFrustum(PortalRectangleView),
-    //MaskedImageSpherePlaneFrustum(_)
+    //MaskedImageSphereHalfSpaceFrustum(_)
     //MaskedImageSphereRectangleFrustum(_)
     // A projection matrix will be defined to fit.
     //FittingProjectionRectangle(PortalRectangleView)
@@ -266,7 +266,7 @@ pub enum PortalMode {
 
 impl Default for PortalMode {
     fn default() -> Self {
-        PortalMode::MaskedImagePlaneFrustum(None)
+        PortalMode::MaskedImageHalfSpaceFrustum(None)
     }
 }
 

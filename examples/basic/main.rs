@@ -6,9 +6,12 @@ use bevy_basic_portals::*;
 
 fn main() {
     App::new()
-        .add_plugins(DefaultPlugins)
-        .add_plugin(PortalsPlugin::default())
-        .add_startup_system(setup)
+        .add_plugins((
+            DefaultPlugins,
+            pivot_cameras::PivotCamerasPlugin::default(),
+            PortalsPlugin::MINIMAL
+        ))
+        .add_systems(Startup, setup)
         .run();
 }
 

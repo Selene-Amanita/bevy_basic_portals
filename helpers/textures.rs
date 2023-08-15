@@ -1,8 +1,11 @@
 //! Debug textures
 use bevy::{
     prelude::*,
-    render::{
-        render_resource::{Extent3d, TextureDimension, TextureFormat, Face},
+    render::render_resource::{
+        Extent3d,
+        TextureDimension,
+        TextureFormat,
+        Face
     },
 };
 

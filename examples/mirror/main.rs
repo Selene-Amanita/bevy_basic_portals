@@ -10,12 +10,12 @@ mod pivot_cameras;
 
 fn main() {
     App::new()
-        .add_plugins(DefaultPlugins
-            .set(ImagePlugin::default_nearest()
+        .add_plugins((
+            DefaultPlugins.set(ImagePlugin::default_nearest()),
+            PortalsPlugin::MINIMAL,
+            pivot_cameras::PivotCamerasPlugin::default(),
         ))
-        .add_plugin(PortalsPlugin::MINIMAL)
-        .add_plugin(pivot_cameras::PivotCamerasPlugin::default())
-        .add_startup_system(setup)
+        .add_systems(Startup, setup)
         .run();
 }
 

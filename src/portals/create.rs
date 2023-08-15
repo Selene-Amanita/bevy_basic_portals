@@ -48,11 +48,11 @@ pub(super) fn build_create(app: &mut App, check_create: &PortalsCheckMode) {
         .register_type::<PortalCamera>();
 
     if check_create != &PortalsCheckMode::Manual {
-        app.add_startup_system(create_portals.in_base_set(StartupSet::PostStartup).after(TransformSystem::TransformPropagate));
+        app.add_systems(PostStartup, create_portals.after(TransformSystem::TransformPropagate));
     }
 
     if check_create == &PortalsCheckMode::AlwaysCheck {
-        app.add_system(create_portals.in_base_set(CoreSet::PostUpdate).after(TransformSystem::TransformPropagate));
+        app.add_systems(PostUpdate, create_portals.after(TransformSystem::TransformPropagate));
     }
 }
 
@@ -109,7 +109,7 @@ pub struct CreatePortalCommand {
 }
 
 impl EntityCommand for CreatePortalCommand {
-    fn write(self, id: Entity, world: &mut World) {
+    fn apply(self, id: Entity, world: &mut World) {
         let (portal_transform, mesh) = world.query::<(&GlobalTransform, &Handle<Mesh>)>().get(world, id)
             .expect("You must provide a GlobalTransform and Handle<Mesh> components to the entity before using a CreatePortalCommand");
         let portal_transform = *portal_transform;

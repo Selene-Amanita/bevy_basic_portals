@@ -29,10 +29,9 @@ impl Plugin for PivotCamerasPlugin {
         } else {
             app.init_resource::<PivotCamerasConfig>();
         }
-        app.add_system(update_pivot_cameras);
+        app.add_systems(Update, update_pivot_cameras);
     }
 }
-
 
 #[derive(Resource, Copy, Clone)]
 pub struct PivotCamerasConfig {
