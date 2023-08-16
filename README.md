@@ -21,7 +21,6 @@ fn main() {
     App::new()
         .add_plugins((
             DefaultPlugins,
-            pivot_cameras::PivotCamerasPlugin::default(),
             PortalsPlugin::MINIMAL
         ))
         .add_systems(Startup, setup)
@@ -77,7 +76,7 @@ More complex examples are available in the examples folder.
 - portals created by this crate are uni-directionnal, you can only look from one space to the other,
 if you want a bidirectional portal you can crate two portals manually
 - this crate doesn't handle "portal recursion", as in viewing a portal through another portal
-- portals created by this crate have no visible borders (not counting aliasing artifacts), you can "see" them with DebugPortal
+- portals created by this crate have no visible borders (not counting aliasing artifacts), you can "see" them with `DebugPortal`
 - this crate doesn't handle moving stuff through the portal, it is only visual, more like a crystal ball
 - this crate doesn't handle raycasting through the portal, it has to be done manually
 - this crate doesn't handle resizing window/viewport of the main camera
@@ -86,5 +85,5 @@ if you want a bidirectional portal you can crate two portals manually
 ## Bevy versions
 | Bevy version | Bevy Basic Portals recommended version |
 |--------------|----------------------------------------|
-| 0.10.*       | 0.2.1                                  |
 | 0.11.1       | 0.3.0                                  |
+| 0.10.*       | 0.2.1                                  |
