@@ -1,33 +1,33 @@
 [package]
 name = "bevy_basic_portals"
-version = "0.3.0"
+version = "0.4.0"
 edition = "2021"
 categories = ["game-engines", "graphics", "rendering"]
 keywords = ["bevy", "portal", "mirror", "gamedev"]
 description = "A portal plugin for Bevy game engine"
-license = "EUPL-1.2"
+license = "NVPL-7+"
 readme = "README.md"
 repository = "https://github.com/Selene-Amanita/bevy_basic_portals"
 authors = ["Selene Amanita"]
 
 [dependencies]
-bevy_app = "0.11.1"
-bevy_asset = "0.11.1"
-bevy_core_pipeline = "0.11.1"
-bevy_ecs = "0.11.1"
-bevy_hierarchy = "0.11.1"
-bevy_math = "0.11.1"
-bevy_pbr = "0.11.1"
-bevy_reflect = "0.11.1" # Could potentially be under a feature?
-bevy_render = "0.11.1"
-bevy_transform = "0.11.1"
-bevy_window = "0.11.1"
+bevy_app = "0.12"
+bevy_asset = "0.12"
+bevy_core_pipeline = "0.12"
+bevy_ecs = "0.12"
+bevy_hierarchy = "0.12"
+bevy_math = "0.12"
+bevy_pbr = "0.12"
+bevy_reflect = "0.12" # Could potentially be under a feature?
+bevy_render = "0.12"
+bevy_transform = "0.12"
+bevy_window = "0.12"
 tracing = { version = "0.1", default-features = false, features = ["std"] } # From bevy_utils
 # All of the above can be replaced by:
-# bevy = { version = "0.11.1", default-features = false, features = ["bevy_asset", "bevy_core_pipeline", "bevy_pbr", "bevy_render", ] }
+# bevy = { version = "0.12", default-features = false, features = ["bevy_asset", "bevy_core_pipeline", "bevy_pbr", "bevy_render", ] }
 
 [dev-dependencies]
-bevy = { version = "0.11.1", default-features = false, features = [
+bevy = { version = "0.12", default-features = false, features = [
     "bevy_asset",
     "bevy_core_pipeline",
     "bevy_pbr",

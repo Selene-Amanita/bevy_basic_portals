@@ -79,11 +79,19 @@ if you want a bidirectional portal you can crate two portals manually
 - portals created by this crate have no visible borders (not counting aliasing artifacts), you can "see" them with `DebugPortal`
 - this crate doesn't handle moving stuff through the portal, it is only visual, more like a crystal ball
 - this crate doesn't handle raycasting through the portal, it has to be done manually
-- this crate doesn't handle resizing window/viewport of the main camera
 - this crate doesn't handle changing the portal's or the destination's scale
 
 ## Bevy versions
 | Bevy version | Bevy Basic Portals recommended version |
 |--------------|----------------------------------------|
+| 0.12.*       | 0.3.0                                  |
 | 0.11.1       | 0.3.0                                  |
 | 0.10.*       | 0.2.1                                  |
+
+## License
+
+Bevy Basic Portals is non-violent software: you can use, redistribute, and/or modify it under the terms of the `NVPLv7+` as found in the `LICENSE` file in the source code root directory or at [the CNPL repository](https://git.pixie.town/thufie/npl-builder/src/branch/main/nvpl.md).
+
+Bevy Basic Portals comes with ABSOLUTELY NO WARRANTY, to the extent permitted by applicable law.
+
+See [the CNPL website](https://thufie.lain.haus/NPL.html) for more information.

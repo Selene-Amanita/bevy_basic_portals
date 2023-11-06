@@ -168,7 +168,8 @@ pub struct CreatePortalBundle {
     pub portal_transform: Transform,
     pub global_transform: GlobalTransform,
     pub visibility: Visibility,
-    pub computed_visibility: ComputedVisibility,
+    pub inherited_visibility: InheritedVisibility,
+    pub view_visibility: ViewVisibility,
 }
 
 /// [Component] to create a [Portal] and everything needed to make it work.

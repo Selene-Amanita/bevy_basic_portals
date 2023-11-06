@@ -28,10 +28,7 @@ pub(super) fn build_update(app: &mut App) {
     app.add_systems(
         PostUpdate,
         update_portal_cameras
-            // TODO: once we can use PortalProjection, we can ignore update_frusta
-            // see https://github.com/bevyengine/bevy/pull/9226
-            //.after(bevy_transform::TransformSystem::TransformPropagate)
-            .after(bevy_render::view::update_frusta::<Projection>)
+            .after(bevy_transform::TransformSystem::TransformPropagate)
     );
 }
 
@@ -40,7 +37,7 @@ pub(super) fn build_update(app: &mut App) {
 pub fn update_portal_cameras(
     mut commands: Commands,
     strategy: Res<PortalPartsDespawnStrategy>,
-    mut portal_cameras: Query<(&PortalCamera, &mut Transform, &mut GlobalTransform, &mut Frustum, &Projection), With<Camera>>, // TODO: use PortalProjection in the future
+    mut portal_cameras: Query<(&PortalCamera, &mut Transform, &mut GlobalTransform, &mut Frustum, &PortalProjection), With<Camera>>,
     main_camera_query: Query<(Ref<GlobalTransform>, &Camera), Without<PortalCamera>>,
     portal_query: Query<(Ref<GlobalTransform>, &Handle<PortalMaterial>), (With<Portal>, Without<Camera>)>,
     destination_query: Query<Ref<GlobalTransform>, (With<PortalDestination>, Without<Camera>)>,
@@ -80,14 +77,16 @@ pub fn update_portal_cameras(
         }
         let destination_global_transform = destination_result.unwrap();
 
-        resize_image_if_needed(portal_camera, main_camera, &mut resize_params, portal_material, &mut materials);
+        let portal_image_resized = resize_image_if_needed(portal_camera, main_camera, &mut resize_params, portal_material, &mut materials);
 
         // Needed for update frustum later because of update_frusta
         let destination_transform = &destination_global_transform.compute_transform();
 
-        if portal_global_transform.is_changed()
+        let should_update_transform = portal_global_transform.is_changed()
         || destination_global_transform.is_changed()
-        || main_camera_global_transform.is_changed() {
+        || main_camera_global_transform.is_changed();
+
+        if should_update_transform {
             let portal_transform = &portal_global_transform.compute_transform();
             let main_camera_transform = &main_camera_global_transform.compute_transform();
 
@@ -101,9 +100,7 @@ pub fn update_portal_cameras(
             *portal_camera_global_transform = GlobalTransform::from(new_portal_camera_transform);
         }
 
-        // We can't put it in the block above because update_frusta will update it
-        // when the portal camera's global transform is updated, which will happen in the next tick
-        if portal_camera_global_transform.is_changed() {
+        if portal_image_resized || should_update_transform {
             // Update frustum
             let new_frustum = get_frustum(
                 portal_camera,
@@ -125,17 +122,12 @@ fn resize_image_if_needed(
     size_params: &mut PortalImageSizeParams,
     portal_material: &Handle<PortalMaterial>,
     materials: &mut Assets<PortalMaterial>,
-) {
-    // TOFIX (mutable access to the image makes it not update by the PortalCamera anymore for some reason)
-    // see https://github.com/bevyengine/bevy/issues/8767
-    // Probably relevant
-    // https://github.com/bevyengine/bevy/blob/9d1193df6c300dede75b00ab092caa119a7e80ad/examples/shader/post_process_pass.rs
-    // https://discord.com/channels/691052431525675048/1019697973933899910/threads/1093930187802017953
+) -> bool {
     let portal_image = size_params.images.get(&portal_camera.image).unwrap();
     let portal_image_size = portal_image.size();
     let main_camera_viewport_size = get_viewport_size(main_camera, size_params);
 
-    if (portal_image_size.x / portal_image_size.y) != ((main_camera_viewport_size.x as f32)/(main_camera_viewport_size.y as f32)) {
+    if portal_image_size.x != main_camera_viewport_size.x || portal_image_size.y != main_camera_viewport_size.y {
         let size = Extent3d {
             width: main_camera_viewport_size.x,
             height: main_camera_viewport_size.y,
@@ -143,6 +135,8 @@ fn resize_image_if_needed(
         };
         if let (Some(portal_image), Some(_)) = (
             size_params.images.get_mut(&portal_camera.image),
+            // This is needed so that the material is aware the image changed,
+            // see https://github.com/bevyengine/bevy/issues/8767
             materials.get_mut(portal_material)
         ) {
             portal_image.texture_descriptor.size = size;
@@ -150,6 +144,9 @@ fn resize_image_if_needed(
         } else {
             warn!("No portal image or material.");
         }
+        true
+    } else {
+        false
     }
 }
 
@@ -159,7 +156,7 @@ fn get_frustum(
     portal_camera: &PortalCamera,
     portal_camera_transform: &Transform,
     destination_transform: &Transform,
-    projection: &Projection, // TODO: use PortalProjection in the future
+    projection: &PortalProjection,
 ) -> Frustum {
     let view_projection =
         projection.get_projection_matrix() * portal_camera_transform.compute_matrix().inverse();
@@ -211,11 +208,11 @@ pub(super) fn get_viewport_size (
             RenderTarget::Window(window_ref) => {
                 let window = match window_ref {
                     WindowRef::Primary => primary_window_query.get_single().unwrap(),
-                    WindowRef::Entity(entity) => windows_query.get(entity.clone()).unwrap()
+                    WindowRef::Entity(entity) => windows_query.get(*entity).unwrap()
                 };
                 UVec2::new(window.physical_width(),window.physical_height())
             },
-            RenderTarget::Image(handle) => images.get(handle).unwrap().size().as_uvec2(),
+            RenderTarget::Image(handle) => images.get(handle).unwrap().size(),
             RenderTarget::TextureView(handle) => texture_views.get(handle).unwrap().size
         }
     }

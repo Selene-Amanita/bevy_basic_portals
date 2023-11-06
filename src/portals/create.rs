@@ -251,8 +251,7 @@ fn create_portal(
 
     // Create the portal camera
     let camera_bundle = Camera3dBundle::default();
-    // TODO: use PortalProjection in the future
-    let projection: Projection = main_camera_projection
+    let projection: PortalProjection = main_camera_projection
         .unwrap_or(&camera_bundle.projection)
         .clone()
         .into();
@@ -267,9 +266,9 @@ fn create_portal(
         camera_bundle.visible_entities,
         camera_bundle.frustum,
         main_camera_camera3d.unwrap_or(&camera_bundle.camera_3d).clone(),
-        main_camera_tonemapping.unwrap_or(&camera_bundle.tonemapping).clone(),
-        main_camera_dither.unwrap_or(&camera_bundle.dither).clone(),
-        main_camera_color_grading.unwrap_or(&camera_bundle.color_grading).clone(),
+        *main_camera_tonemapping.unwrap_or(&camera_bundle.tonemapping),
+        *main_camera_dither.unwrap_or(&camera_bundle.dither),
+        *main_camera_color_grading.unwrap_or(&camera_bundle.color_grading),
         // TOFIX set the exact value of Transform and GlobalTransform to avoid black screen at spawn
         // let portal_camera_transform = get_portal_camera_transform(main_camera_transform, portal_transform, &destination_transform);
         // This requires an extra Query to get destination_transform when AsPortalDestination::Entity/CreateMirror

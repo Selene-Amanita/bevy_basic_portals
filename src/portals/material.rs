@@ -30,7 +30,7 @@ pub(super) fn build_material(app: &mut App) {
 }
 
 /// Material with the portal shader (renders the image without deformation using the mesh as a mask).
-#[derive(AsBindGroup, Clone, TypeUuid, TypePath)]
+#[derive(Asset, AsBindGroup, Clone, TypeUuid, TypePath)]
 #[bind_group_data(PortalMaterialKey)]
 #[uuid = "436e9734-867f-4faf-9b5f-81703017a018"]
 pub struct PortalMaterial {
@@ -40,12 +40,12 @@ pub struct PortalMaterial {
     pub cull_mode: Option<Face>
 }
 
-pub const PORTAL_SHADER_HANDLE: HandleUntyped =
-  HandleUntyped::weak_from_u64(Shader::TYPE_UUID, 0x792531383ac40e25);
+pub const PORTAL_SHADER_HANDLE: Handle<Shader> =
+  Handle::weak_from_u128(0x1EA3049777A909BDFFEB794905C6D106);
 
 impl Material for PortalMaterial {
     fn fragment_shader() -> ShaderRef {
-        PORTAL_SHADER_HANDLE.typed().into()
+        PORTAL_SHADER_HANDLE.into()
     }
 
     fn specialize(

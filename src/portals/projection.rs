@@ -4,7 +4,7 @@
 
 use bevy_app::App;
 use bevy_ecs::prelude::*;
-use bevy_math::Mat4;
+use bevy_math::{Mat4, Vec3A};
 use bevy_reflect::{Reflect, std_traits::ReflectDefault};
 use bevy_render::{
     prelude::*,
@@ -74,6 +74,13 @@ impl CameraProjection for PortalProjection {
         match self {
             Self::Perspective(projection) => projection.far(),
             Self::Orthographic(projection) => projection.far(),
+        }
+    }
+
+    fn get_frustum_corners(&self, z_near: f32, z_far: f32) -> [Vec3A; 8] {
+        match self {
+            Self::Perspective(projection) => projection.get_frustum_corners(z_near, z_far),
+            Self::Orthographic(projection) => projection.get_frustum_corners(z_near, z_far),
         }
     }
 }

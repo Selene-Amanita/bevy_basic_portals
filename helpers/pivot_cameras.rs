@@ -124,13 +124,13 @@ fn update_pivot_cameras(
     let mut mov = Move::default();
 
     if mouse_input.pressed(MouseButton::Left) || mouse_input.pressed(MouseButton::Right) || mouse_input.pressed(MouseButton::Middle) {
-        for ev in motion_evr.iter() {
+        for ev in motion_evr.read() {
             mov.mouse.h -= ev.delta.x * config.mouse_speed;
             mov.mouse.v -= ev.delta.y * config.mouse_speed;
         }
     }
 
-    for ev in scroll_evr.iter() {
+    for ev in scroll_evr.read() {
         match ev.unit {
             MouseScrollUnit::Line => {
                 mov.mouse.f -= ev.y * config.mouse_zoom_speed;
