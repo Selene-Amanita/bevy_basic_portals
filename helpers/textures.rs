@@ -8,6 +8,7 @@ use bevy::{
         Face
     },
 };
+use bevy_render::render_asset::RenderAssetUsages;
 
 /// Creates a colorful test pattern (copied from bevy's 3d_shape example)
 pub fn uv_debug_texture(darkness: u8) -> Image {
@@ -36,6 +37,7 @@ pub fn uv_debug_texture(darkness: u8) -> Image {
         TextureDimension::D2,
         &texture_data,
         TextureFormat::Rgba8UnormSrgb,
+        RenderAssetUsages::default(),
     )
 }
 

@@ -59,7 +59,7 @@ fn setup(
     let torus_mesh = meshes.add(Mesh::from(shape::Torus{radius:2.5, ring_radius:0.5, ..default()}));
     let torus = commands.spawn(PbrBundle {
         mesh: torus_mesh,
-        material: materials.add(Color::WHITE.into()),
+        material: materials.add(Color::WHITE),
         transform: Transform::from_xyz(0., 0., -5.),
         ..default()
     }).id();
