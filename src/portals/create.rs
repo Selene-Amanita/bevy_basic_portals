@@ -279,7 +279,9 @@ fn create_portal(
             visibility: Visibility::Hidden,
             ..SpatialBundle::default()
         },
-        create_portal.render_layer
+        create_portal.render_layer,
+        camera_bundle.exposure,
+        camera_bundle.main_texture_usages,
     )).id();
 
     // Add portal components
