@@ -78,6 +78,7 @@ if you want a bidirectional portal you can crate two portals manually
 ## Bevy versions
 | Bevy version | Bevy Basic Portals recommended version |
 |--------------|----------------------------------------|
+| 0.13.*       | 0.5.0                                  |
 | 0.12.*       | 0.4.0                                  |
 | 0.11.1       | 0.3.0                                  |
 | 0.10.*       | 0.2.1                                  |
