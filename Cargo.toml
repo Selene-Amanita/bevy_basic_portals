@@ -11,23 +11,23 @@ repository = "https://github.com/Selene-Amanita/bevy_basic_portals"
 authors = ["Selene Amanita"]
 
 [dependencies]
-bevy_app = "0.12"
-bevy_asset = "0.12"
-bevy_core_pipeline = "0.12"
-bevy_ecs = "0.12"
-bevy_hierarchy = "0.12"
-bevy_math = "0.12"
-bevy_pbr = "0.12"
-bevy_reflect = "0.12" # Could potentially be under a feature?
-bevy_render = "0.12"
-bevy_transform = "0.12"
-bevy_window = "0.12"
+bevy_app = "0.13"
+bevy_asset = "0.13"
+bevy_core_pipeline = "0.13"
+bevy_ecs = "0.13"
+bevy_hierarchy = "0.13"
+bevy_math = "0.13"
+bevy_pbr = "0.13"
+bevy_reflect = "0.13" # Could potentially be under a feature?
+bevy_render = "0.13"
+bevy_transform = "0.13"
+bevy_window = "0.13"
 tracing = { version = "0.1", default-features = false, features = ["std"] } # From bevy_utils
 # All of the above can be replaced by:
-# bevy = { version = "0.12", default-features = false, features = ["bevy_asset", "bevy_core_pipeline", "bevy_pbr", "bevy_render", ] }
+# bevy = { version = "0.13", default-features = false, features = ["bevy_asset", "bevy_core_pipeline", "bevy_pbr", "bevy_render", ] }
 
 [dev-dependencies]
-bevy = { version = "0.12", default-features = false, features = [
+bevy = { version = "0.13", default-features = false, features = [
     "bevy_asset",
     "bevy_core_pipeline",
     "bevy_pbr",

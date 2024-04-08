@@ -45,24 +45,24 @@ fn setup(
     // Lights
     commands.insert_resource(AmbientLight {
         color: Color::WHITE,
-        brightness: 0.3,
+        brightness: 80.,
     });
 
     commands.insert_resource(ClearColor(Color::rgb(0., 0., 0.)));
 
     // Sphere
     let debug_material = materials.add(textures::debug_material(&mut images, 3, Some(Face::Back)));
-    let sphere_mesh = meshes.add(Mesh::from(shape::UVSphere{radius: 2.5, ..default()}));
+    let sphere_mesh = meshes.add(Sphere::new(2.5).mesh().uv(32, 18));
     setup_object_and_portal(&mut commands, main_camera, sphere_mesh, debug_material.clone(), Transform::from_xyz(10.,0.,0.), Some(Face::Back));
 
     // Cube
     let debug_material = materials.add(textures::debug_material(&mut images, 2, Some(Face::Back)));
-    let cube_mesh = meshes.add(Mesh::from(shape::Cube::new(5.)));
+    let cube_mesh = meshes.add(Cuboid::new(5., 5., 5.));
     setup_object_and_portal(&mut commands, main_camera, cube_mesh, debug_material.clone(), Transform::from_xyz(-10.,0.,0.), Some(Face::Back));
 
     // double-sided Quad
     let debug_material = materials.add(textures::debug_material(&mut images, 1, None));
-    let quad_mesh = meshes.add(Mesh::from(shape::Quad::new(Vec2::new(5.,5.))));
+    let quad_mesh = meshes.add(Rectangle::new(5., 5.));
     setup_object_and_portal(&mut commands, main_camera, quad_mesh, debug_material.clone(), Transform::from_xyz(0.,0.,-10.), None);
 }
 

@@ -1,4 +1,4 @@
-///! Components, systems and command for the creation of portals
+//! Components, systems and command for the creation of portals
 
 use bevy_app::prelude::*;
 use bevy_asset::prelude::*;
@@ -279,7 +279,9 @@ fn create_portal(
             visibility: Visibility::Hidden,
             ..SpatialBundle::default()
         },
-        create_portal.render_layer
+        create_portal.render_layer,
+        camera_bundle.exposure,
+        camera_bundle.main_texture_usages,
     )).id();
 
     // Add portal components
@@ -343,8 +345,8 @@ fn create_portal(
             commands.entity(destination_entity).with_children(|parent| {
                 parent.spawn((
                     PbrBundle {
-                        mesh: meshes.add(shape::Icosphere {radius:0.1, ..shape::Icosphere::default()}.try_into().unwrap()),
-                        material: materials.add(debug_color.into()),
+                        mesh: meshes.add(Sphere::new(0.1).mesh().ico(5).unwrap()),
+                        material: materials.add(debug_color),
                         ..PbrBundle::default()
                     },
                     create_portal.render_layer
@@ -377,8 +379,8 @@ fn create_portal(
             commands.entity(portal_camera_entity).with_children(|parent| {
                 parent.spawn((
                     PbrBundle {
-                        mesh: meshes.add(shape::Icosphere {radius:0.1, ..shape::Icosphere::default()}.try_into().unwrap()),
-                        material: materials.add(debug_color.into()),
+                        mesh: meshes.add(Sphere::new(0.1).mesh().ico(5).unwrap()),
+                        material: materials.add(debug_color),
                         visibility: Visibility::Visible,
                         ..PbrBundle::default()
                     },
@@ -391,6 +393,7 @@ fn create_portal(
 
 /// [SystemParam] needed for [create_portals]
 #[derive(SystemParam)]
+#[allow(clippy::type_complexity)]
 pub struct CreatePortalParams<'w, 's> {
     commands: Commands<'w, 's>,
     portal_materials: ResMut<'w, Assets<PortalMaterial>>,

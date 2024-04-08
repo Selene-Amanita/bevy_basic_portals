@@ -54,12 +54,12 @@ impl Default for PivotCamerasConfig {
             keyboard_zoom_speed: DEFAULT_KEYBOARD_ZOOM_SPEED,
             mouse_speed: DEFAULT_MOUSE_SPEED,
             mouse_zoom_speed: DEFAULT_MOUSE_ZOOM_SPEED,
-            keyboard_left_key: KeyCode::Left,
-            keyboard_right_key: KeyCode::Right,
-            keyboard_up_key: KeyCode::Up,
-            keyboard_down_key: KeyCode::Down,
-            keyboard_forward_key: KeyCode::Z,
-            keyboard_backward_key: KeyCode::A,
+            keyboard_left_key: KeyCode::ArrowLeft,
+            keyboard_right_key: KeyCode::ArrowRight,
+            keyboard_up_key: KeyCode::ArrowUp,
+            keyboard_down_key: KeyCode::ArrowDown,
+            keyboard_forward_key: KeyCode::KeyZ,
+            keyboard_backward_key: KeyCode::KeyA,
         }
     }
 }
@@ -114,8 +114,8 @@ struct Move {
 fn update_pivot_cameras(
     config: Res<PivotCamerasConfig>,
     time: Res<Time>,
-    keyboard_input: Res<Input<KeyCode>>,
-    mouse_input: Res<Input<MouseButton>>,
+    keyboard_input: Res<ButtonInput<KeyCode>>,
+    mouse_input: Res<ButtonInput<MouseButton>>,
     mut motion_evr: EventReader<MouseMotion>,
     mut scroll_evr: EventReader<MouseWheel>,
     mut pivot_camera_query: Query<(&mut Transform, &PivotCamera)>
@@ -178,7 +178,7 @@ fn update_pivot_cameras(
             // Vertical movement
             // TODO (should maybe restrict to not go above?)
             let local_x = transform.local_x();
-            transform.rotate_around(pivot_camera.pivot, Quat::from_axis_angle(local_x, move_cam.v));
+            transform.rotate_around(pivot_camera.pivot, Quat::from_axis_angle(*local_x, move_cam.v));
     
             // Horizontal movement
             transform.rotate_around(pivot_camera.pivot, Quat::from_axis_angle(Vec3::Y, move_cam.h));

@@ -1,4 +1,4 @@
-///! Components and structs to create portals without caring about their implementation
+//! Components and structs to create portals without caring about their implementation
 
 use bevy_app::prelude::*;
 use bevy_asset::Handle;

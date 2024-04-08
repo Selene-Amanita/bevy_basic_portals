@@ -50,13 +50,13 @@ fn setup(
     // Lights
     commands.insert_resource(AmbientLight {
         color: Color::WHITE,
-        brightness: 0.01,
+        brightness: 10.,
     });
 
     commands.insert_resource(ClearColor(Color::rgb(0., 0., 0.)));
 
     // Scenes
-    let portal_mesh = meshes.add(Mesh::from(shape::Quad::new(Vec2::new(scenes::PORTAL_SIZE, scenes::PORTAL_SIZE))));
+    let portal_mesh = meshes.add(Mesh::from(Rectangle::new(scenes::PORTAL_SIZE, scenes::PORTAL_SIZE)));
 
     let debug_material = materials.add(textures::debug_material(&mut images, 1, Some(Face::Back)));
 
@@ -66,7 +66,7 @@ fn setup(
     let spawn_portal_dir = Vec3::Z;
     let spawn_portal_up = Vec3::Y;
     let render_layer = RenderLayers::layer(1);
-    let shape = meshes.add(shape::Cube::new(5.).into());
+    let shape = meshes.add(Cuboid::new(5., 5., 5.));
     let color = Color::YELLOW;
     scenes::setup_portal_cube_face(&mut commands, spawn_portal_dir, spawn_portal_up, main_camera, render_layer, portal_mesh.clone(), true);
     scenes::setup_scene_test(&mut commands, spawn_portal_dir, spawn_portal_up, render_layer, portal_mesh.clone(),
@@ -76,7 +76,7 @@ fn setup(
     let spawn_portal_dir = -Vec3::Z;
     let spawn_portal_up = Vec3::Y;
     let render_layer = RenderLayers::layer(2);
-    let shape = meshes.add(shape::Box::from_corners(Vec3::new(1.,4.,1.), Vec3::new(-1.,-1.,-2.)).into());
+    let shape = meshes.add(Cuboid::from_corners(Vec3::new(1.,4.,1.), Vec3::new(-1.,-1.,-2.)));
     let color = Color::BLUE;
     scenes::setup_portal_cube_face(&mut commands, spawn_portal_dir, spawn_portal_up, main_camera, render_layer, portal_mesh.clone(), true);
     scenes::setup_scene_test(&mut commands, spawn_portal_dir, spawn_portal_up, render_layer, portal_mesh.clone(),
@@ -86,7 +86,7 @@ fn setup(
     let spawn_portal_dir = Vec3::X;
     let spawn_portal_up = Vec3::Y;
     let render_layer = RenderLayers::layer(3);
-    let shape = meshes.add(shape::Capsule {radius: 3., depth: 3., ..default()}.into());
+    let shape = meshes.add(Capsule3d::new(3., 3.));
     let color = Color::GREEN;
     scenes::setup_portal_cube_face(&mut commands, spawn_portal_dir, spawn_portal_up, main_camera, render_layer, portal_mesh.clone(), true);
     scenes::setup_scene_test(&mut commands, spawn_portal_dir, spawn_portal_up, render_layer, portal_mesh.clone(),
@@ -96,7 +96,7 @@ fn setup(
     let spawn_portal_dir = -Vec3::X;
     let spawn_portal_up = Vec3::Y;
     let render_layer = RenderLayers::layer(4);
-    let shape = meshes.add(shape::Capsule {radius: 3., depth: 3., ..default()}.into());
+    let shape = meshes.add(Capsule3d::new(3., 3.));
     let color = Color::FUCHSIA;
     scenes::setup_portal_cube_face(&mut commands, spawn_portal_dir, spawn_portal_up, main_camera, render_layer, portal_mesh.clone(), false);
     scenes::setup_scene_test(&mut commands, spawn_portal_dir, spawn_portal_up, render_layer, portal_mesh.clone(),
@@ -106,7 +106,7 @@ fn setup(
     let spawn_portal_dir = Vec3::Y;
     let spawn_portal_up = -Vec3::Z;
     let render_layer = RenderLayers::layer(5);
-    let shape = meshes.add(shape::Cube::new(5.).into());
+    let shape = meshes.add(Cuboid::new(5., 5., 5.));
     let color = Color::RED;
     scenes::setup_portal_cube_face(&mut commands, spawn_portal_dir, spawn_portal_up, main_camera, render_layer, portal_mesh.clone(), false);
     scenes::setup_scene_test(&mut commands, spawn_portal_dir, spawn_portal_up, render_layer, portal_mesh.clone(),
@@ -116,7 +116,7 @@ fn setup(
     let spawn_portal_dir = -Vec3::Y;
     let spawn_portal_up = -Vec3::Z;
     let render_layer = RenderLayers::layer(6);
-    let shape = meshes.add(shape::Torus {radius: 3., ring_radius: 1., ..default()}.into());
+    let shape = meshes.add(Torus::new(2.5, 3.5));
     let color = Color::CYAN;
     scenes::setup_portal_cube_face(&mut commands, spawn_portal_dir, spawn_portal_up, main_camera, render_layer, portal_mesh.clone(), false);
     scenes::setup_scene_test(&mut commands, spawn_portal_dir, spawn_portal_up, render_layer, portal_mesh.clone(),

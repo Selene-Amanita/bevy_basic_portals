@@ -93,7 +93,7 @@ pub fn setup_scene_test (
             PointLightBundle {
                 point_light: PointLight {
                     color,
-                    intensity: 9000.0,
+                    intensity: 1_000_000.0,
                     range: DESTINATION_DISTANCE - PORTAL_SIZE,
                     shadows_enabled: true,
                     ..default()

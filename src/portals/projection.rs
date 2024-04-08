@@ -1,6 +1,6 @@
-///! Projection logic for portals.
-/// 
-/// This is currently unused because it makes Bevy crash in some situations: https://github.com/bevyengine/bevy/issues/9077
+//! Projection logic for portals.
+//!
+//! This is currently unused because it makes Bevy crash in some situations: https://github.com/bevyengine/bevy/issues/9077
 
 use bevy_app::App;
 use bevy_ecs::prelude::*;
