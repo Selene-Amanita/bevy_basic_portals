@@ -1,4 +1,4 @@
-///! Components, systems and command for the creation of portals
+//! Components, systems and command for the creation of portals
 
 use bevy_app::prelude::*;
 use bevy_asset::prelude::*;
@@ -393,6 +393,7 @@ fn create_portal(
 
 /// [SystemParam] needed for [create_portals]
 #[derive(SystemParam)]
+#[allow(clippy::type_complexity)]
 pub struct CreatePortalParams<'w, 's> {
     commands: Commands<'w, 's>,
     portal_materials: ResMut<'w, Assets<PortalMaterial>>,

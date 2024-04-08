@@ -1,4 +1,4 @@
-///! Material for portal rendering
+//! Material for portal rendering
 
 use bevy_app::App;
 use bevy_asset::prelude::*;

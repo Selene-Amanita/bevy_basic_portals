@@ -1,4 +1,4 @@
-///! System and helpers for the update of portal cameras
+//! System and helpers for the update of portal cameras
 
 use bevy_app::prelude::*;
 use bevy_ecs::{

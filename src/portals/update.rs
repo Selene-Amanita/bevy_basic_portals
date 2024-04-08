@@ -1,4 +1,4 @@
-///! System and helpers for the update of portal cameras
+//! System and helpers for the update of portal cameras
 
 use bevy_app::prelude::*;
 use bevy_asset::{Assets, Handle};
@@ -33,7 +33,7 @@ pub(super) fn build_update(app: &mut App) {
 }
 
 /// Moves the [PortalCamera] to follow the main camera relative to the portal and the destination.
-#[allow(clippy::too_many_arguments)]
+#[allow(clippy::too_many_arguments, clippy::type_complexity)]
 pub fn update_portal_cameras(
     mut commands: Commands,
     strategy: Res<PortalPartsDespawnStrategy>,
