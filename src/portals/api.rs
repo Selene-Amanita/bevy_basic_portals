@@ -4,12 +4,7 @@ use bevy_app::prelude::*;
 use bevy_asset::Handle;
 use bevy_ecs::prelude::*;
 use bevy_reflect::Reflect;
-use bevy_render::{
-    prelude::*,
-    render_resource::Face,
-    view::RenderLayers,
-    primitives::HalfSpace,
-};
+use bevy_render::{prelude::*, primitives::HalfSpace, render_resource::Face, view::RenderLayers};
 use bevy_transform::prelude::*;
 
 use super::*;
@@ -17,18 +12,18 @@ use super::*;
 /// [Plugin] to add support for portals to a bevy App.
 pub struct PortalsPlugin {
     /// Whether and when to check for entities with [CreatePortal] components to create a portal.
-    /// 
+    ///
     /// Defaults to [PortalsCheckMode::AlwaysCheck].
     pub check_create: PortalsCheckMode,
     /// If true, should check if a [PortalCamera] despawned or has the wrong components with [check_portal_camera_despawn]
     pub check_portal_camera_despawn: bool,
     /// What to do when there is a problem getting a [PortalParts]
-    /// 
+    ///
     /// Can happen when :
     /// - a part (main camera, [Portal], [PortalDestination]) has despawned but the [PortalCamera] still exists,
     /// - a part is missing a key component (see [CreatePortalParams], entities should be returned by the relevant queries).
     /// - check_portal_camera_despawn is true and a portal camera has despawned or missing a key component but the [Portal] or [PortalDestination] still exist
-    /// 
+    ///
     /// Defaults/`None` to despawn all entities and children with a warning, except for the main camera.
     /// Will be added as a [Resource], can be changed during execution.
     pub despawn_strategy: Option<PortalPartsDespawnStrategy>,
@@ -58,7 +53,11 @@ impl Plugin for PortalsPlugin {
         build_projection(app);
         build_create(app, &self.check_create);
         build_update(app);
-        build_despawn(app, self.despawn_strategy.clone(), self.check_portal_camera_despawn);
+        build_despawn(
+            app,
+            self.despawn_strategy.clone(),
+            self.check_portal_camera_despawn,
+        );
     }
 }
 
@@ -70,11 +69,11 @@ pub enum PortalsCheckMode {
     /// Set up the check during [StartupSet::PostStartup], after [TransformPropagate](bevy_transform::TransformSystem::TransformPropagate).
     CheckAfterStartup,
     /// Set up the check during [StartupSet::PostStartup] and [CoreSet::Last], after [TransformPropagate](bevy_transform::TransformSystem::TransformPropagate).
-    AlwaysCheck
+    AlwaysCheck,
 }
 
 /// Strategy to despawn portal parts.
-/// 
+///
 /// Defaults to despawn all parts with a warning (without their children), except for the main camera.
 #[derive(Resource, Clone, Reflect)]
 #[reflect(Resource)]
@@ -173,7 +172,7 @@ pub struct CreatePortalBundle {
 }
 
 /// [Component] to create a [Portal] and everything needed to make it work.
-/// 
+///
 /// The portal will be created after the next check (see [PortalsCheckMode]), if it has the other components in [CreatePortalBundle].
 #[derive(Component, Clone)]
 pub struct CreatePortal {
@@ -185,9 +184,9 @@ pub struct CreatePortal {
     /// The camera that will see this portal, defaults to the first camera found.
     pub main_camera: Option<Entity>,
     /// Whether to cull the “front”, “back” or neither side of a the portal mesh.
-    /// 
+    ///
     /// If set to `None`, the two sides of the portal are visible and work as a portal.
-    /// 
+    ///
     /// Defaults to `Some(Face::Back)`, see [StandardMaterial](bevy_pbr::StandardMaterial).
     pub cull_mode: Option<Face>,
     /// Render layer used by the [PortalCamera], and debug elements.
@@ -217,9 +216,9 @@ pub enum AsPortalDestination {
     /// Create a [PortalDestination] with the given configuration.
     Create(CreatePortalDestination),
     /// Create a [PortalDestination] to make a mirror.
-    /// 
+    ///
     /// Will set the [PortalDestination] as a child of the [Portal] entity
-    CreateMirror
+    CreateMirror,
 }
 
 /// [PortalDestination] to be created
@@ -239,7 +238,7 @@ pub enum PortalMode {
     /// The portal effect will be rendered on a texture with the same size as
     /// the main camera's viewport, and a shader will define the UV-mapping using
     /// the portal viewed through the main camera as a mask.
-    /// 
+    ///
     /// The frustum will simply be defined from the projection matrix, which means
     /// everything between the portal camera and the destination will be seen through
     /// the portal
@@ -247,10 +246,10 @@ pub enum PortalMode {
     /// Same as [PortalMode::MaskedImageNoFrustum], but a frustum will be defined,
     /// using a [HalfSpace] in the mesh/entity local space (it later takes into account
     /// the destination transform for calculations in global space).
-    /// 
+    ///
     /// `None` will assume the `Plane` is `{p, p.z < 0}` in local space, it should
     /// be the same as `Some(Vec3::NEG_Z.extend(0.))`.
-    /// 
+    ///
     /// Note that this will *replace* the near plane of the frustum defined from
     /// the projection matrix, which means that some objects might be considered
     /// for rendering when they shouldn't be (for example, when the camera's forward
@@ -292,7 +291,7 @@ pub struct DebugPortal {
     /// If true, displays a copy of the portal mesh at the destination.
     pub show_portal_copy: bool,
     /// If true, displays a small sphere at the [PortalCamera] position.
-    pub show_portal_camera_point: bool
+    pub show_portal_camera_point: bool,
 }
 
 impl Default for DebugPortal {
@@ -303,7 +302,7 @@ impl Default for DebugPortal {
             show_window: true,
             show_destination_point: true,
             show_portal_copy: true,
-            show_portal_camera_point: true
+            show_portal_camera_point: true,
         }
     }
 }

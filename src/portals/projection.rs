@@ -3,20 +3,23 @@
 use bevy_app::{App, PostUpdate};
 use bevy_ecs::prelude::*;
 use bevy_math::{Mat4, Vec3A};
-use bevy_pbr::{clear_directional_light_cascades, build_directional_light_cascades, SimulationLightSystems};
-use bevy_reflect::{Reflect, std_traits::ReflectDefault};
+use bevy_pbr::{
+    build_directional_light_cascades, clear_directional_light_cascades, SimulationLightSystems,
+};
+use bevy_reflect::{std_traits::ReflectDefault, Reflect};
 use bevy_render::{
+    camera::{CameraProjection, CameraProjectionPlugin},
     prelude::*,
-    camera::{CameraProjectionPlugin, CameraProjection},
 };
 
 /// Add the projection logic to [PortalsPlugin](super::PortalsPlugin)
 pub(super) fn build_projection(app: &mut App) {
     app.add_plugins(CameraProjectionPlugin::<PortalProjection>::default());
-    app.add_systems(PostUpdate,
+    app.add_systems(
+        PostUpdate,
         build_directional_light_cascades::<PortalProjection>
             .in_set(SimulationLightSystems::UpdateDirectionalLightCascades)
-            .after(clear_directional_light_cascades)
+            .after(clear_directional_light_cascades),
     );
 }
 

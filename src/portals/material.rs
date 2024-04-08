@@ -3,19 +3,15 @@
 use bevy_app::App;
 use bevy_asset::prelude::*;
 use bevy_pbr::prelude::*;
+use bevy_pbr::{MaterialPipeline, MaterialPipelineKey};
+use bevy_reflect::TypePath;
 use bevy_render::{
-    prelude::*,
     mesh::MeshVertexBufferLayout,
+    prelude::*,
     render_resource::{
-        AsBindGroup,
-        Face,
-        RenderPipelineDescriptor,
-        ShaderRef,
-        SpecializedMeshPipelineError,
+        AsBindGroup, Face, RenderPipelineDescriptor, ShaderRef, SpecializedMeshPipelineError,
     },
 };
-use bevy_reflect::TypePath;
-use bevy_pbr::{MaterialPipelineKey, MaterialPipeline};
 
 /// Add the material logic to [PortalsPlugin](super::PortalsPlugin)
 pub(super) fn build_material(app: &mut App) {
@@ -36,11 +32,11 @@ pub struct PortalMaterial {
     #[texture(0)]
     #[sampler(1)]
     pub color_texture: Option<Handle<Image>>,
-    pub cull_mode: Option<Face>
+    pub cull_mode: Option<Face>,
 }
 
 pub const PORTAL_SHADER_HANDLE: Handle<Shader> =
-  Handle::weak_from_u128(0x1EA3049777A909BDFFEB794905C6D106);
+    Handle::weak_from_u128(0x1EA3049777A909BDFFEB794905C6D106);
 
 impl Material for PortalMaterial {
     fn fragment_shader() -> ShaderRef {

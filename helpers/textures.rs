@@ -3,12 +3,7 @@ use bevy::{
     prelude::*,
     render::{
         render_asset::RenderAssetUsages,
-        render_resource::{
-            Extent3d,
-            TextureDimension,
-            TextureFormat,
-            Face
-        },
+        render_resource::{Extent3d, Face, TextureDimension, TextureFormat},
     },
 };
 
@@ -21,7 +16,7 @@ pub fn uv_debug_texture(darkness: u8) -> Image {
         198, 255, 102, 198, 255, 255, 121, 102, 255, 255, 236, 102, 255, 255,
     ];
 
-    palette = palette.map(|c| c/darkness);
+    palette = palette.map(|c| c / darkness);
 
     let mut texture_data = [0; TEXTURE_SIZE * TEXTURE_SIZE * 4];
     for y in 0..TEXTURE_SIZE {
@@ -44,10 +39,10 @@ pub fn uv_debug_texture(darkness: u8) -> Image {
 }
 
 /// Creates a colorful test material
-pub fn debug_material (
+pub fn debug_material(
     images: &mut Assets<Image>,
     darkness: u8,
-    cull_mode: Option<Face>
+    cull_mode: Option<Face>,
 ) -> StandardMaterial {
     StandardMaterial {
         base_color_texture: Some(images.add(uv_debug_texture(darkness))),

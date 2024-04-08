@@ -11,9 +11,9 @@ const DESTINATION_TRANSLATION_END: Vec3 = Vec3::new(17., -3., 0.);
 
 // Not sure what the camera scale is supposed to do? No visible difference
 const CAMERA_SCALE_START: Vec3 = Vec3::ONE;
-const CAMERA_SCALE_END: Vec3 = Vec3::new(2.,2.,2.);
+const CAMERA_SCALE_END: Vec3 = Vec3::new(2., 2., 2.);
 
-const SPHERE_TRANSFORM: Transform = Transform::from_xyz(20.,0.,-5.);
+const SPHERE_TRANSFORM: Transform = Transform::from_xyz(20., 0., -5.);
 
 const TIME0: u128 = 0;
 const TIME1: u128 = 1000;
@@ -33,28 +33,25 @@ struct MainCamera;
 
 fn main() {
     App::new()
-        .add_plugins((
-            DefaultPlugins,
-            PortalsPlugin::MINIMAL,
-        ))
+        .add_plugins((DefaultPlugins, PortalsPlugin::MINIMAL))
         .add_systems(Startup, setup)
         .add_systems(Update, move_portal_and_destination)
         .run();
 }
 
-fn setup(
-    mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-) {
-    let camera_transform: Transform = Transform::from_xyz(-20., 0., 20.).looking_at(Vec3::ZERO, Vec3::Y);
+fn setup(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>) {
+    let camera_transform: Transform =
+        Transform::from_xyz(-20., 0., 20.).looking_at(Vec3::ZERO, Vec3::Y);
 
-    let main_camera = commands.spawn((
-        Camera3dBundle {
-            transform: camera_transform,
-            ..default()
-        },
-        MainCamera
-    )).id();
+    let main_camera = commands
+        .spawn((
+            Camera3dBundle {
+                transform: camera_transform,
+                ..default()
+            },
+            MainCamera,
+        ))
+        .id();
 
     let portal_mesh = meshes.add(Rectangle::new(10., 10.));
     commands.spawn(CreatePortalBundle {
@@ -78,11 +75,32 @@ fn setup(
     });
 }
 
-fn move_portal_and_destination (
+fn move_portal_and_destination(
     time: Res<Time>,
-    mut portal_query: Query<&mut Transform, (With<Portal>, Without<PortalDestination>, Without<MainCamera>)>,
-    mut destination_query: Query<&mut Transform, (With<PortalDestination>, Without<Portal>, Without<MainCamera>)>,
-    mut camera_query: Query<&mut Transform, (With<MainCamera>, Without<PortalDestination>, Without<Portal>)>
+    mut portal_query: Query<
+        &mut Transform,
+        (
+            With<Portal>,
+            Without<PortalDestination>,
+            Without<MainCamera>,
+        ),
+    >,
+    mut destination_query: Query<
+        &mut Transform,
+        (
+            With<PortalDestination>,
+            Without<Portal>,
+            Without<MainCamera>,
+        ),
+    >,
+    mut camera_query: Query<
+        &mut Transform,
+        (
+            With<MainCamera>,
+            Without<PortalDestination>,
+            Without<Portal>,
+        ),
+    >,
 ) {
     let portal_rotation_start: Quat = Quat::from_axis_angle(Vec3::Y, 0.);
     let portal_rotation_end: Quat = Quat::from_axis_angle(Vec3::Y, 0.5);
@@ -218,7 +236,7 @@ fn move_portal_and_destination (
         else {
             (portal_transform.translation, portal_transform.rotation, destination_transform.translation, destination_transform.rotation, camera_transform.scale)
         };
-    
+
     portal_transform.translation = portal_translation;
     destination_transform.translation = destination_translation;
     portal_transform.rotation = portal_rotation;
@@ -226,10 +244,6 @@ fn move_portal_and_destination (
     camera_transform.scale = camera_scale;
 }
 
-fn percent_from_to(
-    time: u128,
-    begin: u128,
-    stop: u128
-) -> f32 {
-    ((time-begin) as f32)/((stop-begin) as f32)
+fn percent_from_to(time: u128, begin: u128, stop: u128) -> f32 {
+    ((time - begin) as f32) / ((stop - begin) as f32)
 }

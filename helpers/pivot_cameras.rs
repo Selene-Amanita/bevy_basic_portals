@@ -1,8 +1,8 @@
 //! Pivot camera allows a camera to move around a pivot point
 
 use bevy::{
+    input::mouse::{MouseMotion, MouseScrollUnit, MouseWheel},
     prelude::*,
-    input::mouse::{MouseMotion, MouseWheel, MouseScrollUnit},
 };
 
 pub const DEFAULT_KEYBOARD_SPEED: f32 = 3.;
@@ -11,13 +11,13 @@ pub const DEFAULT_MOUSE_SPEED: f32 = 0.3;
 pub const DEFAULT_MOUSE_ZOOM_SPEED: f32 = 40.;
 
 pub struct PivotCamerasPlugin {
-    pub config: Option<PivotCamerasConfig>
+    pub config: Option<PivotCamerasConfig>,
 }
 
 impl Default for PivotCamerasPlugin {
     fn default() -> Self {
         PivotCamerasPlugin {
-            config: Default::default()
+            config: Default::default(),
         }
     }
 }
@@ -49,7 +49,7 @@ pub struct PivotCamerasConfig {
 
 impl Default for PivotCamerasConfig {
     fn default() -> Self {
-        PivotCamerasConfig { 
+        PivotCamerasConfig {
             keyboard_speed: DEFAULT_KEYBOARD_SPEED,
             keyboard_zoom_speed: DEFAULT_KEYBOARD_ZOOM_SPEED,
             mouse_speed: DEFAULT_MOUSE_SPEED,
@@ -118,12 +118,15 @@ fn update_pivot_cameras(
     mouse_input: Res<ButtonInput<MouseButton>>,
     mut motion_evr: EventReader<MouseMotion>,
     mut scroll_evr: EventReader<MouseWheel>,
-    mut pivot_camera_query: Query<(&mut Transform, &PivotCamera)>
+    mut pivot_camera_query: Query<(&mut Transform, &PivotCamera)>,
 ) {
     let still = Move::default();
     let mut mov = Move::default();
 
-    if mouse_input.pressed(MouseButton::Left) || mouse_input.pressed(MouseButton::Right) || mouse_input.pressed(MouseButton::Middle) {
+    if mouse_input.pressed(MouseButton::Left)
+        || mouse_input.pressed(MouseButton::Right)
+        || mouse_input.pressed(MouseButton::Middle)
+    {
         for ev in motion_evr.read() {
             mov.mouse.h -= ev.delta.x * config.mouse_speed;
             mov.mouse.v -= ev.delta.y * config.mouse_speed;
@@ -178,11 +181,17 @@ fn update_pivot_cameras(
             // Vertical movement
             // TODO (should maybe restrict to not go above?)
             let local_x = transform.local_x();
-            transform.rotate_around(pivot_camera.pivot, Quat::from_axis_angle(*local_x, move_cam.v));
-    
+            transform.rotate_around(
+                pivot_camera.pivot,
+                Quat::from_axis_angle(*local_x, move_cam.v),
+            );
+
             // Horizontal movement
-            transform.rotate_around(pivot_camera.pivot, Quat::from_axis_angle(Vec3::Y, move_cam.h));
-    
+            transform.rotate_around(
+                pivot_camera.pivot,
+                Quat::from_axis_angle(Vec3::Y, move_cam.h),
+            );
+
             // Zoom
             let local_z = transform.local_z();
             transform.translation += local_z * move_cam.f;

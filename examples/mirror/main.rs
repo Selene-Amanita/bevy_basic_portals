@@ -3,10 +3,10 @@
 use bevy::prelude::*;
 use bevy_basic_portals::*;
 
-#[path = "../../helpers/textures.rs"]
-mod textures;
 #[path = "../../helpers/pivot_cameras.rs"]
 mod pivot_cameras;
+#[path = "../../helpers/textures.rs"]
+mod textures;
 
 fn main() {
     App::new()
@@ -23,7 +23,7 @@ fn setup(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut images: ResMut<Assets<Image>>,
-    mut materials: ResMut<Assets<StandardMaterial>>
+    mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     // Light
     commands.insert_resource(AmbientLight {
@@ -34,17 +34,19 @@ fn setup(
 
     // Camera
     let pivot = Vec3::ZERO;
-    let main_camera = commands.spawn((
-        Camera3dBundle {
-            transform: Transform::from_xyz(10., 0., 20.).looking_at(pivot, Vec3::Y),
-            ..default()
-        },
-        pivot_cameras::PivotCamera {
-            pivot,
-            closest: 0.,
-            ..default()
-        },
-    )).id();
+    let main_camera = commands
+        .spawn((
+            Camera3dBundle {
+                transform: Transform::from_xyz(10., 0., 20.).looking_at(pivot, Vec3::Y),
+                ..default()
+            },
+            pivot_cameras::PivotCamera {
+                pivot,
+                closest: 0.,
+                ..default()
+            },
+        ))
+        .id();
 
     // Cube
     let debug_material = materials.add(textures::debug_material(&mut images, 1, None));
@@ -54,15 +56,17 @@ fn setup(
         material: debug_material,
         ..default()
     });
-    
+
     // Torus
     let torus_mesh = meshes.add(Torus::new(2.25, 2.75));
-    let torus = commands.spawn(PbrBundle {
-        mesh: torus_mesh,
-        material: materials.add(Color::WHITE),
-        transform: Transform::from_xyz(0., 0., -5.),
-        ..default()
-    }).id();
+    let torus = commands
+        .spawn(PbrBundle {
+            mesh: torus_mesh,
+            material: materials.add(Color::WHITE),
+            transform: Transform::from_xyz(0., 0., -5.),
+            ..default()
+        })
+        .id();
 
     // Mirror
     let portal_mesh = meshes.add(Rectangle::new(10., 10.));

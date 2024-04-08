@@ -6,18 +6,12 @@ use bevy_basic_portals::*;
 
 fn main() {
     App::new()
-        .add_plugins((
-            DefaultPlugins,
-            PortalsPlugin::MINIMAL
-        ))
+        .add_plugins((DefaultPlugins, PortalsPlugin::MINIMAL))
         .add_systems(Startup, setup)
         .run();
 }
 
-fn setup(
-    mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-) {
+fn setup(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>) {
     commands.spawn(Camera3dBundle {
         transform: Transform::from_xyz(-20.0, 0., 20.0).looking_at(Vec3::ZERO, Vec3::Y),
         ..default()
@@ -45,7 +39,7 @@ fn setup(
     let sphere_mesh = meshes.add(Mesh::from(Sphere::new(2.).mesh().uv(32, 18)));
     commands.spawn(PbrBundle {
         mesh: sphere_mesh,
-        transform: Transform::from_xyz(20.,0.,-5.),
+        transform: Transform::from_xyz(20., 0., -5.),
         ..default()
     });
 }
