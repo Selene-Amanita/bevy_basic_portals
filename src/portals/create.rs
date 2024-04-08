@@ -343,8 +343,8 @@ fn create_portal(
             commands.entity(destination_entity).with_children(|parent| {
                 parent.spawn((
                     PbrBundle {
-                        mesh: meshes.add(shape::Icosphere {radius:0.1, ..shape::Icosphere::default()}.try_into().unwrap()),
-                        material: materials.add(debug_color.into()),
+                        mesh: meshes.add(Sphere::new(0.1).mesh().ico(5).unwrap()),
+                        material: materials.add(debug_color),
                         ..PbrBundle::default()
                     },
                     create_portal.render_layer
@@ -377,8 +377,8 @@ fn create_portal(
             commands.entity(portal_camera_entity).with_children(|parent| {
                 parent.spawn((
                     PbrBundle {
-                        mesh: meshes.add(shape::Icosphere {radius:0.1, ..shape::Icosphere::default()}.try_into().unwrap()),
-                        material: materials.add(debug_color.into()),
+                        mesh: meshes.add(Sphere::new(0.1).mesh().ico(5).unwrap()),
+                        material: materials.add(debug_color),
                         visibility: Visibility::Visible,
                         ..PbrBundle::default()
                     },

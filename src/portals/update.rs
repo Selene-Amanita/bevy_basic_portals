@@ -172,7 +172,7 @@ fn get_frustum(
         PortalMode::MaskedImageHalfSpaceFrustum(Some(half_space)) => {
             let rot = Quat::from_rotation_arc(
                 Vec3::NEG_Z,
-                destination_transform.forward(),
+                destination_transform.forward().normalize_or_zero(),
             );
             let near_half_space_normal = rot.mul_vec3(half_space.normal().into());
 
@@ -183,7 +183,7 @@ fn get_frustum(
         }
         PortalMode::MaskedImageHalfSpaceFrustum(None) => {
             let near_half_space_normal = destination_transform.forward();
-            let near_half_space_distance = - destination_transform.translation.dot(near_half_space_normal);
+            let near_half_space_distance = - destination_transform.translation.dot(near_half_space_normal.normalize_or_zero());
             frustum.half_spaces[4] = HalfSpace::new(near_half_space_normal.extend(near_half_space_distance))
         }
         _ => ()
