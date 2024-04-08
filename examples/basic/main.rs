@@ -23,7 +23,7 @@ fn setup(
         ..default()
     });
 
-    let portal_mesh = meshes.add(Mesh::from(shape::Quad::new(Vec2::new(10., 10.))));
+    let portal_mesh = meshes.add(Mesh::from(Rectangle::new(10., 10.)));
     commands.spawn(CreatePortalBundle {
         mesh: portal_mesh,
         // This component will be deleted and things that are needed to create the portal will be created
@@ -42,7 +42,7 @@ fn setup(
         ..default()
     });
 
-    let sphere_mesh = meshes.add(Mesh::from(shape::UVSphere{radius: 2., ..default()}));
+    let sphere_mesh = meshes.add(Mesh::from(Sphere::new(2.).mesh().uv(32, 18)));
     commands.spawn(PbrBundle {
         mesh: sphere_mesh,
         transform: Transform::from_xyz(20.,0.,-5.),

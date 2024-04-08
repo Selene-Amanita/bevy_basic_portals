@@ -56,7 +56,7 @@ fn setup(
         MainCamera
     )).id();
 
-    let portal_mesh = meshes.add(Mesh::from(shape::Quad::new(Vec2::new(10., 10.))));
+    let portal_mesh = meshes.add(Rectangle::new(10., 10.));
     commands.spawn(CreatePortalBundle {
         mesh: portal_mesh,
         create_portal: CreatePortal {
@@ -70,7 +70,7 @@ fn setup(
         ..default()
     });
 
-    let sphere_mesh = meshes.add(Mesh::from(shape::UVSphere{radius: 2., ..default()}));
+    let sphere_mesh = meshes.add(Sphere::new(2.).mesh().uv(32, 18));
     commands.spawn(PbrBundle {
         mesh: sphere_mesh,
         transform: SPHERE_TRANSFORM,
