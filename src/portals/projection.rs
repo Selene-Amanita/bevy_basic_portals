@@ -1,10 +1,9 @@
 //! Projection logic for portals.
-//!
-//! This is currently unused because it makes Bevy crash in some situations: https://github.com/bevyengine/bevy/issues/9077
 
-use bevy_app::App;
+use bevy_app::{App, PostUpdate};
 use bevy_ecs::prelude::*;
 use bevy_math::{Mat4, Vec3A};
+use bevy_pbr::{clear_directional_light_cascades, build_directional_light_cascades, SimulationLightSystems};
 use bevy_reflect::{Reflect, std_traits::ReflectDefault};
 use bevy_render::{
     prelude::*,
@@ -14,6 +13,11 @@ use bevy_render::{
 /// Add the projection logic to [PortalsPlugin](super::PortalsPlugin)
 pub(super) fn build_projection(app: &mut App) {
     app.add_plugins(CameraProjectionPlugin::<PortalProjection>::default());
+    app.add_systems(PostUpdate,
+        build_directional_light_cascades::<PortalProjection>
+            .in_set(SimulationLightSystems::UpdateDirectionalLightCascades)
+            .after(clear_directional_light_cascades)
+    );
 }
 
 /// For now, almost a copy of Bevy's Projection, to avoid frustum being calculated
