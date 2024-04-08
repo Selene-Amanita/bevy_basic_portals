@@ -45,7 +45,7 @@ fn setup(
     // Lights
     commands.insert_resource(AmbientLight {
         color: Color::WHITE,
-        brightness: 80.,
+        brightness: 300.,
     });
 
     commands.insert_resource(ClearColor(Color::rgb(0., 0., 0.)));

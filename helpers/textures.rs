@@ -1,14 +1,16 @@
 //! Debug textures
 use bevy::{
     prelude::*,
-    render::render_resource::{
-        Extent3d,
-        TextureDimension,
-        TextureFormat,
-        Face
+    render::{
+        render_asset::RenderAssetUsages,
+        render_resource::{
+            Extent3d,
+            TextureDimension,
+            TextureFormat,
+            Face
+        },
     },
 };
-use bevy_render::render_asset::RenderAssetUsages;
 
 /// Creates a colorful test pattern (copied from bevy's 3d_shape example)
 pub fn uv_debug_texture(darkness: u8) -> Image {
