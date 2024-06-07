@@ -50,7 +50,7 @@ fn setup(
         brightness: 300.,
     });
 
-    commands.insert_resource(ClearColor(Color::rgb(0., 0., 0.)));
+    commands.insert_resource(ClearColor(Color::srgb(0., 0., 0.)));
 
     // Sphere
     let debug_material = materials.add(textures::debug_material(&mut images, 3, Some(Face::Back)));

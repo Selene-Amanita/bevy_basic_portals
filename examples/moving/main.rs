@@ -112,7 +112,7 @@ fn move_portal_and_destination(
     let mut camera_transform = camera_query.get_single_mut().unwrap();
 
     let time = time.elapsed().as_millis() % TIME_STOP;
-    let (portal_translation, portal_rotation, destination_translation, destination_rotation, camera_scale) = 
+    let (portal_translation, portal_rotation, destination_translation, destination_rotation, camera_scale) =
         // Portal translation
         if (TIME0..TIME1).contains(&time) {
             (

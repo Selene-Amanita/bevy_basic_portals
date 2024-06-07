@@ -3,6 +3,7 @@
 //! (This is what this crate was created for originally)
 
 use bevy::{
+    color::palettes::basic::*,
     prelude::*,
     render::{render_resource::Face, view::RenderLayers},
 };
@@ -55,7 +56,7 @@ fn setup(
         brightness: 10.,
     });
 
-    commands.insert_resource(ClearColor(Color::rgb(0., 0., 0.)));
+    commands.insert_resource(ClearColor(Color::srgb(0., 0., 0.)));
 
     // Scenes
     let portal_mesh = meshes.add(Mesh::from(Rectangle::new(
@@ -72,7 +73,18 @@ fn setup(
     let spawn_portal_up = Vec3::Y;
     let render_layer = RenderLayers::layer(1);
     let shape = meshes.add(Cuboid::new(5., 5., 5.));
-    let color = Color::YELLOW;
+    let color = YELLOW.into();
+    scenes::setup_scene_test(
+        &mut commands,
+        spawn_portal_dir,
+        spawn_portal_up,
+        &render_layer,
+        portal_mesh.clone(),
+        wall_material.clone(),
+        shape.clone(),
+        debug_material.clone(),
+        color,
+    );
     scenes::setup_portal_cube_face(
         &mut commands,
         spawn_portal_dir,
@@ -81,17 +93,6 @@ fn setup(
         render_layer,
         portal_mesh.clone(),
         true,
-    );
-    scenes::setup_scene_test(
-        &mut commands,
-        spawn_portal_dir,
-        spawn_portal_up,
-        render_layer,
-        portal_mesh.clone(),
-        wall_material.clone(),
-        shape.clone(),
-        debug_material.clone(),
-        color,
     );
 
     // Back scene
@@ -102,7 +103,18 @@ fn setup(
         Vec3::new(1., 4., 1.),
         Vec3::new(-1., -1., -2.),
     ));
-    let color = Color::BLUE;
+    let color = BLUE.into();
+    scenes::setup_scene_test(
+        &mut commands,
+        spawn_portal_dir,
+        spawn_portal_up,
+        &render_layer,
+        portal_mesh.clone(),
+        wall_material.clone(),
+        shape.clone(),
+        debug_material.clone(),
+        color,
+    );
     scenes::setup_portal_cube_face(
         &mut commands,
         spawn_portal_dir,
@@ -111,17 +123,6 @@ fn setup(
         render_layer,
         portal_mesh.clone(),
         true,
-    );
-    scenes::setup_scene_test(
-        &mut commands,
-        spawn_portal_dir,
-        spawn_portal_up,
-        render_layer,
-        portal_mesh.clone(),
-        wall_material.clone(),
-        shape.clone(),
-        debug_material.clone(),
-        color,
     );
 
     // Right scene
@@ -129,7 +130,18 @@ fn setup(
     let spawn_portal_up = Vec3::Y;
     let render_layer = RenderLayers::layer(3);
     let shape = meshes.add(Capsule3d::new(3., 3.));
-    let color = Color::GREEN;
+    let color = GREEN.into();
+    scenes::setup_scene_test(
+        &mut commands,
+        spawn_portal_dir,
+        spawn_portal_up,
+        &render_layer,
+        portal_mesh.clone(),
+        wall_material.clone(),
+        shape.clone(),
+        debug_material.clone(),
+        color,
+    );
     scenes::setup_portal_cube_face(
         &mut commands,
         spawn_portal_dir,
@@ -139,24 +151,24 @@ fn setup(
         portal_mesh.clone(),
         true,
     );
-    scenes::setup_scene_test(
-        &mut commands,
-        spawn_portal_dir,
-        spawn_portal_up,
-        render_layer,
-        portal_mesh.clone(),
-        wall_material.clone(),
-        shape.clone(),
-        debug_material.clone(),
-        color,
-    );
 
     // Left scene
     let spawn_portal_dir = -Vec3::X;
     let spawn_portal_up = Vec3::Y;
     let render_layer = RenderLayers::layer(4);
     let shape = meshes.add(Capsule3d::new(3., 3.));
-    let color = Color::FUCHSIA;
+    let color = FUCHSIA.into();
+    scenes::setup_scene_test(
+        &mut commands,
+        spawn_portal_dir,
+        spawn_portal_up,
+        &render_layer,
+        portal_mesh.clone(),
+        wall_material.clone(),
+        shape.clone(),
+        debug_material.clone(),
+        color,
+    );
     scenes::setup_portal_cube_face(
         &mut commands,
         spawn_portal_dir,
@@ -165,17 +177,6 @@ fn setup(
         render_layer,
         portal_mesh.clone(),
         false,
-    );
-    scenes::setup_scene_test(
-        &mut commands,
-        spawn_portal_dir,
-        spawn_portal_up,
-        render_layer,
-        portal_mesh.clone(),
-        wall_material.clone(),
-        shape.clone(),
-        debug_material.clone(),
-        color,
     );
 
     // Up scene
@@ -183,7 +184,18 @@ fn setup(
     let spawn_portal_up = -Vec3::Z;
     let render_layer = RenderLayers::layer(5);
     let shape = meshes.add(Cuboid::new(5., 5., 5.));
-    let color = Color::RED;
+    let color = RED.into();
+    scenes::setup_scene_test(
+        &mut commands,
+        spawn_portal_dir,
+        spawn_portal_up,
+        &render_layer,
+        portal_mesh.clone(),
+        wall_material.clone(),
+        shape.clone(),
+        debug_material.clone(),
+        color,
+    );
     scenes::setup_portal_cube_face(
         &mut commands,
         spawn_portal_dir,
@@ -192,17 +204,6 @@ fn setup(
         render_layer,
         portal_mesh.clone(),
         false,
-    );
-    scenes::setup_scene_test(
-        &mut commands,
-        spawn_portal_dir,
-        spawn_portal_up,
-        render_layer,
-        portal_mesh.clone(),
-        wall_material.clone(),
-        shape.clone(),
-        debug_material.clone(),
-        color,
     );
 
     // Down scene
@@ -210,7 +211,18 @@ fn setup(
     let spawn_portal_up = -Vec3::Z;
     let render_layer = RenderLayers::layer(6);
     let shape = meshes.add(Torus::new(2.5, 3.5));
-    let color = Color::CYAN;
+    let color = AQUA.into();
+    scenes::setup_scene_test(
+        &mut commands,
+        spawn_portal_dir,
+        spawn_portal_up,
+        &render_layer,
+        portal_mesh.clone(),
+        wall_material.clone(),
+        shape.clone(),
+        debug_material.clone(),
+        color,
+    );
     scenes::setup_portal_cube_face(
         &mut commands,
         spawn_portal_dir,
@@ -219,16 +231,5 @@ fn setup(
         render_layer,
         portal_mesh.clone(),
         false,
-    );
-    scenes::setup_scene_test(
-        &mut commands,
-        spawn_portal_dir,
-        spawn_portal_up,
-        render_layer,
-        portal_mesh.clone(),
-        wall_material.clone(),
-        shape.clone(),
-        debug_material.clone(),
-        color,
     );
 }

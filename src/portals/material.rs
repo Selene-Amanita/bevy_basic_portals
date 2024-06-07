@@ -6,7 +6,7 @@ use bevy_pbr::prelude::*;
 use bevy_pbr::{MaterialPipeline, MaterialPipelineKey};
 use bevy_reflect::TypePath;
 use bevy_render::{
-    mesh::MeshVertexBufferLayout,
+    mesh::MeshVertexBufferLayoutRef,
     prelude::*,
     render_resource::{
         AsBindGroup, Face, RenderPipelineDescriptor, ShaderRef, SpecializedMeshPipelineError,
@@ -46,7 +46,7 @@ impl Material for PortalMaterial {
     fn specialize(
         _: &MaterialPipeline<Self>,
         descriptor: &mut RenderPipelineDescriptor,
-        _: &MeshVertexBufferLayout,
+        _: &MeshVertexBufferLayoutRef,
         key: MaterialPipelineKey<Self>,
     ) -> Result<(), SpecializedMeshPipelineError> {
         descriptor.primitive.cull_mode = key.bind_group_data.cull_mode;

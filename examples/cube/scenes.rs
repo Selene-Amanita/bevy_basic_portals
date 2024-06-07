@@ -56,7 +56,7 @@ pub fn setup_scene_test(
     commands: &mut Commands,
     spawn_portal_dir: Vec3,
     spawn_portal_up: Vec3,
-    render_layer: RenderLayers,
+    render_layer: &RenderLayers,
     wall_mesh: Handle<Mesh>,
     wall_material: Handle<StandardMaterial>,
     shape: Handle<Mesh>,
@@ -84,7 +84,7 @@ pub fn setup_scene_test(
                     transform: shape_transform,
                     ..default()
                 },
-                render_layer,
+                render_layer.clone(),
             ));
 
             // Light
@@ -102,35 +102,35 @@ pub fn setup_scene_test(
                     transform: light_transform,
                     ..default()
                 },
-                render_layer,
+                render_layer.clone(),
             ));
 
             // Walls
             let walls_center_rotation = vec![
                 // back
-                (Vec3::new(0., 0., -PORTAL_SIZE), Vec3::Y, 0.),
+                (Vec3::new(0., 0., -PORTAL_SIZE), Dir3::Y, 0.),
                 // left
                 (
                     Vec3::new(-PORTAL_SIZE / 2., 0., -PORTAL_SIZE / 2.),
-                    Vec3::Y,
+                    Dir3::Y,
                     PI / 2.,
                 ),
                 // right
                 (
                     Vec3::new(PORTAL_SIZE / 2., 0., -PORTAL_SIZE / 2.),
-                    Vec3::Y,
+                    Dir3::Y,
                     -PI / 2.,
                 ),
                 // up
                 (
                     Vec3::new(0., PORTAL_SIZE / 2., -PORTAL_SIZE / 2.),
-                    Vec3::X,
+                    Dir3::X,
                     PI / 2.,
                 ),
                 // down
                 (
                     Vec3::new(0., -PORTAL_SIZE / 2., -PORTAL_SIZE / 2.),
-                    Vec3::X,
+                    Dir3::X,
                     -PI / 2.,
                 ),
             ];
@@ -144,7 +144,7 @@ pub fn setup_scene_test(
                         material: wall_material.clone(),
                         ..default()
                     },
-                    render_layer,
+                    render_layer.clone(),
                 ));
             }
         });

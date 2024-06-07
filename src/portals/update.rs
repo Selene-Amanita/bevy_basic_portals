@@ -157,11 +157,14 @@ fn resize_image_if_needed(
 ) -> bool {
     let portal_image = size_params.images.get(&portal_camera.image).unwrap();
     let portal_image_size = portal_image.size();
-    let main_camera_viewport_size = get_viewport_size(main_camera, size_params);
+    let Some(main_camera_viewport_size) = get_viewport_size(main_camera, size_params) else {
+        warn!("Viewport size not found, skipping portal resize");
+        return false;
+    };
 
-    if portal_image_size.x != main_camera_viewport_size.x
-        || portal_image_size.y != main_camera_viewport_size.y
-    {
+    let resize = portal_image_size.x != main_camera_viewport_size.x
+        || portal_image_size.y != main_camera_viewport_size.y;
+    if resize {
         let size = Extent3d {
             width: main_camera_viewport_size.x,
             height: main_camera_viewport_size.y,
@@ -178,10 +181,9 @@ fn resize_image_if_needed(
         } else {
             warn!("No portal image or material.");
         }
-        true
-    } else {
-        false
     }
+
+    resize
 }
 
 /// Get the [Frustum] for the [PortalCamera] from the [PortalProjection] and
@@ -193,9 +195,9 @@ fn get_frustum(
     projection: &PortalProjection,
 ) -> Frustum {
     let view_projection =
-        projection.get_projection_matrix() * portal_camera_transform.compute_matrix().inverse();
+        projection.get_clip_from_view() * portal_camera_transform.compute_matrix().inverse();
 
-    let mut frustum = Frustum::from_view_projection_custom_far(
+    let mut frustum = Frustum::from_clip_from_world_custom_far(
         &view_projection,
         &portal_camera_transform.translation,
         &portal_camera_transform.back(),
@@ -241,19 +243,19 @@ pub(super) fn get_viewport_size(
         windows_query,
         texture_views,
     }: &PortalImageSizeParams,
-) -> UVec2 {
+) -> Option<UVec2> {
     match main_camera.viewport.as_ref() {
-        Some(viewport) => viewport.physical_size,
+        Some(viewport) => Some(viewport.physical_size),
         None => match &main_camera.target {
-            RenderTarget::Window(window_ref) => {
-                let window = match window_ref {
-                    WindowRef::Primary => primary_window_query.get_single().unwrap(),
-                    WindowRef::Entity(entity) => windows_query.get(*entity).unwrap(),
-                };
-                UVec2::new(window.physical_width(), window.physical_height())
-            }
-            RenderTarget::Image(handle) => images.get(handle).unwrap().size(),
-            RenderTarget::TextureView(handle) => texture_views.get(handle).unwrap().size,
+            RenderTarget::Window(window_ref) => (match window_ref {
+                WindowRef::Primary => primary_window_query.get_single().ok(),
+                WindowRef::Entity(entity) => windows_query.get(*entity).ok(),
+            })
+            .map(|window| UVec2::new(window.physical_width(), window.physical_height())),
+            RenderTarget::Image(handle) => images.get(handle).map(|image| image.size()),
+            RenderTarget::TextureView(handle) => texture_views
+                .get(handle)
+                .map(|texture_view| texture_view.size),
         },
     }
 }

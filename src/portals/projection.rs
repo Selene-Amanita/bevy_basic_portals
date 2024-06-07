@@ -1,26 +1,33 @@
 //! Projection logic for portals.
 
-use bevy_app::{App, PostUpdate};
+use bevy_app::{App, PostStartup, PostUpdate};
 use bevy_ecs::prelude::*;
 use bevy_math::{Mat4, Vec3A};
-use bevy_pbr::{
-    build_directional_light_cascades, clear_directional_light_cascades, SimulationLightSystems,
-};
+use bevy_pbr::PbrProjectionPlugin;
 use bevy_reflect::{std_traits::ReflectDefault, Reflect};
 use bevy_render::{
-    camera::{CameraProjection, CameraProjectionPlugin},
+    camera::{camera_system, CameraProjection, CameraUpdateSystem},
     prelude::*,
 };
 
 /// Add the projection logic to [PortalsPlugin](super::PortalsPlugin)
 pub(super) fn build_projection(app: &mut App) {
-    app.add_plugins(CameraProjectionPlugin::<PortalProjection>::default());
-    app.add_systems(
-        PostUpdate,
-        build_directional_light_cascades::<PortalProjection>
-            .in_set(SimulationLightSystems::UpdateDirectionalLightCascades)
-            .after(clear_directional_light_cascades),
-    );
+    // Copy of CameraProjectionPlugin's code but without update_frusta
+    app.register_type::<PortalProjection>()
+        .add_systems(
+            PostStartup,
+            camera_system::<PortalProjection>
+                .in_set(CameraUpdateSystem)
+                .ambiguous_with(CameraUpdateSystem),
+        )
+        .add_systems(
+            PostUpdate,
+            camera_system::<PortalProjection>
+                .in_set(CameraUpdateSystem)
+                .ambiguous_with(CameraUpdateSystem),
+        );
+
+    app.add_plugins(PbrProjectionPlugin::<PortalProjection>::default());
 }
 
 /// For now, almost a copy of Bevy's Projection, to avoid frustum being calculated
@@ -63,10 +70,10 @@ impl From<OrthographicProjection> for PortalProjection {
 }
 
 impl CameraProjection for PortalProjection {
-    fn get_projection_matrix(&self) -> Mat4 {
+    fn get_clip_from_view(&self) -> Mat4 {
         match self {
-            Self::Perspective(projection) => projection.get_projection_matrix(),
-            Self::Orthographic(projection) => projection.get_projection_matrix(),
+            Self::Perspective(projection) => projection.get_clip_from_view(),
+            Self::Orthographic(projection) => projection.get_clip_from_view(),
         }
     }
 

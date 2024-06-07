@@ -4,7 +4,8 @@ use bevy_app::prelude::*;
 use bevy_ecs::{
     prelude::*,
     query::QueryEntityError,
-    system::{Command, EntityCommand, SystemState},
+    system::{EntityCommand, SystemState},
+    world::Command,
 };
 use bevy_hierarchy::DespawnRecursiveExt;
 use bevy_render::camera::Camera;
@@ -53,7 +54,7 @@ impl Command for DespawnPortalPartsCommand {
 #[derive(Default)]
 pub struct DespawnPortalPartsEntityCommand(PortalPartsDespawnStrategy);
 
-impl EntityCommand for DespawnPortalPartsCommand {
+impl EntityCommand for DespawnPortalPartsEntityCommand {
     fn apply(self, entity: Entity, world: &mut World) {
         let mut system_state = SystemState::<(
             Commands,
@@ -79,7 +80,7 @@ impl EntityCommand for DespawnPortalPartsCommand {
         );
 
         if let Some(portal_parts) = portal_parts {
-            despawn_portal_parts(&mut commands, portal_parts, &self.strategy);
+            despawn_portal_parts(&mut commands, portal_parts, &self.0);
         } else {
             warn!(
                 "DespawnPortalPartsEntityCommand called on entity {} which is not a portal part",

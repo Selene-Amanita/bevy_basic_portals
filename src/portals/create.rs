@@ -2,6 +2,7 @@
 
 use bevy_app::prelude::*;
 use bevy_asset::prelude::*;
+use bevy_color::Alpha;
 use bevy_core_pipeline::{
     prelude::*,
     tonemapping::{DebandDither, Tonemapping},
@@ -25,6 +26,7 @@ use bevy_render::{
 use bevy_transform::{prelude::*, TransformSystem};
 use bevy_window::{Window, WindowLevel, WindowRef, WindowResolution};
 use std::f32::consts::PI;
+use tracing::error;
 
 use super::*;
 
@@ -178,7 +180,7 @@ fn create_portal(
         main_camera_projection,
         main_camera_camera3d,
         main_camera_tonemapping,
-        main_camera_dither,
+        main_camera_deband_dither,
         main_camera_color_grading,
     ) = if let Some(camera_entity) = create_portal.main_camera {
         main_camera_query.get(camera_entity).unwrap()
@@ -186,7 +188,11 @@ fn create_portal(
         main_camera_query.iter().next().unwrap()
     };
 
-    let main_camera_viewport_size = get_viewport_size(main_camera, size_params);
+    let main_camera_viewport_size =
+        get_viewport_size(main_camera, size_params).unwrap_or_else(|| {
+            error!("Viewport size not found, creating portal with default sized image");
+            UVec2::new(100, 100)
+        });
 
     let size = Extent3d {
         width: main_camera_viewport_size.x,
@@ -267,8 +273,10 @@ fn create_portal(
                 .unwrap_or(&camera_bundle.camera_3d)
                 .clone(),
             *main_camera_tonemapping.unwrap_or(&camera_bundle.tonemapping),
-            *main_camera_dither.unwrap_or(&camera_bundle.dither),
-            *main_camera_color_grading.unwrap_or(&camera_bundle.color_grading),
+            *main_camera_deband_dither.unwrap_or(&camera_bundle.deband_dither),
+            main_camera_color_grading
+                .cloned()
+                .unwrap_or_else(|| camera_bundle.color_grading.clone()),
             // TOFIX set the exact value of Transform and GlobalTransform to avoid black screen at spawn
             // let portal_camera_transform = get_portal_camera_transform(main_camera_transform, portal_transform, &destination_transform);
             // This requires an extra Query to get destination_transform when AsPortalDestination::Entity/CreateMirror
@@ -279,7 +287,7 @@ fn create_portal(
                 visibility: Visibility::Hidden,
                 ..SpatialBundle::default()
             },
-            create_portal.render_layer,
+            create_portal.render_layer.clone(),
             camera_bundle.exposure,
             camera_bundle.main_texture_usages,
         ))
@@ -314,7 +322,7 @@ fn create_portal(
     if let Some(debug) = &create_portal.debug {
         let debug_color = debug.color;
         let mut debug_transparent_color = debug.color;
-        debug_transparent_color.set_a(0.3);
+        debug_transparent_color.set_alpha(0.3);
 
         // Create the debug camera as a child of the portal camera in a new window
         if debug.show_window {
@@ -343,7 +351,7 @@ fn create_portal(
                             ..Camera3dBundle::default()
                         },
                         PortalDebugCamera {},
-                        create_portal.render_layer,
+                        create_portal.render_layer.clone(),
                     ));
                 });
         }
@@ -357,7 +365,7 @@ fn create_portal(
                         material: materials.add(debug_color),
                         ..PbrBundle::default()
                     },
-                    create_portal.render_layer,
+                    create_portal.render_layer.clone(),
                 ));
             });
         }
@@ -377,7 +385,7 @@ fn create_portal(
                         transform: Transform::from_xyz(0., 0., -0.001),
                         ..PbrBundle::default()
                     },
-                    create_portal.render_layer,
+                    create_portal.render_layer.clone(),
                 ));
             });
         }
@@ -394,7 +402,7 @@ fn create_portal(
                             visibility: Visibility::Visible,
                             ..PbrBundle::default()
                         },
-                        create_portal.render_layer,
+                        create_portal.render_layer.clone(),
                     ));
                 });
         }

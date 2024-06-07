@@ -2,8 +2,8 @@
 
 [![crates.io](https://img.shields.io/crates/v/bevy_basic_portals)](https://crates.io/crates/bevy_basic_portals)
 [![docs.rs](https://img.shields.io/docsrs/bevy_basic_portals)](https://docs.rs/bevy_basic_portals/latest/bevy_basic_portals/)
-[![MIT/Apache 2.0](https://img.shields.io/badge/license-EUPL-blue.svg)](https://commission.europa.eu/content/european-union-public-licence_en)
-[![Bevy tracking](https://img.shields.io/badge/Bevy%20tracking-released%20version-lightblue)](https://github.com/bevyengine/bevy/blob/main/docs/plugins_guidelines.md#main-branch-tracking)
+[![NVPLv7+](https://img.shields.io/badge/license-NPLv7+-blue.svg)](https://git.pixie.town/thufie/npl-builder/src/branch/main/nvpl.md)
+[![Following released Bevy versions](https://img.shields.io/badge/Bevy%20tracking-released%20version-lightblue)](https://bevyengine.org/learn/quick-start/plugin-development/#main-branch-tracking)
 
 Bevy Basic Portals is a Bevy game engine plugin aimed to create portals.
 
@@ -78,6 +78,7 @@ if you want a bidirectional portal you can crate two portals manually
 ## Bevy versions
 | Bevy version | Bevy Basic Portals recommended version |
 |--------------|----------------------------------------|
+| 0.14.0-rc2   | 0.6.0-dev (not released on crates.io)  |
 | 0.13.*       | 0.5.0                                  |
 | 0.12.*       | 0.4.0                                  |
 | 0.11.1       | 0.3.0                                  |

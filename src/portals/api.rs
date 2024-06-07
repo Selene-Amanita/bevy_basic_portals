@@ -2,6 +2,7 @@
 
 use bevy_app::prelude::*;
 use bevy_asset::Handle;
+use bevy_color::{palettes::basic::GRAY, Color};
 use bevy_ecs::prelude::*;
 use bevy_reflect::Reflect;
 use bevy_render::{prelude::*, primitives::HalfSpace, render_resource::Face, view::RenderLayers};
@@ -298,7 +299,7 @@ impl Default for DebugPortal {
     fn default() -> Self {
         DebugPortal {
             name: Default::default(),
-            color: Color::GRAY,
+            color: GRAY.into(),
             show_window: true,
             show_destination_point: true,
             show_portal_copy: true,
