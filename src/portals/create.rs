@@ -16,7 +16,7 @@ use bevy_math::prelude::*;
 use bevy_pbr::prelude::*;
 use bevy_reflect::Reflect;
 use bevy_render::{
-    camera::RenderTarget,
+    camera::{Exposure, RenderTarget},
     prelude::*,
     render_resource::{
         Extent3d, TextureDescriptor, TextureDimension, TextureFormat, TextureUsages,
@@ -182,6 +182,7 @@ fn create_portal(
         main_camera_tonemapping,
         main_camera_deband_dither,
         main_camera_color_grading,
+        main_camera_exposure,
     ) = if let Some(camera_entity) = create_portal.main_camera {
         main_camera_query.get(camera_entity).unwrap()
     } else {
@@ -288,7 +289,8 @@ fn create_portal(
                 ..SpatialBundle::default()
             },
             create_portal.render_layer.clone(),
-            camera_bundle.exposure,
+            *main_camera_exposure
+                .unwrap_or(&camera_bundle.exposure),
             camera_bundle.main_texture_usages,
         ))
         .id();
@@ -428,6 +430,7 @@ pub struct CreatePortalParams<'w, 's> {
             Option<&'static Tonemapping>,
             Option<&'static DebandDither>,
             Option<&'static ColorGrading>,
+            Option<&'static Exposure>,
         ),
     >,
     size_params: PortalImageSizeParams<'w, 's>,

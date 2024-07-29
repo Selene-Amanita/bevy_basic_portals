@@ -74,6 +74,7 @@ if you want a bidirectional portal you can crate two portals manually
 - this crate doesn't handle moving stuff through the portal, it is only visual, more like a crystal ball
 - this crate doesn't handle raycasting through the portal, it has to be done manually
 - this crate doesn't handle changing the portal's or the destination's scale
+- this crate doesn't handle changing camera settings after creation
 
 ## Bevy versions
 | Bevy version | Bevy Basic Portals recommended version |
