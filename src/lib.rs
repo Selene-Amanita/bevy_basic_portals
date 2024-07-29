@@ -24,6 +24,7 @@
 //! - this crate doesn't handle raycasting through the portal, it has to be done manually
 //! - this crate doesn't handle resizing window/viewport of the main camera
 //! - this crate doesn't handle changing the portal's or the destination's scale
+//! - this crate doesn't handle changing camera settings after creation
 
 pub mod portals;
 pub use portals::*;
