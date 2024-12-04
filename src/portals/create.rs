@@ -287,7 +287,7 @@ fn create_portal(
             // This requires an extra Query to get destination_transform when AsPortalDestination::Entity/CreateMirror
             // Would still matter if the portal camera is a child of the destination
             //transform: portal_camera_transform,
-            //global_transorm: GlobalTransform::from(portal_camera_transform),
+            //global_transorm: GlobalTransform::from(portal_camera_transform),399c716bba4597815e3ee11be6cd999e
         ))
         .remove::<Projection>() // Required component of `Camera3d`, but in this specific case we don't want it
         .id();
