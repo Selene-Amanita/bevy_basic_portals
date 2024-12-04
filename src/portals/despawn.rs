@@ -206,10 +206,11 @@ pub(super) fn deal_with_part_query_error(
     name_of_part: &str,
 ) {
     let error_message = match query_error {
-        QueryEntityError::QueryDoesNotMatch(entity) => format!(
+        QueryEntityError::QueryDoesNotMatch(entity, _world) => format!(
             "is a part of portal parts where {} #{} is missing key components",
             name_of_part,
             entity.index()
+            // TODO: reproduce format_archetype's behavior
         ),
         QueryEntityError::NoSuchEntity(entity) => format!(
             "is a part of portal parts where {} #{} has despawned",

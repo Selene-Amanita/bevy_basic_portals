@@ -29,7 +29,7 @@
 pub mod portals;
 pub use portals::*;
 #[doc(inline)]
-pub use portals::{CreatePortalBundle, PortalsPlugin};
+pub use portals::{CreatePortal, PortalsPlugin};
 
 //TODO examples:
 // - should handle multiple main cameras

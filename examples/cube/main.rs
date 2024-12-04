@@ -38,10 +38,8 @@ fn setup(
     let pivot = Vec3::ZERO;
     let main_camera = commands
         .spawn((
-            Camera3dBundle {
-                transform: Transform::from_xyz(0.0, 0., 20.0).looking_at(pivot, Vec3::Y),
-                ..default()
-            },
+            Camera3d::default(),
+            Transform::from_xyz(0.0, 0., 20.0).looking_at(pivot, Vec3::Y),
             pivot_cameras::PivotCamera {
                 pivot,
                 closest: 10., // half diagonal of the cube = sqrt(3) * 10 / 2 < 10.

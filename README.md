@@ -25,16 +25,15 @@ fn main() {
 }
 
 fn setup(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>) {
-    commands.spawn(Camera3dBundle {
-        transform: Transform::from_xyz(-20.0, 0., 20.0).looking_at(Vec3::ZERO, Vec3::Y),
-        ..default()
-    });
+    commands.spawn((
+        Camera3d::default(),
+        Transform::from_xyz(-20.0, 0., 20.0).looking_at(Vec3::ZERO, Vec3::Y),
+    ));
 
     let portal_mesh = meshes.add(Mesh::from(Rectangle::new(10., 10.)));
-    commands.spawn(CreatePortalBundle {
-        mesh: portal_mesh,
+    commands.spawn((
         // This component will be deleted and things that are needed to create the portal will be created
-        create_portal: CreatePortal {
+        CreatePortal {
             destination: AsPortalDestination::Create(CreatePortalDestination {
                 transform: Transform::from_xyz(20., 0., 0.),
                 ..default()
@@ -46,15 +45,15 @@ fn setup(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>) {
             }),*/
             ..default()
         },
-        ..default()
-    });
+        Mesh3d(portal_mesh),
+    ));
 
     let sphere_mesh = meshes.add(Mesh::from(Sphere::new(2.).mesh().uv(32, 18)));
-    commands.spawn(PbrBundle {
-        mesh: sphere_mesh,
-        transform: Transform::from_xyz(20., 0., -5.),
-        ..default()
-    });
+    commands.spawn((
+        Mesh3d(sphere_mesh),
+        MeshMaterial3d::<StandardMaterial>::default(),
+        Transform::from_xyz(20., 0., -5.),
+    ));
 }
 ```
 More complex examples are available in the examples folder.
@@ -79,6 +78,7 @@ if you want a bidirectional portal you can crate two portals manually
 ## Bevy versions
 | Bevy version | Bevy Basic Portals recommended version |
 |--------------|----------------------------------------|
+| 0.15.*       | 0.7.0                                  |
 | 0.14.*       | 0.6.0                                  |
 | 0.13.*       | 0.5.0                                  |
 | 0.12.*       | 0.4.0                                  |

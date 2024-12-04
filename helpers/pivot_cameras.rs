@@ -164,8 +164,8 @@ fn update_pivot_cameras(
     }
 
     if mov != still {
-        mov.keyboard *= time.delta_seconds();
-        mov.mouse *= time.delta_seconds();
+        mov.keyboard *= time.delta_secs();
+        mov.mouse *= time.delta_secs();
 
         for (mut transform, pivot_camera) in pivot_camera_query.iter_mut() {
             let mut move_cam = MoveForDevice::default();

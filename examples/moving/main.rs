@@ -45,18 +45,15 @@ fn setup(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>) {
 
     let main_camera = commands
         .spawn((
-            Camera3dBundle {
-                transform: camera_transform,
-                ..default()
-            },
+            Camera3d::default(),
+            camera_transform,
             MainCamera,
         ))
         .id();
 
     let portal_mesh = meshes.add(Rectangle::new(10., 10.));
-    commands.spawn(CreatePortalBundle {
-        mesh: portal_mesh,
-        create_portal: CreatePortal {
+    commands.spawn((
+        CreatePortal {
             main_camera: Some(main_camera),
             debug: Some(DebugPortal {
                 show_window: false,
@@ -64,13 +61,18 @@ fn setup(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>) {
             }),
             ..default()
         },
-        ..default()
-    });
+        Mesh3d(portal_mesh),
+    ));
 
     let sphere_mesh = meshes.add(Sphere::new(2.).mesh().uv(32, 18));
-    commands.spawn(PbrBundle {
-        mesh: sphere_mesh,
-        transform: SPHERE_TRANSFORM,
+    commands.spawn((
+        Mesh3d(sphere_mesh),
+        MeshMaterial3d::<StandardMaterial>::default(),
+        SPHERE_TRANSFORM,
+    ));
+
+    commands.insert_resource(AmbientLight{
+        brightness: 500.,
         ..default()
     });
 }

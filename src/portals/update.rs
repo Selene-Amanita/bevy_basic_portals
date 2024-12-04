@@ -3,7 +3,9 @@
 use bevy_app::prelude::*;
 use bevy_asset::{Assets, Handle};
 use bevy_ecs::{prelude::*, system::SystemParam};
+use bevy_image::Image;
 use bevy_math::{Quat, UVec2, Vec3};
+use bevy_pbr::MeshMaterial3d;
 use bevy_render::{
     camera::{CameraProjection, ManualTextureViews, RenderTarget},
     prelude::*,
@@ -41,7 +43,7 @@ pub fn update_portal_cameras(
     >,
     main_camera_query: Query<(Ref<GlobalTransform>, &Camera), Without<PortalCamera>>,
     portal_query: Query<
-        (Ref<GlobalTransform>, &Handle<PortalMaterial>),
+        (Ref<GlobalTransform>, &MeshMaterial3d<PortalMaterial>),
         (With<Portal>, Without<Camera>),
     >,
     destination_query: Query<Ref<GlobalTransform>, (With<PortalDestination>, Without<Camera>)>,

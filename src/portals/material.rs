@@ -2,6 +2,7 @@
 
 use bevy_app::App;
 use bevy_asset::prelude::*;
+use bevy_image::Image;
 use bevy_pbr::prelude::*;
 use bevy_pbr::{MaterialPipeline, MaterialPipelineKey};
 use bevy_reflect::TypePath;

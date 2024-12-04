@@ -6,7 +6,7 @@ use bevy_math::{Mat4, Vec3A};
 use bevy_pbr::PbrProjectionPlugin;
 use bevy_reflect::{std_traits::ReflectDefault, Reflect};
 use bevy_render::{
-    camera::{camera_system, CameraProjection, CameraUpdateSystem},
+    camera::{camera_system, CameraProjection, CameraUpdateSystem, SubCameraView},
     prelude::*,
 };
 
@@ -74,6 +74,13 @@ impl CameraProjection for PortalProjection {
         match self {
             Self::Perspective(projection) => projection.get_clip_from_view(),
             Self::Orthographic(projection) => projection.get_clip_from_view(),
+        }
+    }
+
+    fn get_clip_from_view_for_sub(&self, sub_view: &SubCameraView) -> Mat4 {
+        match self {
+            Self::Perspective(projection) => projection.get_clip_from_view_for_sub(sub_view),
+            Self::Orthographic(projection) => projection.get_clip_from_view_for_sub(sub_view),
         }
     }
 

@@ -1,5 +1,6 @@
 //! Components, systems and command for the creation of portals
 
+use bevy_image::Image;
 use bevy_app::prelude::*;
 use bevy_asset::prelude::*;
 use bevy_color::Alpha;
@@ -105,7 +106,7 @@ pub struct CreatePortalCommand {
 
 impl EntityCommand for CreatePortalCommand {
     fn apply(self, id: Entity, world: &mut World) {
-        let (portal_transform, mesh) = world.query::<(&GlobalTransform, &Handle<Mesh>)>().get(world, id)
+        let (portal_transform, mesh) = world.query::<(&GlobalTransform, &Mesh3d)>().get(world, id)
             .expect("You must provide a GlobalTransform and Handle<Mesh> components to the entity before using a CreatePortalCommand");
         let portal_transform = *portal_transform;
         let mesh = mesh.clone();
@@ -142,7 +143,7 @@ impl EntityCommand for CreatePortalCommand {
 #[allow(clippy::too_many_arguments)]
 pub fn create_portals(
     mut create_params: CreatePortalParams,
-    portals_to_create: Query<(Entity, &CreatePortal, &GlobalTransform, &Handle<Mesh>)>,
+    portals_to_create: Query<(Entity, &CreatePortal, &GlobalTransform, &Mesh3d)>,
 ) {
     for (portal_entity, portal_create, portal_transform, mesh) in portals_to_create.iter() {
         create_portal(
@@ -233,66 +234,62 @@ fn create_portal(
     let destination_entity = match create_portal.destination {
         AsPortalDestination::Use(entity) => entity,
         AsPortalDestination::Create(CreatePortalDestination { transform, parent }) => {
-            let mut destination_commands = commands.spawn(SpatialBundle {
+            let mut destination_commands = commands.spawn((
                 transform,
-                global_transform: GlobalTransform::from(transform),
-                ..SpatialBundle::default()
-            });
+                GlobalTransform::from(transform),
+            ));
             if let Some(parent) = parent {
                 destination_commands.set_parent(parent);
             }
             destination_commands.id()
         }
         AsPortalDestination::CreateMirror => {
-            let mut destination_commands = commands.spawn(SpatialBundle {
-                transform: Transform::from_rotation(Quat::from_axis_angle(Vec3::Y, PI)),
-                ..SpatialBundle::default()
-            });
+            let mut destination_commands = commands.spawn(
+                Transform::from_rotation(Quat::from_axis_angle(Vec3::Y, PI))
+            );
             destination_commands.set_parent(portal_entity);
             destination_commands.id()
         }
     };
 
     // Create the portal camera
-    let camera_bundle = Camera3dBundle::default();
     let projection: PortalProjection = main_camera_projection
-        .unwrap_or(&camera_bundle.projection)
-        .clone()
+        .cloned()
+        .unwrap_or_else(|| Projection::default())
         .into();
     let portal_camera_entity = commands
         .spawn((
+            main_camera_camera3d
+                .cloned()
+                .unwrap_or_else(|| Camera3d::default()),
             Camera {
                 order: -1,
                 target: RenderTarget::Image(portal_image.clone()),
                 ..Camera::default()
             },
             projection,
-            camera_bundle.camera_render_graph,
-            camera_bundle.visible_entities,
-            camera_bundle.frustum,
-            main_camera_camera3d
-                .unwrap_or(&camera_bundle.camera_3d)
-                .clone(),
-            *main_camera_tonemapping.unwrap_or(&camera_bundle.tonemapping),
-            *main_camera_deband_dither.unwrap_or(&camera_bundle.deband_dither),
+            main_camera_tonemapping
+                .cloned()
+                .unwrap_or_else(|| Tonemapping::default()),
+            main_camera_deband_dither
+                .cloned()
+                .unwrap_or_else(|| DebandDither::default()),
             main_camera_color_grading
                 .cloned()
-                .unwrap_or_else(|| camera_bundle.color_grading.clone()),
+                .unwrap_or_else(|| ColorGrading::default()),
+            main_camera_exposure
+                .cloned()
+                .unwrap_or_else(|| Exposure::default()),
+            Visibility::Hidden,
+            create_portal.render_layer.clone(),
             // TOFIX set the exact value of Transform and GlobalTransform to avoid black screen at spawn
             // let portal_camera_transform = get_portal_camera_transform(main_camera_transform, portal_transform, &destination_transform);
             // This requires an extra Query to get destination_transform when AsPortalDestination::Entity/CreateMirror
             // Would still matter if the portal camera is a child of the destination
             //transform: portal_camera_transform,
             //global_transorm: GlobalTransform::from(portal_camera_transform),
-            SpatialBundle {
-                visibility: Visibility::Hidden,
-                ..SpatialBundle::default()
-            },
-            create_portal.render_layer.clone(),
-            *main_camera_exposure
-                .unwrap_or(&camera_bundle.exposure),
-            camera_bundle.main_texture_usages,
         ))
+        .remove::<Projection>() // Required component of `Camera3d`, but in this specific case we don't want it
         .id();
 
     // Add portal components
@@ -304,7 +301,7 @@ fn create_portal(
     };
 
     let mut portal_entity_command = commands.entity(portal_entity);
-    portal_entity_command.insert(portal_material);
+    portal_entity_command.insert(MeshMaterial3d(portal_material));
     portal_entity_command.remove::<CreatePortal>();
     portal_entity_command.insert(Portal {
         parts: parts.clone(),
@@ -344,13 +341,11 @@ fn create_portal(
                 .entity(portal_camera_entity)
                 .with_children(|parent| {
                     parent.spawn((
-                        Camera3dBundle {
-                            camera: Camera {
-                                order: -1,
-                                target: RenderTarget::Window(WindowRef::Entity(debug_window)),
-                                ..Camera::default()
-                            },
-                            ..Camera3dBundle::default()
+                        Camera3d::default(),
+                        Camera {
+                            order: -1,
+                            target: RenderTarget::Window(WindowRef::Entity(debug_window)),
+                            ..Camera::default()
                         },
                         PortalDebugCamera {},
                         create_portal.render_layer.clone(),
@@ -362,11 +357,8 @@ fn create_portal(
         if debug.show_destination_point {
             commands.entity(destination_entity).with_children(|parent| {
                 parent.spawn((
-                    PbrBundle {
-                        mesh: meshes.add(Sphere::new(0.1).mesh().ico(5).unwrap()),
-                        material: materials.add(debug_color),
-                        ..PbrBundle::default()
-                    },
+                    Mesh3d(meshes.add(Sphere::new(0.1).mesh().ico(5).unwrap())),
+                    MeshMaterial3d(materials.add(debug_color)),
                     create_portal.render_layer.clone(),
                 ));
             });
@@ -379,14 +371,11 @@ fn create_portal(
             portal_copy_material.cull_mode = create_portal.cull_mode;
             commands.entity(destination_entity).with_children(|parent| {
                 parent.spawn((
-                    PbrBundle {
-                        mesh: portal_mesh.clone(),
-                        material: materials.add(portal_copy_material),
-                        // So that it can still be seen through the portal,
-                        // despite rounding frustum mismatch
-                        transform: Transform::from_xyz(0., 0., -0.001),
-                        ..PbrBundle::default()
-                    },
+                    Mesh3d(portal_mesh.clone()),
+                    MeshMaterial3d(materials.add(portal_copy_material)),
+                    // So that it can still be seen through the portal,
+                    // despite rounding frustum mismatch
+                    Transform::from_xyz(0., 0., -0.001),
                     create_portal.render_layer.clone(),
                 ));
             });
@@ -398,12 +387,9 @@ fn create_portal(
                 .entity(portal_camera_entity)
                 .with_children(|parent| {
                     parent.spawn((
-                        PbrBundle {
-                            mesh: meshes.add(Sphere::new(0.1).mesh().ico(5).unwrap()),
-                            material: materials.add(debug_color),
-                            visibility: Visibility::Visible,
-                            ..PbrBundle::default()
-                        },
+                        Mesh3d(meshes.add(Sphere::new(0.1).mesh().ico(5).unwrap())),
+                        MeshMaterial3d(materials.add(debug_color)),
+                        Visibility::Visible,
                         create_portal.render_layer.clone(),
                     ));
                 });

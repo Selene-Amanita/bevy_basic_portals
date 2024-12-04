@@ -32,10 +32,8 @@ fn setup(
     let pivot = Vec3::ZERO;
     let main_camera = commands
         .spawn((
-            Camera3dBundle {
-                transform: Transform::from_xyz(0.0, 0., 20.0).looking_at(pivot, Vec3::Y),
-                ..default()
-            },
+            Camera3d::default(),
+            Transform::from_xyz(0.0, 0., 20.0).looking_at(pivot, Vec3::Y),
             pivot_cameras::PivotCamera {
                 pivot,
                 closest: 0.,
@@ -47,7 +45,7 @@ fn setup(
     // Lights
     commands.insert_resource(AmbientLight {
         color: Color::WHITE,
-        brightness: 300.,
+        brightness: 500.,
     });
 
     commands.insert_resource(ClearColor(Color::srgb(0., 0., 0.)));
@@ -100,19 +98,17 @@ fn setup_object_and_portal(
     //Object
     let mut object_transform = portal_transform.clone();
     object_transform.translation.y -= 10.;
-    commands.spawn(PbrBundle {
-        mesh: mesh.clone(),
-        material,
-        transform: object_transform,
-        ..default()
-    });
+    commands.spawn((
+        Mesh3d(mesh.clone()),
+        MeshMaterial3d(material),
+        object_transform,
+    ));
 
     //Portal
     let mut destination_transform = portal_transform.clone();
     destination_transform.translation = Vec3::new(0., -10., 0.);
-    commands.spawn(CreatePortalBundle {
-        mesh: mesh,
-        create_portal: CreatePortal {
+    commands.spawn((
+        CreatePortal {
             main_camera: Some(main_camera),
             destination: AsPortalDestination::Create(CreatePortalDestination {
                 transform: destination_transform,
@@ -126,7 +122,7 @@ fn setup_object_and_portal(
             }),
             ..default()
         },
+        Mesh3d(mesh),
         portal_transform,
-        ..default()
-    });
+    ));
 }

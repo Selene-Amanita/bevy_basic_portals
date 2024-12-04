@@ -1,7 +1,6 @@
 //! Components and structs to create portals without caring about their implementation
 
 use bevy_app::prelude::*;
-use bevy_asset::Handle;
 use bevy_color::{palettes::basic::GRAY, Color};
 use bevy_ecs::prelude::*;
 use bevy_reflect::Reflect;
@@ -159,9 +158,13 @@ impl PortalPartDespawnStrategy {
 
 /// [Bundle] to create a portal with all the components needed.
 #[derive(Bundle, Default)]
+#[deprecated(
+    since = "0.7.0",
+    note = "Use the `CreatePortal` component instead. Inserting it will now also insert the other components required by it automatically."
+)]
 pub struct CreatePortalBundle {
     /// Mesh of the portal.
-    pub mesh: Handle<Mesh>,
+    pub mesh: Mesh3d,
     /// Configuration of the portal.
     pub create_portal: CreatePortal,
     /// Transform of the portal.
@@ -175,7 +178,10 @@ pub struct CreatePortalBundle {
 /// [Component] to create a [Portal] and everything needed to make it work.
 ///
 /// The portal will be created after the next check (see [PortalsCheckMode]), if it has the other components in [CreatePortalBundle].
+/// 
+/// Requires [Mesh3d] to define the mesh of the portal. Indirectly requires [Transform] to locate the portal.
 #[derive(Component, Clone)]
+#[require(Mesh3d)]
 pub struct CreatePortal {
     /// Where the portal should lead to.
     pub destination: AsPortalDestination,

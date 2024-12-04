@@ -32,20 +32,19 @@ pub fn setup_portal_cube_face(
 
     // This shows two different ways of creating a portal
     if automatic {
-        commands.spawn(CreatePortalBundle {
-            mesh: portal_mesh,
-            portal_transform,
+        commands.spawn((
             create_portal,
-            ..default()
-        });
+            Mesh3d(portal_mesh),
+            portal_transform,
+        ));
     } else {
         commands
-            .spawn(CreatePortalBundle {
-                mesh: portal_mesh,
+            .spawn((
+                CreatePortal::default(),
+                Mesh3d(portal_mesh),
                 portal_transform,
-                ..default()
-            })
-            .add(CreatePortalCommand {
+            ))
+            .queue(CreatePortalCommand {
                 config: Some(create_portal),
             });
     }
@@ -67,23 +66,17 @@ pub fn setup_scene_test(
 
     commands
         .spawn((
-            TransformBundle {
-                local: destination_transform,
-                ..default()
-            },
-            VisibilityBundle::default(),
+            destination_transform,
+            Visibility::default(),
         ))
         .with_children(|parent| {
             // Shape
             let mut shape_transform = Transform::default();
             shape_transform.translation.z += -PORTAL_SIZE / 2.;
             parent.spawn((
-                PbrBundle {
-                    mesh: shape,
-                    material,
-                    transform: shape_transform,
-                    ..default()
-                },
+                Mesh3d(shape),
+                MeshMaterial3d(material),
+                shape_transform,
                 render_layer.clone(),
             ));
 
@@ -91,17 +84,14 @@ pub fn setup_scene_test(
             let mut light_transform = Transform::default();
             light_transform.translation.z += PORTAL_SIZE * 2.;
             parent.spawn((
-                PointLightBundle {
-                    point_light: PointLight {
-                        color,
-                        intensity: 9_000_000.0,
-                        range: DESTINATION_DISTANCE - PORTAL_SIZE,
-                        shadows_enabled: true,
-                        ..default()
-                    },
-                    transform: light_transform,
+                PointLight {
+                    color,
+                    intensity: 9_000_000.0,
+                    range: DESTINATION_DISTANCE - PORTAL_SIZE,
+                    shadows_enabled: true,
                     ..default()
                 },
+                light_transform,
                 render_layer.clone(),
             ));
 
@@ -138,12 +128,9 @@ pub fn setup_scene_test(
                 let mut transform = Transform::from_translation(center);
                 transform.rotate_axis(axis, angle);
                 parent.spawn((
-                    PbrBundle {
-                        mesh: wall_mesh.clone(),
-                        transform,
-                        material: wall_material.clone(),
-                        ..default()
-                    },
+                    Mesh3d(wall_mesh.clone()),
+                    MeshMaterial3d(wall_material.clone()),
+                    transform,
                     render_layer.clone(),
                 ));
             }
