@@ -178,7 +178,7 @@ pub struct CreatePortalBundle {
 /// [Component] to create a [Portal] and everything needed to make it work.
 ///
 /// The portal will be created after the next check (see [PortalsCheckMode]), if it has the other components in [CreatePortalBundle].
-/// 
+///
 /// Requires [Mesh3d] to define the mesh of the portal. Indirectly requires [Transform] to locate the portal.
 #[derive(Component, Clone)]
 #[require(Mesh3d)]
@@ -236,6 +236,15 @@ pub struct CreatePortalDestination {
     ///Entity to use as a parent of the [PortalDestination]
     pub parent: Option<Entity>,
     //TODO: pub spawn_as_children: something like an EntityCommand?
+}
+
+impl From<Transform> for CreatePortalDestination {
+    fn from(transform: Transform) -> Self {
+        Self {
+            transform,
+            ..Default::default()
+        }
+    }
 }
 
 /// What technique to use to render the portal effect, and what entities are seen
