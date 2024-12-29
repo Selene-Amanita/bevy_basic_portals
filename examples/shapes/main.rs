@@ -110,10 +110,7 @@ fn setup_object_and_portal(
     commands.spawn((
         CreatePortal {
             main_camera: Some(main_camera),
-            destination: AsPortalDestination::Create(CreatePortalDestination {
-                transform: destination_transform,
-                ..default()
-            }),
+            destination: AsPortalDestination::Create(destination_transform.into()),
             portal_mode: PortalMode::MaskedImageNoFrustum,
             cull_mode,
             debug: Some(DebugPortal {
