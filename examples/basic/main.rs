@@ -21,7 +21,7 @@ fn setup(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>) {
     commands.spawn((
         // This component will be deleted and things that are needed to create the portal will be created
         CreatePortal {
-            destination: AsPortalDestination::Create(CreatePortalDestination {
+            destination: PortalDestinationSource::Create(CreatePortalDestination {
                 transform: Transform::from_xyz(20., 0., 0.),
                 ..default()
             }),

@@ -31,6 +31,7 @@ pub(super) fn build_update(app: &mut App) {
 pub fn update_portal_cameras(
     mut commands: Commands,
     strategy: Res<PortalPartsDespawnStrategy>,
+    portal_parts_query: Query<(Entity, &PortalParts)>,
     mut portal_cameras: Query<
         (
             &PortalCamera,
@@ -46,61 +47,83 @@ pub fn update_portal_cameras(
         (Ref<GlobalTransform>, &MeshMaterial3d<PortalMaterial>),
         (With<Portal>, Without<Camera>),
     >,
-    destination_query: Query<Ref<GlobalTransform>, (With<PortalDestination>, Without<Camera>)>,
+    destination_query: Query<(Ref<GlobalTransform>, &PortalDestination), (With<PortalDestination>, Without<Camera>)>,
     mut resize_params: PortalImageSizeParams,
     mut materials: ResMut<Assets<PortalMaterial>>,
 ) {
-    // For every portal camera
-    for (
-        portal_camera,
-        mut portal_camera_transform,
-        mut portal_camera_global_transform,
-        mut frustum,
-        projection,
-    ) in portal_cameras.iter_mut()
-    {
-        // Main Camera
-        let main_camera_result = main_camera_query.get(portal_camera.parts.main_camera);
-        if let Err(query_error) = main_camera_result {
-            deal_with_part_query_error(
-                &mut commands,
-                &portal_camera.parts,
-                &strategy,
-                &query_error,
-                "Main Camera",
-            );
-            return;
-        }
-        let (main_camera_global_transform, main_camera) = main_camera_result.unwrap();
+    // For every portal parts
+    for (portal_parts_entity, portal_parts) in portal_parts_query.iter() {
+        // Portal camera
+        let (
+            portal_camera,
+            mut portal_camera_transform,
+            mut portal_camera_global_transform,
+            mut frustum,
+            projection,
+        ) = match portal_cameras.get_mut(portal_parts.portal_camera) {
+            Ok(result) => result,
+            Err(query_error) => {
+                deal_with_part_query_error(
+                    &mut commands,
+                    portal_parts,
+                    portal_parts_entity,
+                    &strategy,
+                    query_error,
+                    "Portal Camera",
+                );
+                return;
+            }
+        };
 
+        // Main Camera
+        let (main_camera_global_transform, main_camera) = match main_camera_query.get(portal_parts.main_camera) {
+            Ok(result) => result,
+            Err(query_error) => {
+                deal_with_part_query_error(
+                    &mut commands,
+                    portal_parts,
+                    portal_parts_entity,
+                    &strategy,
+                    query_error,
+                    "Main Camera",
+                );
+                return;
+            }
+        };
+        
         // Portal
-        let portal_result = portal_query.get(portal_camera.parts.portal);
-        if let Err(query_error) = portal_result {
-            deal_with_part_query_error(
-                &mut commands,
-                &portal_camera.parts,
-                &strategy,
-                &query_error,
-                "Portal",
-            );
-            return;
-        }
-        let (portal_global_transform, portal_material) = portal_result.unwrap();
+        let (portal_global_transform, portal_material) = match portal_query.get(portal_parts.portal) {
+            Ok(result) => result,
+            Err(query_error) => {
+                deal_with_part_query_error(
+                    &mut commands,
+                    portal_parts,
+                    portal_parts_entity,
+                    &strategy,
+                    query_error,
+                    "Portal",
+                );
+                return;
+            }
+        };
 
         // Destination
-        let destination_result = destination_query.get(portal_camera.parts.destination);
-        if let Err(query_error) = destination_result {
-            deal_with_part_query_error(
-                &mut commands,
-                &portal_camera.parts,
-                &strategy,
-                &query_error,
-                "Destination",
-            );
-            return;
-        }
-        let destination_global_transform = destination_result.unwrap();
+        let (destination_global_transform, destination) = match destination_query.get(portal_parts.destination) {
+            Ok(result) => result,
+            Err(query_error) => {
+                deal_with_part_query_error(
+                    &mut commands,
+                    portal_parts,
+                    portal_parts_entity,
+                    &strategy,
+                    query_error,
+                    "Destination",
+                );
+                return;
+            }
+        };
 
+        // Resize image
         let portal_image_resized = resize_image_if_needed(
             portal_camera,
             main_camera,
@@ -117,21 +140,20 @@ pub fn update_portal_cameras(
             || main_camera_global_transform.is_changed();
 
         if should_update_transform {
-            let portal_transform = &portal_global_transform.compute_transform();
-            let main_camera_transform = &main_camera_global_transform.compute_transform();
-
             // Move portal camera
-            let new_portal_camera_transform = get_portal_camera_transform(
-                main_camera_transform,
-                portal_transform,
-                destination_transform,
+            let new_portal_camera_global_transform = get_portal_camera_transform(
+                &main_camera_global_transform,
+                &portal_global_transform,
+                &destination_global_transform,
+                destination.mirror_x,
+                destination.mirror_y,
             );
-            *portal_camera_transform = new_portal_camera_transform;
+            *portal_camera_transform = new_portal_camera_global_transform.into();
             // We update the global transform manually here for two reasons:
             // 1) This system is run after global transform propagation
             // so if we don't do that the portal camera's global transform would be lagging behind one frame
             // 2) The portal camera should not be in a hierarchy in theory (?)
-            *portal_camera_global_transform = GlobalTransform::from(new_portal_camera_transform);
+            *portal_camera_global_transform = new_portal_camera_global_transform;
         }
 
         if portal_image_resized || should_update_transform {
@@ -273,22 +295,59 @@ pub struct PortalImageSizeParams<'w, 's> {
 
 /// Helper function to get the transform to change the main camera's transform into the portal camera's transform.
 fn get_portal_camera_transform(
-    main_camera_transform: &Transform,
-    portal_transform: &Transform,
-    destination_transform: &Transform,
-) -> Transform {
-    let portal_camera_translation = main_camera_transform.translation
-        - portal_transform.translation
-        + destination_transform.translation;
-    let rotation = portal_transform
-        .rotation
-        .inverse()
-        .mul_quat(destination_transform.rotation);
-    let mut portal_camera_transform = Transform {
-        translation: portal_camera_translation,
-        rotation: main_camera_transform.rotation,
-        scale: main_camera_transform.scale,
-    };
-    portal_camera_transform.rotate_around(destination_transform.translation, rotation);
-    portal_camera_transform
+    main_camera_transform: &GlobalTransform,
+    portal_transform: &GlobalTransform,
+    destination_transform: &GlobalTransform,
+    mirror_x: bool,
+    mirror_y: bool,
+) -> GlobalTransform {
+    let mut portal_camera_global_transform: GlobalTransform = (
+        destination_transform.affine()
+        * portal_transform.affine().inverse()
+        * main_camera_transform.affine()
+    ).into();
+
+    if mirror_y {
+        let mut transform = portal_camera_global_transform.compute_transform();
+        mirror_transform(
+            &mut transform,
+            destination_transform.translation(),
+            destination_transform.right().into()
+        );
+        portal_camera_global_transform = transform.into();
+    }
+    if mirror_x {
+        let mut transform = portal_camera_global_transform.compute_transform();
+        mirror_transform(
+            &mut transform,
+            destination_transform.translation(),
+            destination_transform.up().into()
+        );
+        portal_camera_global_transform = transform.into();
+    }
+
+    portal_camera_global_transform
+}
+
+// Mirrors a vector "without origin" (/with the same origin as the mirror's normal)
+fn mirror_vec(vec: Vec3, mirror_normal: Vec3) -> Vec3 {
+    let vec_proj = vec.project_onto(mirror_normal);
+    vec - 2. * vec_proj
+}
+
+fn mirror_transform(transform: &mut Transform, mirror_translation: Vec3, mirror_normal: Vec3) {
+    transform.translation = mirror_translation + mirror_vec(
+        transform.translation - mirror_translation,
+        mirror_normal
+    );
+    transform.look_to(
+        mirror_vec(
+            transform.forward().into(),
+            mirror_normal
+        ),
+        mirror_vec(
+            transform.up().into(),
+            mirror_normal
+        ),
+    );
 }

@@ -11,12 +11,8 @@ use super::*;
 
 /// [Plugin] to add support for portals to a bevy App.
 pub struct PortalsPlugin {
-    /// Whether and when to check for entities with [CreatePortal] components to create a portal.
-    ///
-    /// Defaults to [PortalsCheckMode::AlwaysCheck].
-    pub check_create: PortalsCheckMode,
-    /// If true, should check if a [PortalCamera] despawned or has the wrong components with [check_portal_camera_despawn]
-    pub check_portal_camera_despawn: bool,
+    /// If true, should check if any [PortalParts] entity despawned but still has a [PortalPart] referencing it with [check_portal_parts_back_references]
+    pub check_portal_parts_back_references: bool,
     /// What to do when there is a problem getting a [PortalParts]
     ///
     /// Can happen when :
@@ -32,8 +28,7 @@ pub struct PortalsPlugin {
 impl Default for PortalsPlugin {
     fn default() -> Self {
         PortalsPlugin {
-            check_create: PortalsCheckMode::AlwaysCheck,
-            check_portal_camera_despawn: true,
+            check_portal_parts_back_references: true,
             despawn_strategy: None,
         }
     }
@@ -41,8 +36,7 @@ impl Default for PortalsPlugin {
 
 impl PortalsPlugin {
     pub const MINIMAL: Self = Self {
-        check_create: PortalsCheckMode::CheckAfterStartup,
-        check_portal_camera_despawn: false,
+        check_portal_parts_back_references: false,
         despawn_strategy: Some(PortalPartsDespawnStrategy::PANIC),
     };
 }
@@ -51,25 +45,17 @@ impl Plugin for PortalsPlugin {
     fn build(&self, app: &mut App) {
         build_material(app);
         build_projection(app);
-        build_create(app, &self.check_create);
+        build_create(app);
         build_update(app);
         build_despawn(
             app,
             self.despawn_strategy.clone(),
-            self.check_portal_camera_despawn,
+            self.check_portal_parts_back_references,
         );
-    }
-}
 
-/// Whether and when [PortalsPlugin] should check for entities with [CreatePortal] components to create a portal using [create_portals].
-#[derive(PartialEq, Eq, Clone)]
-pub enum PortalsCheckMode {
-    /// Don't set up this check automatically with the plugin, set-up [create_portals] manually, or use [CreatePortalCommand].
-    Manual,
-    /// Set up the check during [StartupSet::PostStartup], after [TransformPropagate](bevy_transform::TransformSystem::TransformPropagate).
-    CheckAfterStartup,
-    /// Set up the check during [StartupSet::PostStartup] and [CoreSet::Last], after [TransformPropagate](bevy_transform::TransformSystem::TransformPropagate).
-    AlwaysCheck,
+        #[cfg(feature = "picking_backend")]
+        app.add_plugins(crate::picking::PortalPickingBackendPlugin);
+    }
 }
 
 /// Strategy to despawn portal parts.
@@ -121,7 +107,7 @@ impl PortalPartsDespawnStrategy {
 }
 
 /// Strategy to despawn a portal part if it is not yet despawned
-#[derive(Default, PartialEq, Eq, Clone, Reflect)]
+#[derive(Default, PartialEq, Eq, Copy, Clone, Reflect)]
 pub enum PortalPartDespawnStrategy {
     /// Despawn the entity and all of its children with a warning
     WarnThenDespawnWithChildren,
@@ -156,35 +142,16 @@ impl PortalPartDespawnStrategy {
     }
 }
 
-/// [Bundle] to create a portal with all the components needed.
-#[derive(Bundle, Default)]
-#[deprecated(
-    since = "0.7.0",
-    note = "Use the `CreatePortal` component instead. Inserting it will now also insert the other components required by it automatically."
-)]
-pub struct CreatePortalBundle {
-    /// Mesh of the portal.
-    pub mesh: Mesh3d,
-    /// Configuration of the portal.
-    pub create_portal: CreatePortal,
-    /// Transform of the portal.
-    pub portal_transform: Transform,
-    pub global_transform: GlobalTransform,
-    pub visibility: Visibility,
-    pub inherited_visibility: InheritedVisibility,
-    pub view_visibility: ViewVisibility,
-}
-
 /// [Component] to create a [Portal] and everything needed to make it work.
 ///
-/// The portal will be created after the next check (see [PortalsCheckMode]), if it has the other components in [CreatePortalBundle].
+/// The portal will be created after the next check (see [PortalsCheckMode]), if it has the components required.
 /// 
-/// Requires [Mesh3d] to define the mesh of the portal. Indirectly requires [Transform] to locate the portal.
+/// Requires [Mesh3d] to define the mesh of the portal, and all its dependencies. Indirectly requires [Transform] to locate the portal.
 #[derive(Component, Clone)]
 #[require(Mesh3d)]
 pub struct CreatePortal {
     /// Where the portal should lead to.
-    pub destination: AsPortalDestination,
+    pub destination: PortalDestinationSource,
     /// What technique to use to render the portal effect, and how to define the
     /// frustum when applicable.
     pub portal_mode: PortalMode,
@@ -205,7 +172,7 @@ pub struct CreatePortal {
 impl Default for CreatePortal {
     fn default() -> Self {
         Self {
-            destination: AsPortalDestination::Create(CreatePortalDestination::default()),
+            destination: PortalDestinationSource::Create(CreatePortalDestination::default()),
             portal_mode: PortalMode::default(),
             main_camera: None,
             cull_mode: Some(Face::Back),
@@ -217,7 +184,7 @@ impl Default for CreatePortal {
 
 /// How to create the [PortalDestination].
 #[derive(Clone)]
-pub enum AsPortalDestination {
+pub enum PortalDestinationSource {
     /// Use an already existing entity.
     Use(Entity),
     /// Create a [PortalDestination] with the given configuration.
@@ -233,8 +200,12 @@ pub enum AsPortalDestination {
 pub struct CreatePortalDestination {
     /// Where to create the destination of the portal
     pub transform: Transform,
-    ///Entity to use as a parent of the [PortalDestination]
+    /// Entity to use as a parent of the [PortalDestination]
     pub parent: Option<Entity>,
+    /// Mirror the image according to the destination's local x/right direction
+    pub mirror_x: bool,
+    /// Mirror the image according to the destination's local y/up direction
+    pub mirror_y: bool,
     //TODO: pub spawn_as_children: something like an EntityCommand?
 }
 

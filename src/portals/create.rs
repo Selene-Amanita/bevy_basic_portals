@@ -24,36 +24,26 @@ use bevy_render::{
     },
     view::ColorGrading,
 };
-use bevy_transform::{prelude::*, TransformSystem};
-use bevy_window::{Window, WindowLevel, WindowRef, WindowResolution};
+use bevy_transform::prelude::*;
+use bevy_window::{Window, WindowRef, WindowResolution};
 use std::f32::consts::PI;
 use tracing::error;
 
 use super::*;
 
 /// Add the create logic to [PortalsPlugin]
-pub(super) fn build_create(app: &mut App, check_create: &PortalsCheckMode) {
+pub(super) fn build_create(app: &mut App) {
     app.register_type::<Portal>()
         .register_type::<PortalDestination>()
         .register_type::<PortalCamera>();
 
-    if check_create != &PortalsCheckMode::Manual {
-        app.add_systems(
-            PostStartup,
-            create_portals.after(TransformSystem::TransformPropagate),
-        );
-    }
-
-    if check_create == &PortalsCheckMode::AlwaysCheck {
-        app.add_systems(
-            PostUpdate,
-            create_portals.after(TransformSystem::TransformPropagate),
-        );
-    }
+    app.add_observer(create_portal_on_add);
 }
 
-/// References to the entities that make a portal work
-#[derive(Clone, Reflect)]
+/// [Component] referencing the entities that make a portal work.
+/// 
+/// Will be put on a separate entity.
+#[derive(Component, Reflect)]
 pub struct PortalParts {
     pub main_camera: Entity,
     pub portal: Entity,
@@ -61,20 +51,25 @@ pub struct PortalParts {
     pub portal_camera: Entity,
 }
 
+/// [Component] put on any portal part (except the main camera) to reference the entity referencing the other parts.
+#[derive(Component, Reflect)]
+pub struct PortalPart {
+    pub parts: Entity,
+}
+
 /// Marker [Component] for the portal.
 ///
 /// Will replace [CreatePortal] after [create_portals].
 #[derive(Component, Reflect)]
-pub struct Portal {
-    pub parts: PortalParts,
-}
+pub struct Portal;
 
 /// Marker [Component] for the destination.
 ///
 /// Will be added to the entity defined by [CreatePortal.destination](CreatePortal)
-#[derive(Component, Reflect)]
+#[derive(Component, Reflect, Default)]
 pub struct PortalDestination {
-    pub parts: PortalParts,
+    pub mirror_x: bool,
+    pub mirror_y: bool,
 }
 
 /// [Component] for a portal camera, the camera that is used to see through a portal.
@@ -85,7 +80,6 @@ pub struct PortalCamera {
     pub image: Handle<Image>,
     #[reflect(ignore)]
     pub portal_mode: PortalMode,
-    pub parts: PortalParts,
 }
 
 /// Marker [Component] for the debug camera when [DebugPortal::show_window] is true.
@@ -106,7 +100,7 @@ pub struct CreatePortalCommand {
 
 impl EntityCommand for CreatePortalCommand {
     fn apply(self, id: Entity, world: &mut World) {
-        let (portal_transform, mesh) = world.query::<(&GlobalTransform, &Mesh3d)>().get(world, id)
+        let (portal_transform, mesh) = world.query::<(&Transform, &Mesh3d)>().get(world, id)//TODO revert !dbg()
             .expect("You must provide a GlobalTransform and Handle<Mesh> components to the entity before using a CreatePortalCommand");
         let portal_transform = *portal_transform;
         let mesh = mesh.clone();
@@ -132,28 +126,30 @@ impl EntityCommand for CreatePortalCommand {
     }
 }
 
-/// [System] that will find entities with the components of [CreatePortalBundle] and create a portal.
+/// [Observer] triggering on adding [CreatePortal], that will remove this component and create a real portal.
 ///
 /// It will create a [PortalCamera] at the destination, and put a portal material on the mesh of the entity with [CreatePortal].
 /// The [PortalCamera] will render to that material.
 /// It will also create debug elements if needed.
 /// It will then remove the [CreatePortal] component.
-///
-/// This system can be automatically added by [PortalsPlugin] depending on [PortalsCheckMode].
-#[allow(clippy::too_many_arguments)]
-pub fn create_portals(
+pub fn create_portal_on_add(
+    trigger: Trigger<OnAdd, CreatePortal>,
     mut create_params: CreatePortalParams,
-    portals_to_create: Query<(Entity, &CreatePortal, &GlobalTransform, &Mesh3d)>,
+    portal_query: Query<(&CreatePortal, &Transform, &Mesh3d)>, //TODO revert !dbg()
 ) {
-    for (portal_entity, portal_create, portal_transform, mesh) in portals_to_create.iter() {
-        create_portal(
-            &mut create_params,
-            portal_entity,
-            portal_create,
-            portal_transform,
-            mesh,
-        );
-    }
+    let portal_entity = trigger.entity();
+    let Ok((portal_create, portal_transform, mesh)) = portal_query.get(portal_entity) else {
+        error!("Entity with CreatePortal lacks the other required components");
+        return;
+    };
+
+    create_portal(
+        &mut create_params,
+        portal_entity,
+        portal_create,
+        portal_transform,
+        mesh,
+    );
 }
 
 /// Creates a portal.
@@ -171,7 +167,7 @@ fn create_portal(
     }: &mut CreatePortalParams,
     portal_entity: Entity,
     create_portal: &CreatePortal,
-    _portal_global_transform: &GlobalTransform,
+    _portal_global_transform: &Transform,//TODO revert !dbg()
     portal_mesh: &Handle<Mesh>,
 ) {
     // Get main camera infos
@@ -224,44 +220,56 @@ fn create_portal(
 
     let portal_image = size_params.images.add(portal_image);
 
-    // Material that the portal camera will render to
-    let portal_material = portal_materials.add(PortalMaterial {
-        color_texture: Some(portal_image.clone()),
-        cull_mode: create_portal.cull_mode,
-    });
-
     // Create or get the destination entity
-    let destination_entity = match create_portal.destination {
-        AsPortalDestination::Use(entity) => entity,
-        AsPortalDestination::Create(CreatePortalDestination { transform, parent }) => {
+    let (destination_entity, mirror_x, mirror_y) = match create_portal.destination {
+        PortalDestinationSource::Use(entity) => {
+            commands.entity(entity).insert(PortalDestination::default());
+            (entity, false, false)
+        },
+        PortalDestinationSource::Create(CreatePortalDestination {
+            transform,
+            parent,
+            mirror_x,
+            mirror_y,
+         }) => {
             let mut destination_commands = commands.spawn((
                 transform,
                 GlobalTransform::from(transform),
+                PortalDestination { mirror_x, mirror_y },
             ));
             if let Some(parent) = parent {
                 destination_commands.set_parent(parent);
             }
-            destination_commands.id()
+            (destination_commands.id(), mirror_x, mirror_y)
         }
-        AsPortalDestination::CreateMirror => {
-            let mut destination_commands = commands.spawn(
-                Transform::from_rotation(Quat::from_axis_angle(Vec3::Y, PI))
-            );
+        PortalDestinationSource::CreateMirror => {
+            let mut destination_commands = commands.spawn((
+                Transform::from_rotation(Quat::from_axis_angle(Vec3::Y, PI)),
+                PortalDestination { mirror_x: false, mirror_y: true }
+            ));
             destination_commands.set_parent(portal_entity);
-            destination_commands.id()
+            (destination_commands.id(), false, true)
         }
     };
+
+    // Material that the portal camera will render to
+    let portal_material = portal_materials.add(PortalMaterial {
+        color_texture: Some(portal_image.clone()),
+        cull_mode: create_portal.cull_mode,
+        mirror_u: if mirror_y {1} else {0},
+        mirror_v: if mirror_x {1} else {0},
+    });
 
     // Create the portal camera
     let projection: PortalProjection = main_camera_projection
         .cloned()
-        .unwrap_or_else(|| Projection::default())
+        .unwrap_or_else(Projection::default)
         .into();
     let portal_camera_entity = commands
         .spawn((
             main_camera_camera3d
                 .cloned()
-                .unwrap_or_else(|| Camera3d::default()),
+                .unwrap_or_else(Camera3d::default),
             Camera {
                 order: -1,
                 target: RenderTarget::Image(portal_image.clone()),
@@ -270,16 +278,16 @@ fn create_portal(
             projection,
             main_camera_tonemapping
                 .cloned()
-                .unwrap_or_else(|| Tonemapping::default()),
+                .unwrap_or_else(Tonemapping::default),
             main_camera_deband_dither
                 .cloned()
-                .unwrap_or_else(|| DebandDither::default()),
+                .unwrap_or_else(DebandDither::default),
             main_camera_color_grading
                 .cloned()
-                .unwrap_or_else(|| ColorGrading::default()),
+                .unwrap_or_else(ColorGrading::default),
             main_camera_exposure
                 .cloned()
-                .unwrap_or_else(|| Exposure::default()),
+                .unwrap_or_else(Exposure::default),
             Visibility::Hidden,
             create_portal.render_layer.clone(),
             // TOFIX set the exact value of Transform and GlobalTransform to avoid black screen at spawn
@@ -287,35 +295,38 @@ fn create_portal(
             // This requires an extra Query to get destination_transform when AsPortalDestination::Entity/CreateMirror
             // Would still matter if the portal camera is a child of the destination
             //transform: portal_camera_transform,
-            //global_transorm: GlobalTransform::from(portal_camera_transform),399c716bba4597815e3ee11be6cd999e
+            //global_transorm: GlobalTransform::from(portal_camera_transform),
         ))
         .remove::<Projection>() // Required component of `Camera3d`, but in this specific case we don't want it
         .id();
 
     // Add portal components
-    let parts = PortalParts {
+    let parts = commands.spawn(PortalParts {
         main_camera: main_camera_entity,
         portal: portal_entity,
         destination: destination_entity,
         portal_camera: portal_camera_entity,
-    };
+    }).id();
 
     let mut portal_entity_command = commands.entity(portal_entity);
-    portal_entity_command.insert(MeshMaterial3d(portal_material));
     portal_entity_command.remove::<CreatePortal>();
-    portal_entity_command.insert(Portal {
-        parts: parts.clone(),
-    });
+    portal_entity_command.insert((
+        Portal,
+        PortalPart{parts},
+        MeshMaterial3d(portal_material),
+    ));
 
-    commands.entity(portal_camera_entity).insert(PortalCamera {
-        image: portal_image,
-        portal_mode: create_portal.portal_mode.clone(),
-        parts: parts.clone(),
-    });
+    commands.entity(portal_camera_entity).insert((
+        PortalCamera {
+            image: portal_image,
+            portal_mode: create_portal.portal_mode.clone(),
+        },
+        PortalPart{parts},
+    ));
 
     commands
         .entity(destination_entity)
-        .insert(PortalDestination { parts });
+        .insert(PortalPart{ parts });
 
     // Debug
     if let Some(debug) = &create_portal.debug {
@@ -329,11 +340,10 @@ fn create_portal(
                 .spawn(Window {
                     title: (match &debug.name {
                         Some(name) => name,
-                        _ => "Debug",
+                        _ => "Portal camera debug",
                     })
                     .to_owned(),
                     resolution: WindowResolution::new(size.width as f32, size.height as f32),
-                    window_level: WindowLevel::AlwaysOnBottom,
                     ..Window::default()
                 })
                 .id();

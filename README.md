@@ -63,6 +63,7 @@ More complex examples are available in the examples folder.
 - A Main Camera is a camera used to visualize the effect
 - A (portal) Destination is an entity representing the point in space where a portal is "looking"
 - A Portal Camera is a camera being used to render the effect, its position to the destination is the same as the main camera's position to the portal
+- All of those are Portal Parts, their references are stored in a separate entity
 
 ## Known limitations
 (may be fixed in the future)

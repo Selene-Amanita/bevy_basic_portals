@@ -110,7 +110,7 @@ fn setup_object_and_portal(
     commands.spawn((
         CreatePortal {
             main_camera: Some(main_camera),
-            destination: AsPortalDestination::Create(CreatePortalDestination {
+            destination: PortalDestinationSource::Create(CreatePortalDestination {
                 transform: destination_transform,
                 ..default()
             }),

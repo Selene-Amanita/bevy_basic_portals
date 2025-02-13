@@ -13,7 +13,7 @@ const DESTINATION_TRANSLATION_END: Vec3 = Vec3::new(17., -3., 0.);
 const CAMERA_SCALE_START: Vec3 = Vec3::ONE;
 const CAMERA_SCALE_END: Vec3 = Vec3::new(2., 2., 2.);
 
-const SPHERE_TRANSFORM: Transform = Transform::from_xyz(20., 0., -5.);
+const CUBE_TRANSFORM: Transform = Transform::from_xyz(20., 0., -5.);
 
 const TIME0: u128 = 0;
 const TIME1: u128 = 1000;
@@ -26,7 +26,11 @@ const TIME7: u128 = 7000;
 const TIME8: u128 = 8000;
 const TIME9: u128 = 8500;
 const TIME10: u128 = 9000;
-const TIME_STOP: u128 = 9000;
+const TIME11: u128 = 10000;
+const TIME12: u128 = 11000;
+const TIME13: u128 = 12000;
+const TIME14: u128 = 13000;
+const TIME_STOP: u128 = 13000;
 
 #[derive(Component)]
 struct MainCamera;
@@ -56,7 +60,7 @@ fn setup(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>) {
         CreatePortal {
             main_camera: Some(main_camera),
             debug: Some(DebugPortal {
-                show_window: false,
+                show_window: true,
                 ..default()
             }),
             ..default()
@@ -64,11 +68,11 @@ fn setup(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>) {
         Mesh3d(portal_mesh),
     ));
 
-    let sphere_mesh = meshes.add(Sphere::new(2.).mesh().uv(32, 18));
+    let cube_mesh = meshes.add(Cuboid::new(2.,2.,2.).mesh());
     commands.spawn((
-        Mesh3d(sphere_mesh),
+        Mesh3d(cube_mesh),
         MeshMaterial3d::<StandardMaterial>::default(),
-        SPHERE_TRANSFORM,
+        CUBE_TRANSFORM,
     ));
 
     commands.insert_resource(AmbientLight{
@@ -108,6 +112,10 @@ fn move_portal_and_destination(
     let portal_rotation_end: Quat = Quat::from_axis_angle(Vec3::Y, 0.5);
     let destination_rotation_start: Quat = Quat::from_axis_angle(Vec3::Y, 0.);
     let destination_rotation_end: Quat = Quat::from_axis_angle(Vec3::Y, 0.5);
+    let portal_rotation2_start: Quat = Quat::from_axis_angle(Vec3::Z, 0.);
+    let portal_rotation2_end: Quat = Quat::from_axis_angle(Vec3::Z, 0.5);
+    let destination_rotation2_start: Quat = Quat::from_axis_angle(Vec3::Z, 0.);
+    let destination_rotation2_end: Quat = Quat::from_axis_angle(Vec3::Z, 0.5);
 
     let mut portal_transform = portal_query.get_single_mut().unwrap();
     let mut destination_transform = destination_query.get_single_mut().unwrap();
@@ -233,6 +241,54 @@ fn move_portal_and_destination(
                 CAMERA_SCALE_END.lerp(
                     CAMERA_SCALE_START, percent_from_to(time, TIME9, TIME10)
                 )
+            )
+        }
+        // Portal second rotation
+        else if (TIME10..TIME11).contains(&time) {
+            (
+                PORTAL_TRANSLATION_START,
+                portal_rotation2_start.lerp(
+                    portal_rotation2_end, percent_from_to(time, TIME10, TIME11)
+                ),
+                DESTINATION_TRANSLATION_START,
+                destination_rotation2_start,
+                CAMERA_SCALE_START
+            )
+        }
+        // Destination second rotation
+        else if (TIME11..TIME12).contains(&time) {
+            (
+                PORTAL_TRANSLATION_START,
+                portal_rotation2_end,
+                DESTINATION_TRANSLATION_START,
+                destination_rotation2_start.lerp(
+                    destination_rotation2_end, percent_from_to(time, TIME11, TIME12)
+                ),
+                CAMERA_SCALE_START
+            )
+        }
+        // Portal reverse second rotation
+        else if (TIME12..TIME13).contains(&time) {
+            (
+                PORTAL_TRANSLATION_START,
+                portal_rotation2_end.lerp(
+                    portal_rotation2_start, percent_from_to(time, TIME12, TIME13)
+                ),
+                DESTINATION_TRANSLATION_START,
+                destination_rotation2_end,
+                CAMERA_SCALE_START
+            )
+        }
+        // Destination reverse second rotation
+        else if (TIME13..TIME14).contains(&time) {
+            (
+                PORTAL_TRANSLATION_START,
+                portal_rotation2_start,
+                DESTINATION_TRANSLATION_START,
+                destination_rotation2_end.lerp(
+                    destination_rotation2_start, percent_from_to(time, TIME13, TIME14)
+                ),
+                CAMERA_SCALE_START
             )
         }
         else {

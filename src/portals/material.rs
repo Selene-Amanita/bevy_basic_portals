@@ -33,6 +33,10 @@ pub struct PortalMaterial {
     #[texture(0)]
     #[sampler(1)]
     pub color_texture: Option<Handle<Image>>,
+    #[uniform(2)]
+    pub mirror_u: u32,
+    #[uniform(3)]
+    pub mirror_v: u32,
     pub cull_mode: Option<Face>,
 }
 

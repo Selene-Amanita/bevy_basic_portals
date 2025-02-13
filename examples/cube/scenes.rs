@@ -21,7 +21,7 @@ pub fn setup_portal_cube_face(
     let destination_transform = get_destination_transform(spawn_portal_dir, spawn_portal_up);
 
     let create_portal = portals::CreatePortal {
-        destination: AsPortalDestination::Create(CreatePortalDestination {
+        destination: PortalDestinationSource::Create(CreatePortalDestination {
             transform: destination_transform,
             ..default()
         }),

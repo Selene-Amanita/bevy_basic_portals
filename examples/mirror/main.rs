@@ -1,7 +1,10 @@
 //! This example illustrates how to create a mirror
 
+use std::f32::consts::FRAC_PI_6;
+
 use bevy::prelude::*;
 use bevy_basic_portals::*;
+use bevy_color::palettes::basic::*;
 
 #[path = "../../helpers/pivot_cameras.rs"]
 mod pivot_cameras;
@@ -22,7 +25,6 @@ fn main() {
 fn setup(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
-    mut images: ResMut<Assets<Image>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     // Light
@@ -34,10 +36,11 @@ fn setup(
 
     // Camera
     let pivot = Vec3::ZERO;
+    let camera_transform = Transform::from_xyz(10., 5., 20.).looking_at(pivot, Vec3::Y);
     let main_camera = commands
         .spawn((
             Camera3d::default(),
-            Transform::from_xyz(10., 0., 20.).looking_at(pivot, Vec3::Y),
+            camera_transform,
             pivot_cameras::PivotCamera {
                 pivot,
                 closest: 0.,
@@ -46,12 +49,27 @@ fn setup(
         ))
         .id();
 
-    // Cube
-    let debug_material = materials.add(textures::debug_material(&mut images, 1, None));
-    let cube_mesh = meshes.add(Cuboid::new(5., 5., 5.));
+    // Cubes
+    let cube_mesh = meshes.add(Cuboid::new(2., 2., 2.));
+    commands.spawn((
+        Mesh3d(cube_mesh.clone()),
+        MeshMaterial3d(materials.add(Color::Srgba(BLUE))),
+        Transform::from_xyz(2., -2., 0.)
+    ));
+    commands.spawn((
+        Mesh3d(cube_mesh.clone()),
+        MeshMaterial3d(materials.add(Color::Srgba(YELLOW))),
+        Transform::from_xyz(2., 2., 0.)
+    ));
+    commands.spawn((
+        Mesh3d(cube_mesh.clone()),
+        MeshMaterial3d(materials.add(Color::Srgba(RED))),
+        Transform::from_xyz(-2., 2., 0.)
+    ));
     commands.spawn((
         Mesh3d(cube_mesh),
-        MeshMaterial3d(debug_material),
+        MeshMaterial3d(materials.add(Color::Srgba(GREEN))),
+        Transform::from_xyz(-2., -2., 0.)
     ));
 
     // Torus
@@ -66,13 +84,14 @@ fn setup(
 
     // Mirror
     let portal_mesh = meshes.add(Rectangle::new(10., 10.));
-    let portal_transform = Transform::from_xyz(0., 0., -10.);
+    let mut portal_transform = Transform::from_xyz(0., 0., -10.);
+    portal_transform.rotate(Quat::from_axis_angle(Vec3::Z, FRAC_PI_6));
     let mut mirror = commands.spawn((
         CreatePortal {
             main_camera: Some(main_camera),
-            destination: AsPortalDestination::CreateMirror,
+            destination: PortalDestinationSource::CreateMirror,
             debug: Some(DebugPortal {
-                show_window: false,
+                show_window: true,
                 ..default()
             }),
             ..default()
@@ -80,6 +99,5 @@ fn setup(
         Mesh3d(portal_mesh),
         portal_transform,
     ));
-
     mirror.add_child(torus);
 }
