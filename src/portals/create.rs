@@ -1,6 +1,5 @@
 //! Components, systems and command for the creation of portals
 
-use bevy_image::Image;
 use bevy_app::prelude::*;
 use bevy_asset::prelude::*;
 use bevy_color::Alpha;
@@ -13,6 +12,7 @@ use bevy_ecs::{
     system::{EntityCommand, SystemParam, SystemState},
 };
 use bevy_hierarchy::prelude::*;
+use bevy_image::Image;
 use bevy_math::prelude::*;
 use bevy_pbr::prelude::*;
 use bevy_reflect::Reflect;
@@ -41,7 +41,7 @@ pub(super) fn build_create(app: &mut App) {
 }
 
 /// [Component] referencing the entities that make a portal work.
-/// 
+///
 /// Will be put on a separate entity.
 #[derive(Component, Reflect)]
 pub struct PortalParts {
@@ -69,7 +69,7 @@ pub struct Portal;
 #[derive(Component, Reflect, Default)]
 pub struct PortalDestination {
     /// Mirrors the image with origin and normal, see [MirrorConfig]
-    pub mirror: Option<(Vec3, Dir3)>
+    pub mirror: Option<(Vec3, Dir3)>,
 }
 
 /// [Component] for a portal camera, the camera that is used to see through a portal.
@@ -167,7 +167,7 @@ fn create_portal(
     }: &mut CreatePortalParams,
     portal_entity: Entity,
     create_portal: &CreatePortal,
-    _portal_global_transform: &Transform,//TODO revert !dbg()
+    _portal_global_transform: &Transform, //TODO revert !dbg()
     portal_mesh: &Handle<Mesh>,
 ) {
     // Get main camera infos
@@ -225,18 +225,19 @@ fn create_portal(
         PortalDestinationSource::Use(entity) => {
             commands.entity(entity).insert(PortalDestination::default());
             (entity, false, false)
-        },
+        }
         PortalDestinationSource::Create(CreatePortalDestination {
             transform,
             parent,
             ref mirror,
-         }) => {
+        }) => {
             let (mirror, mirror_u, mirror_v) = if let Some(MirrorConfig {
-                    origin,
-                    normal,
-                    mirror_u,
-                    mirror_v
-                }) = mirror {
+                origin,
+                normal,
+                mirror_u,
+                mirror_v,
+            }) = mirror
+            {
                 (Some((*origin, *normal)), *mirror_u, *mirror_v)
             } else {
                 (None, false, false)
@@ -254,7 +255,9 @@ fn create_portal(
         PortalDestinationSource::CreateMirror => {
             let mut destination_commands = commands.spawn((
                 Transform::from_rotation(Quat::from_axis_angle(Vec3::Y, PI)),
-                PortalDestination { mirror: Some((Vec3::ZERO, Dir3::from_xyz(1., 0.5, 0.).unwrap())) }
+                PortalDestination {
+                    mirror: Some((Vec3::ZERO, Dir3::X)),
+                },
             ));
             destination_commands.set_parent(portal_entity);
             (destination_commands.id(), true, false)
@@ -265,8 +268,8 @@ fn create_portal(
     let portal_material = portal_materials.add(PortalMaterial {
         color_texture: Some(portal_image.clone()),
         cull_mode: create_portal.cull_mode,
-        mirror_u: if mirror_u {1} else {0},
-        mirror_v: if mirror_v {1} else {0},
+        mirror_u: if mirror_u { 1 } else { 0 },
+        mirror_v: if mirror_v { 1 } else { 0 },
     });
 
     // Create the portal camera
@@ -310,18 +313,20 @@ fn create_portal(
         .id();
 
     // Add portal components
-    let parts = commands.spawn(PortalParts {
-        main_camera: main_camera_entity,
-        portal: portal_entity,
-        destination: destination_entity,
-        portal_camera: portal_camera_entity,
-    }).id();
+    let parts = commands
+        .spawn(PortalParts {
+            main_camera: main_camera_entity,
+            portal: portal_entity,
+            destination: destination_entity,
+            portal_camera: portal_camera_entity,
+        })
+        .id();
 
     let mut portal_entity_command = commands.entity(portal_entity);
     portal_entity_command.remove::<CreatePortal>();
     portal_entity_command.insert((
         Portal,
-        PortalPart{parts},
+        PortalPart { parts },
         MeshMaterial3d(portal_material),
     ));
 
@@ -330,12 +335,12 @@ fn create_portal(
             image: portal_image,
             portal_mode: create_portal.portal_mode.clone(),
         },
-        PortalPart{parts},
+        PortalPart { parts },
     ));
 
     commands
         .entity(destination_entity)
-        .insert(PortalPart{ parts });
+        .insert(PortalPart { parts });
 
     // Debug
     if let Some(debug) = &create_portal.debug {

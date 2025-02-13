@@ -146,7 +146,7 @@ impl PortalPartDespawnStrategy {
 /// [Component] to create a [Portal] and everything needed to make it work.
 ///
 /// The portal will be created with everything needed by a trigger after the insertion/spawning command is flushed, and this component will be removed.
-/// 
+///
 /// Requires [Mesh3d] to define the mesh of the portal, and all its dependencies. Indirectly requires [Transform] to locate the portal.
 #[derive(Component, Clone)]
 #[require(Mesh3d)]
@@ -219,12 +219,12 @@ impl From<Transform> for CreatePortalDestination {
 }
 
 /// Configuration of the mirror effect, used in [CreatePortalDestination].
-/// 
+///
 /// When a mirror effect is applied through a portal:
 /// - the portal camera will be first placed in the position it would be if the portal was nor mirrored
 /// - its position, forward direction and up direction (but not the right one) are then mirrored relative to a mirrored defined in the destination's space by `origin` and `normal`.
 /// - the u and/or v coordinates of the texture are swapped in the portal shader
-/// 
+///
 /// To mirror the image vertically, the normal of the mirror would be Dir3:X to mirror according to the plane YZ of the destination.
 /// Since the up position is mirrored but not the right one, you typically want to mirror only the u coordinate of the texture.
 #[derive(Clone)]
@@ -264,7 +264,7 @@ pub enum PortalMode {
     ///
     /// `None` will assume the `Plane` is `{p, p.z < 0}` in local space, it should
     /// be the same as `Some(Vec3::NEG_Z.extend(0.))`.
-    /// 
+    ///
     /// If the boolean is true, when the camera is inside the half-space its normal will be inverted.
     /// This is needed when using [CreatePortal::cull_mode] set to `None`.
     ///

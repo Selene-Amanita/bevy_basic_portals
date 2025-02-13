@@ -48,22 +48,18 @@ fn setup(
         .observe(on_event_change_color::<Over, true>)
         .observe(on_event_change_color::<Out, false>);
 
-    commands.insert_resource(AmbientLight{
+    commands.insert_resource(AmbientLight {
         brightness: 500.,
         ..default()
     });
 }
 
-
-fn on_event_change_color<
-    E: std::fmt::Debug + Clone + Reflect,
-    const MAKE_GREEN: bool
->(
+fn on_event_change_color<E: std::fmt::Debug + Clone + Reflect, const MAKE_GREEN: bool>(
     event: Trigger<Pointer<E>>,
     material_query: Query<&MeshMaterial3d<StandardMaterial>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     let material_handle = material_query.get(event.entity()).unwrap();
     let material = materials.get_mut(material_handle).unwrap();
-    material.base_color = Color::Srgba(if MAKE_GREEN {GREEN} else {RED});
+    material.base_color = Color::Srgba(if MAKE_GREEN { GREEN } else { RED });
 }

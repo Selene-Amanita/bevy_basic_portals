@@ -52,22 +52,22 @@ fn setup(
     commands.spawn((
         Mesh3d(cube_mesh.clone()),
         MeshMaterial3d(materials.add(Color::Srgba(BLUE))),
-        Transform::from_xyz(2., -2., 0.)
+        Transform::from_xyz(2., -2., 0.),
     ));
     commands.spawn((
         Mesh3d(cube_mesh.clone()),
         MeshMaterial3d(materials.add(Color::Srgba(YELLOW))),
-        Transform::from_xyz(2., 2., 0.)
+        Transform::from_xyz(2., 2., 0.),
     ));
     commands.spawn((
         Mesh3d(cube_mesh.clone()),
         MeshMaterial3d(materials.add(Color::Srgba(RED))),
-        Transform::from_xyz(-2., 2., 0.)
+        Transform::from_xyz(-2., 2., 0.),
     ));
     commands.spawn((
         Mesh3d(cube_mesh),
         MeshMaterial3d(materials.add(Color::Srgba(GREEN))),
-        Transform::from_xyz(-2., -2., 0.)
+        Transform::from_xyz(-2., -2., 0.),
     ));
 
     // Torus

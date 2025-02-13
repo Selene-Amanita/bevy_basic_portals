@@ -54,21 +54,13 @@ pub struct DespawnPortalPartsEntityCommand(PortalPartsDespawnStrategy);
 
 impl EntityCommand for DespawnPortalPartsEntityCommand {
     fn apply(self, entity: Entity, world: &mut World) {
-        let mut system_state = SystemState::<(
-            Commands,
-            Query<&PortalPart>,
-            Query<&PortalParts>,
-        )>::new(world);
-        let (mut commands, portal_part_query, portal_parts_query) =
-            system_state.get_mut(world);
+        let mut system_state =
+            SystemState::<(Commands, Query<&PortalPart>, Query<&PortalParts>)>::new(world);
+        let (mut commands, portal_part_query, portal_parts_query) = system_state.get_mut(world);
 
         let portal_parts = portal_part_query.get(entity).map_or_else(
-            |_| {
-                portal_parts_query.get(entity).ok()
-            },
-            |p| {
-                portal_parts_query.get(p.parts).ok()
-            },
+            |_| portal_parts_query.get(entity).ok(),
+            |p| portal_parts_query.get(p.parts).ok(),
         );
 
         if let Some(portal_parts) = portal_parts {
@@ -175,7 +167,10 @@ pub fn check_portal_parts_back_references(
             } else if portal_camera_query.contains(part_entity) {
                 strategy.portal_camera
             } else {
-                warn!("Portal Part #{} isn't a portal, a destination or a portal camera", part_entity);
+                warn!(
+                    "Portal Part #{} isn't a portal, a destination or a portal camera",
+                    part_entity
+                );
                 continue;
             };
 
@@ -208,8 +203,7 @@ pub(super) fn deal_with_part_query_error(
             "is a part of portal parts {} where {} #{} is missing key components",
             parts_entity,
             name_of_part,
-            entity.index()
-            // TODO: reproduce format_archetype's behavior
+            entity.index() // TODO: reproduce format_archetype's behavior
         ),
         QueryEntityError::NoSuchEntity(entity) => format!(
             "is a part of portal parts {} where {} #{} has despawned",
@@ -226,7 +220,7 @@ pub(super) fn deal_with_part_query_error(
                 name_of_part,
                 entity.index()
             )
-        },
+        }
     };
     despawn_portal_parts_with_message(commands, parts, strategy, &error_message);
 }

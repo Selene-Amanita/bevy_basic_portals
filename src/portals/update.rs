@@ -47,7 +47,10 @@ pub fn update_portal_cameras(
         (Ref<GlobalTransform>, &MeshMaterial3d<PortalMaterial>),
         (With<Portal>, Without<Camera>),
     >,
-    destination_query: Query<(Ref<GlobalTransform>, &PortalDestination), (With<PortalDestination>, Without<Camera>)>,
+    destination_query: Query<
+        (Ref<GlobalTransform>, &PortalDestination),
+        (With<PortalDestination>, Without<Camera>),
+    >,
     mut resize_params: PortalImageSizeParams,
     mut materials: ResMut<Assets<PortalMaterial>>,
 ) {
@@ -76,23 +79,25 @@ pub fn update_portal_cameras(
         };
 
         // Main Camera
-        let (main_camera_global_transform, main_camera) = match main_camera_query.get(portal_parts.main_camera) {
-            Ok(result) => result,
-            Err(query_error) => {
-                deal_with_part_query_error(
-                    &mut commands,
-                    portal_parts,
-                    portal_parts_entity,
-                    &strategy,
-                    query_error,
-                    "Main Camera",
-                );
-                return;
-            }
-        };
-        
+        let (main_camera_global_transform, main_camera) =
+            match main_camera_query.get(portal_parts.main_camera) {
+                Ok(result) => result,
+                Err(query_error) => {
+                    deal_with_part_query_error(
+                        &mut commands,
+                        portal_parts,
+                        portal_parts_entity,
+                        &strategy,
+                        query_error,
+                        "Main Camera",
+                    );
+                    return;
+                }
+            };
+
         // Portal
-        let (portal_global_transform, portal_material) = match portal_query.get(portal_parts.portal) {
+        let (portal_global_transform, portal_material) = match portal_query.get(portal_parts.portal)
+        {
             Ok(result) => result,
             Err(query_error) => {
                 deal_with_part_query_error(
@@ -108,20 +113,21 @@ pub fn update_portal_cameras(
         };
 
         // Destination
-        let (destination_global_transform, destination) = match destination_query.get(portal_parts.destination) {
-            Ok(result) => result,
-            Err(query_error) => {
-                deal_with_part_query_error(
-                    &mut commands,
-                    portal_parts,
-                    portal_parts_entity,
-                    &strategy,
-                    query_error,
-                    "Destination",
-                );
-                return;
-            }
-        };
+        let (destination_global_transform, destination) =
+            match destination_query.get(portal_parts.destination) {
+                Ok(result) => result,
+                Err(query_error) => {
+                    deal_with_part_query_error(
+                        &mut commands,
+                        portal_parts,
+                        portal_parts_entity,
+                        &strategy,
+                        query_error,
+                        "Destination",
+                    );
+                    return;
+                }
+            };
 
         // Resize image
         let portal_image_resized = resize_image_if_needed(
@@ -227,12 +233,23 @@ fn get_frustum(
     match portal_camera.portal_mode {
         PortalMode::MaskedImageHalfSpaceFrustum((half_space, switch_normal)) => {
             let (mut near_half_space_normal, half_space_d) = if let Some(half_space) = half_space {
-                (destination_transform.rotation().mul_vec3(half_space.normal().into()), half_space.d())
+                (
+                    destination_transform
+                        .rotation()
+                        .mul_vec3(half_space.normal().into()),
+                    half_space.d(),
+                )
             } else {
                 (destination_transform.forward().into(), 0.)
             };
 
-            if switch_normal && near_half_space_normal.dot(portal_camera_transform.translation() - destination_transform.translation()).is_sign_positive() {
+            if switch_normal
+                && near_half_space_normal
+                    .dot(
+                        portal_camera_transform.translation() - destination_transform.translation(),
+                    )
+                    .is_sign_positive()
+            {
                 near_half_space_normal = -near_half_space_normal;
             }
 
@@ -290,20 +307,20 @@ fn get_portal_camera_transform(
     main_camera_transform: &GlobalTransform,
     portal_transform: &GlobalTransform,
     destination_transform: &GlobalTransform,
-    mirror: Option<(Vec3, Dir3)>
+    mirror: Option<(Vec3, Dir3)>,
 ) -> GlobalTransform {
-    let mut portal_camera_global_transform: GlobalTransform = (
-        destination_transform.affine()
+    let mut portal_camera_global_transform: GlobalTransform = (destination_transform.affine()
         * portal_transform.affine().inverse()
-        * main_camera_transform.affine()
-    ).into();
+        * main_camera_transform.affine())
+    .into();
 
     if let Some((origin, normal)) = mirror {
         let mut transform = portal_camera_global_transform.compute_transform();
         mirror_transform(
             &mut transform,
             destination_transform.transform_point(origin),
-            destination_transform.transform_point(normal.into()) - destination_transform.translation(),
+            destination_transform.transform_point(normal.into())
+                - destination_transform.translation(),
         );
         portal_camera_global_transform = transform.into();
     }
@@ -318,18 +335,10 @@ fn mirror_vec(vec: Vec3, mirror_normal: Vec3) -> Vec3 {
 }
 
 fn mirror_transform(transform: &mut Transform, mirror_translation: Vec3, mirror_normal: Vec3) {
-    transform.translation = mirror_translation + mirror_vec(
-        transform.translation - mirror_translation,
-        mirror_normal
-    );
+    transform.translation =
+        mirror_translation + mirror_vec(transform.translation - mirror_translation, mirror_normal);
     transform.look_to(
-        mirror_vec(
-            transform.forward().into(),
-            mirror_normal
-        ),
-        mirror_vec(
-            transform.up().into(),
-            mirror_normal
-        ),
+        mirror_vec(transform.forward().into(), mirror_normal),
+        mirror_vec(transform.up().into(), mirror_normal),
     );
 }

@@ -48,11 +48,7 @@ fn setup(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>) {
         Transform::from_xyz(-20., 0., 20.).looking_at(Vec3::ZERO, Vec3::Y);
 
     let main_camera = commands
-        .spawn((
-            Camera3d::default(),
-            camera_transform,
-            MainCamera,
-        ))
+        .spawn((Camera3d::default(), camera_transform, MainCamera))
         .id();
 
     let portal_mesh = meshes.add(Rectangle::new(10., 10.));
@@ -68,14 +64,14 @@ fn setup(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>) {
         Mesh3d(portal_mesh),
     ));
 
-    let cube_mesh = meshes.add(Cuboid::new(2.,2.,2.).mesh());
+    let cube_mesh = meshes.add(Cuboid::new(2., 2., 2.).mesh());
     commands.spawn((
         Mesh3d(cube_mesh),
         MeshMaterial3d::<StandardMaterial>::default(),
         CUBE_TRANSFORM,
     ));
 
-    commands.insert_resource(AmbientLight{
+    commands.insert_resource(AmbientLight {
         brightness: 500.,
         ..default()
     });
