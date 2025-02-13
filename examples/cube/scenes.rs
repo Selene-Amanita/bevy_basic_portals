@@ -32,11 +32,7 @@ pub fn setup_portal_cube_face(
 
     // This shows two different ways of creating a portal
     if automatic {
-        commands.spawn((
-            create_portal,
-            Mesh3d(portal_mesh),
-            portal_transform,
-        ));
+        commands.spawn((create_portal, Mesh3d(portal_mesh), portal_transform));
     } else {
         commands
             .spawn((
@@ -65,10 +61,7 @@ pub fn setup_scene_test(
     let destination_transform = get_destination_transform(spawn_portal_dir, spawn_portal_up);
 
     commands
-        .spawn((
-            destination_transform,
-            Visibility::default(),
-        ))
+        .spawn((destination_transform, Visibility::default()))
         .with_children(|parent| {
             // Shape
             let mut shape_transform = Transform::default();

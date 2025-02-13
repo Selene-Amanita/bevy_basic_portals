@@ -144,7 +144,7 @@ impl PortalPartDespawnStrategy {
 
 /// [Component] to create a [Portal] and everything needed to make it work.
 ///
-/// The portal will be created after the next check (see [PortalsCheckMode]), if it has the components required.
+/// The portal will be created with everything needed by a trigger after the insertion/spawning command is flushed, and this component will be removed.
 /// 
 /// Requires [Mesh3d] to define the mesh of the portal, and all its dependencies. Indirectly requires [Transform] to locate the portal.
 #[derive(Component, Clone)]
@@ -207,6 +207,15 @@ pub struct CreatePortalDestination {
     /// Mirror the image according to the destination's local y/up direction
     pub mirror_y: bool,
     //TODO: pub spawn_as_children: something like an EntityCommand?
+}
+
+impl From<Transform> for CreatePortalDestination {
+    fn from(transform: Transform) -> Self {
+        Self {
+            transform,
+            ..Default::default()
+        }
+    }
 }
 
 /// What technique to use to render the portal effect, and what entities are seen

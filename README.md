@@ -34,10 +34,7 @@ fn setup(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>) {
     commands.spawn((
         // This component will be deleted and things that are needed to create the portal will be created
         CreatePortal {
-            destination: AsPortalDestination::Create(CreatePortalDestination {
-                transform: Transform::from_xyz(20., 0., 0.),
-                ..default()
-            }),
+            destination: AsPortalDestination::Create(Transform::from_xyz(20., 0., 0.).into()),
             // Uncomment this to see the portal
             /*debug: Some(DebugPortal {
                 show_window: false,
@@ -79,7 +76,7 @@ if you want a bidirectional portal you can crate two portals manually
 ## Bevy versions
 | Bevy version | Bevy Basic Portals recommended version |
 |--------------|----------------------------------------|
-| 0.15.*       | 0.7.0                                  |
+| 0.15.*       | 0.7.1                                  |
 | 0.14.*       | 0.6.0                                  |
 | 0.13.*       | 0.5.0                                  |
 | 0.12.*       | 0.4.0                                  |

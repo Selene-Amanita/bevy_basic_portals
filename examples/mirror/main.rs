@@ -91,7 +91,8 @@ fn setup(
             main_camera: Some(main_camera),
             destination: PortalDestinationSource::CreateMirror,
             debug: Some(DebugPortal {
-                show_window: true,
+                // Set to true to see what the portal camera really sees
+                show_window: false,
                 ..default()
             }),
             ..default()

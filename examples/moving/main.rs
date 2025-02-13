@@ -60,7 +60,7 @@ fn setup(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>) {
         CreatePortal {
             main_camera: Some(main_camera),
             debug: Some(DebugPortal {
-                show_window: true,
+                show_window: false,
                 ..default()
             }),
             ..default()
