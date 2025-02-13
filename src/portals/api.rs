@@ -3,6 +3,7 @@
 use bevy_app::prelude::*;
 use bevy_color::{palettes::basic::GRAY, Color};
 use bevy_ecs::prelude::*;
+use bevy_math::prelude::*;
 use bevy_reflect::Reflect;
 use bevy_render::{prelude::*, primitives::HalfSpace, render_resource::Face, view::RenderLayers};
 use bevy_transform::prelude::*;
@@ -160,6 +161,7 @@ pub struct CreatePortal {
     /// Whether to cull the “front”, “back” or neither side of a the portal mesh.
     ///
     /// If set to `None`, the two sides of the portal are visible and work as a portal.
+    /// Be sure to set an appropriate [PortalMode] so that the frustum isn't assuming you only see the back of your mesh.
     ///
     /// Defaults to `Some(Face::Back)`, see [StandardMaterial](bevy_pbr::StandardMaterial).
     pub cull_mode: Option<Face>,
@@ -202,10 +204,8 @@ pub struct CreatePortalDestination {
     pub transform: Transform,
     /// Entity to use as a parent of the [PortalDestination]
     pub parent: Option<Entity>,
-    /// Mirror the image according to the destination's local x/right direction
-    pub mirror_x: bool,
-    /// Mirror the image according to the destination's local y/up direction
-    pub mirror_y: bool,
+    /// Mirrors the image seen through the portal, see [MirrorConfig].
+    pub mirror: Option<MirrorConfig>,
     //TODO: pub spawn_as_children: something like an EntityCommand?
 }
 
@@ -214,6 +214,34 @@ impl From<Transform> for CreatePortalDestination {
         Self {
             transform,
             ..Default::default()
+        }
+    }
+}
+
+/// Configuration of the mirror effect, used in [CreatePortalDestination].
+/// 
+/// When a mirror effect is applied through a portal:
+/// - the portal camera will be first placed in the position it would be if the portal was nor mirrored
+/// - its position, forward direction and up direction (but not the right one) are then mirrored relative to a mirrored defined in the destination's space by `origin` and `normal`.
+/// - the u and/or v coordinates of the texture are swapped in the portal shader
+/// 
+/// To mirror the image vertically, the normal of the mirror would be Dir3:X to mirror according to the plane YZ of the destination.
+/// Since the up position is mirrored but not the right one, you typically want to mirror only the u coordinate of the texture.
+#[derive(Clone)]
+pub struct MirrorConfig {
+    pub origin: Vec3,
+    pub normal: Dir3,
+    pub mirror_u: bool,
+    pub mirror_v: bool,
+}
+
+impl Default for MirrorConfig {
+    fn default() -> Self {
+        MirrorConfig {
+            origin: Vec3::ZERO,
+            normal: Dir3::X,
+            mirror_u: true,
+            mirror_v: false,
         }
     }
 }
@@ -236,13 +264,16 @@ pub enum PortalMode {
     ///
     /// `None` will assume the `Plane` is `{p, p.z < 0}` in local space, it should
     /// be the same as `Some(Vec3::NEG_Z.extend(0.))`.
+    /// 
+    /// If the boolean is true, when the camera is inside the half-space its normal will be inverted.
+    /// This is needed when using [CreatePortal::cull_mode] set to `None`.
     ///
     /// Note that this will *replace* the near plane of the frustum defined from
     /// the projection matrix, which means that some objects might be considered
     /// for rendering when they shouldn't be (for example, when the camera's forward
     /// is almost parallel to the plane, objects behind the camera but in front of
     /// the plane will be considered).
-    MaskedImageHalfSpaceFrustum(Option<HalfSpace>),
+    MaskedImageHalfSpaceFrustum((Option<HalfSpace>, bool)),
     //TODO
     //MaskedImageRectangleFrustum(PortalRectangleView),
     //MaskedImageSphereHalfSpaceFrustum(_)
@@ -253,7 +284,7 @@ pub enum PortalMode {
 
 impl Default for PortalMode {
     fn default() -> Self {
-        PortalMode::MaskedImageHalfSpaceFrustum(None)
+        PortalMode::MaskedImageHalfSpaceFrustum((None, false))
     }
 }
 

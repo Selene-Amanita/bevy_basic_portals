@@ -1,7 +1,5 @@
 //! This example illustrates how to create a mirror
 
-use std::f32::consts::FRAC_PI_6;
-
 use bevy::prelude::*;
 use bevy_basic_portals::*;
 use bevy_color::palettes::basic::*;
@@ -84,8 +82,8 @@ fn setup(
 
     // Mirror
     let portal_mesh = meshes.add(Rectangle::new(10., 10.));
-    let mut portal_transform = Transform::from_xyz(0., 0., -10.);
-    portal_transform.rotate(Quat::from_axis_angle(Vec3::Z, FRAC_PI_6));
+    let portal_transform = Transform::from_xyz(0., 0., -10.);
+    //portal_transform.rotate(Quat::from_axis_angle(Vec3::Z, FRAC_PI_6));
     let mut mirror = commands.spawn((
         CreatePortal {
             main_camera: Some(main_camera),
@@ -95,6 +93,9 @@ fn setup(
                 show_window: false,
                 ..default()
             }),
+            // Uncomment the following two lines to have a double-sided mirror
+            //cull_mode: None,
+            //portal_mode: PortalMode::MaskedImageHalfSpaceFrustum((None, true)),
             ..default()
         },
         Mesh3d(portal_mesh),

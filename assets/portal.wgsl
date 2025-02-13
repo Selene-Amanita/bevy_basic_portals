@@ -18,10 +18,9 @@ fn fragment(
     let dimensions = textureDimensions(texture);
     let dimension_x: f32 = f32(dimensions.x);
     let dimension_y: f32 = f32(dimensions.y);
-    var uv: vec2<f32> = vec2(in.position.x/dimension_x, in.position.y/dimension_y);// / in.world_position.w;
+    var uv: vec2<f32> = vec2(in.position.x/dimension_x, in.position.y/dimension_y);
     if (mirror_u != 0) { uv.x = 1. - uv.x; }
     if (mirror_v != 0) { uv.y = 1. - uv.y; }
     let color = textureSample(texture, texture_sampler, uv).rgb;
     return vec4(color, 1.0);
-    //return vec4(0.5,0.5,1.,1.);
 }

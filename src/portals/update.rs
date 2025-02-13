@@ -4,7 +4,7 @@ use bevy_app::prelude::*;
 use bevy_asset::{Assets, Handle};
 use bevy_ecs::{prelude::*, system::SystemParam};
 use bevy_image::Image;
-use bevy_math::{Quat, UVec2, Vec3};
+use bevy_math::{Dir3, UVec2, Vec3};
 use bevy_pbr::MeshMaterial3d;
 use bevy_render::{
     camera::{CameraProjection, ManualTextureViews, RenderTarget},
@@ -132,9 +132,6 @@ pub fn update_portal_cameras(
             &mut materials,
         );
 
-        // Needed for update frustum later because of update_frusta
-        let destination_transform = &destination_global_transform.compute_transform();
-
         let should_update_transform = portal_global_transform.is_changed()
             || destination_global_transform.is_changed()
             || main_camera_global_transform.is_changed();
@@ -145,8 +142,7 @@ pub fn update_portal_cameras(
                 &main_camera_global_transform,
                 &portal_global_transform,
                 &destination_global_transform,
-                destination.mirror_x,
-                destination.mirror_y,
+                destination.mirror,
             );
             *portal_camera_transform = new_portal_camera_global_transform.into();
             // We update the global transform manually here for two reasons:
@@ -160,8 +156,8 @@ pub fn update_portal_cameras(
             // Update frustum
             let new_frustum = get_frustum(
                 portal_camera,
-                &portal_camera_transform,
-                destination_transform,
+                &portal_camera_global_transform,
+                &destination_global_transform,
                 projection,
             );
             *frustum = new_frustum;
@@ -214,8 +210,8 @@ fn resize_image_if_needed(
 /// modifying it depending on the [PortalMode].
 fn get_frustum(
     portal_camera: &PortalCamera,
-    portal_camera_transform: &Transform,
-    destination_transform: &Transform,
+    portal_camera_transform: &GlobalTransform,
+    destination_transform: &GlobalTransform,
     projection: &PortalProjection,
 ) -> Frustum {
     let view_projection =
@@ -223,32 +219,28 @@ fn get_frustum(
 
     let mut frustum = Frustum::from_clip_from_world_custom_far(
         &view_projection,
-        &portal_camera_transform.translation,
+        &portal_camera_transform.translation(),
         &portal_camera_transform.back(),
         projection.far(),
     );
 
     match portal_camera.portal_mode {
-        PortalMode::MaskedImageHalfSpaceFrustum(Some(half_space)) => {
-            let rot = Quat::from_rotation_arc(
-                Vec3::NEG_Z,
-                destination_transform.forward().normalize_or_zero(),
-            );
-            let near_half_space_normal = rot.mul_vec3(half_space.normal().into());
+        PortalMode::MaskedImageHalfSpaceFrustum((half_space, switch_normal)) => {
+            let (mut near_half_space_normal, half_space_d) = if let Some(half_space) = half_space {
+                (destination_transform.rotation().mul_vec3(half_space.normal().into()), half_space.d())
+            } else {
+                (destination_transform.forward().into(), 0.)
+            };
+
+            if switch_normal && near_half_space_normal.dot(portal_camera_transform.translation() - destination_transform.translation()).is_sign_positive() {
+                near_half_space_normal = -near_half_space_normal;
+            }
 
             let dot = destination_transform
-                .translation
+                .translation()
                 .dot(near_half_space_normal.normalize());
-            let near_half_space_distance = -(dot + half_space.d());
+            let near_half_space_distance = -(dot + half_space_d) - 0.00001;
 
-            frustum.half_spaces[4] =
-                HalfSpace::new(near_half_space_normal.extend(near_half_space_distance))
-        }
-        PortalMode::MaskedImageHalfSpaceFrustum(None) => {
-            let near_half_space_normal = destination_transform.forward();
-            let near_half_space_distance = -destination_transform
-                .translation
-                .dot(near_half_space_normal.normalize_or_zero());
             frustum.half_spaces[4] =
                 HalfSpace::new(near_half_space_normal.extend(near_half_space_distance))
         }
@@ -298,8 +290,7 @@ fn get_portal_camera_transform(
     main_camera_transform: &GlobalTransform,
     portal_transform: &GlobalTransform,
     destination_transform: &GlobalTransform,
-    mirror_x: bool,
-    mirror_y: bool,
+    mirror: Option<(Vec3, Dir3)>
 ) -> GlobalTransform {
     let mut portal_camera_global_transform: GlobalTransform = (
         destination_transform.affine()
@@ -307,21 +298,12 @@ fn get_portal_camera_transform(
         * main_camera_transform.affine()
     ).into();
 
-    if mirror_y {
+    if let Some((origin, normal)) = mirror {
         let mut transform = portal_camera_global_transform.compute_transform();
         mirror_transform(
             &mut transform,
-            destination_transform.translation(),
-            destination_transform.right().into()
-        );
-        portal_camera_global_transform = transform.into();
-    }
-    if mirror_x {
-        let mut transform = portal_camera_global_transform.compute_transform();
-        mirror_transform(
-            &mut transform,
-            destination_transform.translation(),
-            destination_transform.up().into()
+            destination_transform.transform_point(origin),
+            destination_transform.transform_point(normal.into()) - destination_transform.translation(),
         );
         portal_camera_global_transform = transform.into();
     }

@@ -68,8 +68,8 @@ pub struct Portal;
 /// Will be added to the entity defined by [CreatePortal.destination](CreatePortal)
 #[derive(Component, Reflect, Default)]
 pub struct PortalDestination {
-    pub mirror_x: bool,
-    pub mirror_y: bool,
+    /// Mirrors the image with origin and normal, see [MirrorConfig]
+    pub mirror: Option<(Vec3, Dir3)>
 }
 
 /// [Component] for a portal camera, the camera that is used to see through a portal.
@@ -221,7 +221,7 @@ fn create_portal(
     let portal_image = size_params.images.add(portal_image);
 
     // Create or get the destination entity
-    let (destination_entity, mirror_x, mirror_y) = match create_portal.destination {
+    let (destination_entity, mirror_u, mirror_v) = match create_portal.destination {
         PortalDestinationSource::Use(entity) => {
             commands.entity(entity).insert(PortalDestination::default());
             (entity, false, false)
@@ -229,26 +229,35 @@ fn create_portal(
         PortalDestinationSource::Create(CreatePortalDestination {
             transform,
             parent,
-            mirror_x,
-            mirror_y,
+            ref mirror,
          }) => {
+            let (mirror, mirror_u, mirror_v) = if let Some(MirrorConfig {
+                    origin,
+                    normal,
+                    mirror_u,
+                    mirror_v
+                }) = mirror {
+                (Some((*origin, *normal)), *mirror_u, *mirror_v)
+            } else {
+                (None, false, false)
+            };
             let mut destination_commands = commands.spawn((
                 transform,
                 GlobalTransform::from(transform),
-                PortalDestination { mirror_x, mirror_y },
+                PortalDestination { mirror },
             ));
             if let Some(parent) = parent {
                 destination_commands.set_parent(parent);
             }
-            (destination_commands.id(), mirror_x, mirror_y)
+            (destination_commands.id(), mirror_u, mirror_v)
         }
         PortalDestinationSource::CreateMirror => {
             let mut destination_commands = commands.spawn((
                 Transform::from_rotation(Quat::from_axis_angle(Vec3::Y, PI)),
-                PortalDestination { mirror_x: false, mirror_y: true }
+                PortalDestination { mirror: Some((Vec3::ZERO, Dir3::from_xyz(1., 0.5, 0.).unwrap())) }
             ));
             destination_commands.set_parent(portal_entity);
-            (destination_commands.id(), false, true)
+            (destination_commands.id(), true, false)
         }
     };
 
@@ -256,8 +265,8 @@ fn create_portal(
     let portal_material = portal_materials.add(PortalMaterial {
         color_texture: Some(portal_image.clone()),
         cull_mode: create_portal.cull_mode,
-        mirror_u: if mirror_y {1} else {0},
-        mirror_v: if mirror_x {1} else {0},
+        mirror_u: if mirror_u {1} else {0},
+        mirror_v: if mirror_v {1} else {0},
     });
 
     // Create the portal camera
