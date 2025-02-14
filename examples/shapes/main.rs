@@ -59,7 +59,7 @@ fn setup(
         sphere_mesh,
         debug_material.clone(),
         Transform::from_xyz(10., 0., 0.),
-        PortalMode::MaskedImageSphereHalfSpaceFrustum((Vec3::ZERO,2.5)),
+        PortalMode::MaskedImageSphereHalfSpaceFrustum((Vec3::ZERO, 2.5)),
         Some(Face::Back),
     );
 
@@ -72,7 +72,7 @@ fn setup(
         cube_mesh,
         debug_material.clone(),
         Transform::from_xyz(-10., 0., 0.),
-        PortalMode::MaskedImageSphereHalfSpaceFrustum((Vec3::ZERO,2.5 * std::f32::consts::SQRT_2)),
+        PortalMode::MaskedImageSphereHalfSpaceFrustum((Vec3::ZERO, 2.5 * std::f32::consts::SQRT_2)),
         Some(Face::Back),
     );
 

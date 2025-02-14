@@ -266,12 +266,11 @@ fn get_frustum(
 
             let sphere_tangeant_point =
                 destination_transform.translation() + origin - distance * near_half_space_normal;
-            let near_half_space_distance = - sphere_tangeant_point
-                .dot(near_half_space_normal);
+            let near_half_space_distance = -sphere_tangeant_point.dot(near_half_space_normal);
 
             frustum.half_spaces[4] =
                 HalfSpace::new(near_half_space_normal.extend(near_half_space_distance));
-        },
+        }
         PortalMode::MaskedImageNoFrustum => (),
     };
 

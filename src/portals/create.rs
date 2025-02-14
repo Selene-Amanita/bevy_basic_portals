@@ -379,7 +379,9 @@ fn create_portal(
 
         // Put a sphere at destination_transform.translation, as a child of the destination
         if debug.show_destination_point {
-            commands.entity(destination_entity).insert(Visibility::default())
+            commands
+                .entity(destination_entity)
+                .insert(Visibility::default())
                 .with_children(|parent| {
                     parent.spawn((
                         Mesh3d(meshes.add(Sphere::new(0.1).mesh().ico(5).unwrap())),

@@ -260,7 +260,7 @@ pub enum PortalMode {
     MaskedImageNoFrustum,
     /// Same as [PortalMode::MaskedImageNoFrustum], but a frustum will be defined to hide
     /// objects between the portal camera and the destination.
-    /// 
+    ///
     /// The frustum uses a [HalfSpace] in destination local space (it later takes into account
     /// the destination transform for calculations in global space) as a near plane.
     ///
@@ -278,10 +278,10 @@ pub enum PortalMode {
     MaskedImageHalfSpaceFrustum((Option<HalfSpace>, bool)),
     /// Same as [PortalMode::MaskedImageNoFrustum], but a frustum will be defined to hide
     /// objects between the portal camera and the destination.
-    /// 
+    ///
     /// The frustum uses an origin and a distance in destination local space as a near plane.
     /// The near plane will always be facing the portal camera, at a certain distance from the origin.
-    /// 
+    ///
     /// This is useful for 3D portals (like crystal balls).
     MaskedImageSphereHalfSpaceFrustum((Vec3, f32)),
     //TODO
