@@ -59,6 +59,7 @@ fn setup(
         sphere_mesh,
         debug_material.clone(),
         Transform::from_xyz(10., 0., 0.),
+        PortalMode::MaskedImageSphereHalfSpaceFrustum((Vec3::ZERO,2.5)),
         Some(Face::Back),
     );
 
@@ -71,6 +72,7 @@ fn setup(
         cube_mesh,
         debug_material.clone(),
         Transform::from_xyz(-10., 0., 0.),
+        PortalMode::MaskedImageSphereHalfSpaceFrustum((Vec3::ZERO,2.5 * std::f32::consts::SQRT_2)),
         Some(Face::Back),
     );
 
@@ -83,6 +85,7 @@ fn setup(
         quad_mesh,
         debug_material.clone(),
         Transform::from_xyz(0., 0., -10.),
+        PortalMode::MaskedImageHalfSpaceFrustum((None, true)),
         None,
     );
 }
@@ -93,6 +96,7 @@ fn setup_object_and_portal(
     mesh: Handle<Mesh>,
     material: Handle<StandardMaterial>,
     portal_transform: Transform,
+    portal_mode: PortalMode,
     cull_mode: Option<Face>,
 ) {
     //Object
@@ -114,7 +118,7 @@ fn setup_object_and_portal(
                 transform: destination_transform,
                 ..default()
             }),
-            portal_mode: PortalMode::MaskedImageNoFrustum,
+            portal_mode,
             cull_mode,
             debug: Some(DebugPortal {
                 show_window: false,

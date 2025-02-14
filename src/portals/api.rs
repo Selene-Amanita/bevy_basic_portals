@@ -256,11 +256,13 @@ pub enum PortalMode {
     ///
     /// The frustum will simply be defined from the projection matrix, which means
     /// everything between the portal camera and the destination will be seen through
-    /// the portal
+    /// the portal.
     MaskedImageNoFrustum,
-    /// Same as [PortalMode::MaskedImageNoFrustum], but a frustum will be defined,
-    /// using a [HalfSpace] in the mesh/entity local space (it later takes into account
-    /// the destination transform for calculations in global space).
+    /// Same as [PortalMode::MaskedImageNoFrustum], but a frustum will be defined to hide
+    /// objects between the portal camera and the destination.
+    /// 
+    /// The frustum uses a [HalfSpace] in destination local space (it later takes into account
+    /// the destination transform for calculations in global space) as a near plane.
     ///
     /// `None` will assume the `Plane` is `{p, p.z < 0}` in local space, it should
     /// be the same as `Some(Vec3::NEG_Z.extend(0.))`.
@@ -274,9 +276,16 @@ pub enum PortalMode {
     /// is almost parallel to the plane, objects behind the camera but in front of
     /// the plane will be considered).
     MaskedImageHalfSpaceFrustum((Option<HalfSpace>, bool)),
+    /// Same as [PortalMode::MaskedImageNoFrustum], but a frustum will be defined to hide
+    /// objects between the portal camera and the destination.
+    /// 
+    /// The frustum uses an origin and a distance in destination local space as a near plane.
+    /// The near plane will always be facing the portal camera, at a certain distance from the origin.
+    /// 
+    /// This is useful for 3D portals (like crystal balls).
+    MaskedImageSphereHalfSpaceFrustum((Vec3, f32)),
     //TODO
     //MaskedImageRectangleFrustum(PortalRectangleView),
-    //MaskedImageSphereHalfSpaceFrustum(_)
     //MaskedImageSphereRectangleFrustum(_)
     // A projection matrix will be defined to fit.
     //FittingProjectionRectangle(PortalRectangleView)

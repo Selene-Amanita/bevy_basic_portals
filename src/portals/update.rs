@@ -259,9 +259,20 @@ fn get_frustum(
             let near_half_space_distance = -(dot + half_space_d) - 0.00001;
 
             frustum.half_spaces[4] =
-                HalfSpace::new(near_half_space_normal.extend(near_half_space_distance))
+                HalfSpace::new(near_half_space_normal.extend(near_half_space_distance));
         }
-        _ => (),
+        PortalMode::MaskedImageSphereHalfSpaceFrustum((origin, distance)) => {
+            let near_half_space_normal: Vec3 = portal_camera_transform.forward().into();
+
+            let sphere_tangeant_point =
+                destination_transform.translation() + origin - distance * near_half_space_normal;
+            let near_half_space_distance = - sphere_tangeant_point
+                .dot(near_half_space_normal);
+
+            frustum.half_spaces[4] =
+                HalfSpace::new(near_half_space_normal.extend(near_half_space_distance));
+        },
+        PortalMode::MaskedImageNoFrustum => (),
     };
 
     frustum
