@@ -11,6 +11,8 @@ mod pivot_cameras;
 #[path = "../../helpers/textures.rs"]
 mod textures;
 
+pub const SQRT_3: f32 = 1.732050807568877293527446341505872367_f32;
+
 fn main() {
     App::new()
         .add_plugins((
@@ -72,7 +74,7 @@ fn setup(
         cube_mesh,
         debug_material.clone(),
         Transform::from_xyz(-10., 0., 0.),
-        PortalMode::MaskedImageSphereHalfSpaceFrustum((Vec3::ZERO, 2.5 * std::f32::consts::SQRT_2)),
+        PortalMode::MaskedImageSphereHalfSpaceFrustum((Vec3::ZERO, 2.5 * SQRT_3)),
         Some(Face::Back),
     );
 

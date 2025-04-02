@@ -1,4 +1,3 @@
-#![cfg(feature = "picking_backend")]
 //! Module to pick entities through portals.
 //! This requires the feature `picking_backend`.
 
