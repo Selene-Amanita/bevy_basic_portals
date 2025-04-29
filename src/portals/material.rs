@@ -40,8 +40,7 @@ pub struct PortalMaterial {
     pub cull_mode: Option<Face>,
 }
 
-pub const PORTAL_SHADER_HANDLE: Handle<Shader> =
-    weak_handle!("1EA3049777A909BDFFEB794905C6D106");
+pub const PORTAL_SHADER_HANDLE: Handle<Shader> = weak_handle!("1EA3049777A909BDFFEB794905C6D106");
 
 impl Material for PortalMaterial {
     fn fragment_shader() -> ShaderRef {

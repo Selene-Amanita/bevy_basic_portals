@@ -333,9 +333,9 @@ fn create_portal(
         MeshMaterial3d(portal_material),
     ));
 
-    commands.entity(portal_camera_entity).insert((
-        PortalPart { parts },
-    ));
+    commands
+        .entity(portal_camera_entity)
+        .insert((PortalPart { parts },));
 
     commands
         .entity(destination_entity)

@@ -1,7 +1,7 @@
 //! Components and structs to create portals without caring about their implementation
 
 use bevy_app::prelude::*;
-use bevy_color::{palettes::basic::GRAY, Color};
+use bevy_color::{Color, palettes::basic::GRAY};
 use bevy_ecs::prelude::*;
 use bevy_math::prelude::*;
 use bevy_reflect::Reflect;

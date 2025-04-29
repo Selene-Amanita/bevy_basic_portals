@@ -5,7 +5,11 @@ use crate::*;
 use bevy_app::prelude::*;
 use bevy_ecs::prelude::*;
 use bevy_math::Vec2;
-use bevy_picking::{backend::prelude::*, hover::HoverMap, pointer::{Location, PointerAction, PointerInput}};
+use bevy_picking::{
+    backend::prelude::*,
+    hover::HoverMap,
+    pointer::{Location, PointerAction, PointerInput},
+};
 use bevy_render::camera::NormalizedRenderTarget;
 use bevy_transform::prelude::*;
 use tracing::debug;

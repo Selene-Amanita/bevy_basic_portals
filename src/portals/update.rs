@@ -24,9 +24,11 @@ pub(super) fn build_update(app: &mut App) {
     app.add_systems(
         PostUpdate,
         (
-            update_portal_cameras.after(bevy_transform::TransformSystem::TransformPropagate).before(VisibilitySystems::UpdateFrusta),
+            update_portal_cameras
+                .after(bevy_transform::TransformSystem::TransformPropagate)
+                .before(VisibilitySystems::UpdateFrusta),
             update_portal_camera_frusta.after(VisibilitySystems::UpdateFrusta),
-        )
+        ),
     );
 }
 
@@ -50,10 +52,7 @@ pub fn update_portal_cameras(
         (Ref<GlobalTransform>, &MeshMaterial3d<PortalMaterial>),
         (With<Portal>, Without<Camera>),
     >,
-    destination_query: Query<
-        (Ref<GlobalTransform>, &PortalDestination),
-        Without<Camera>,
-    >,
+    destination_query: Query<(Ref<GlobalTransform>, &PortalDestination), Without<Camera>>,
     mut resize_params: PortalImageSizeParams,
     mut materials: ResMut<Assets<PortalMaterial>>,
 ) {
@@ -170,8 +169,8 @@ pub fn update_portal_cameras(
 ///  - when it moved
 ///  - when the projection changed
 ///  - when the image was resized in update_portal_camera, so when the main
-///    camera render target's dimensions changed (which triggers a projection change flag) 
-/// 
+///    camera render target's dimensions changed (which triggers a projection change flag)
+///
 /// Should always do something at the same frame that update_frusta does
 /// and override the Frustum set by it.
 #[allow(clippy::type_complexity)]
@@ -180,45 +179,36 @@ pub fn update_portal_camera_frusta(
     strategy: Res<PortalPartsDespawnStrategy>,
     portal_parts_query: Query<(Entity, &PortalParts)>,
     mut portal_cameras: Query<
+        (&PortalCamera, &GlobalTransform, &mut Frustum, &Projection),
         (
-            &PortalCamera,
-            &GlobalTransform,
-            &mut Frustum,
-            &Projection,
+            With<Camera>,
+            Or<(Changed<GlobalTransform>, Changed<Projection>)>,
         ),
-        (With<Camera>, Or<(Changed<GlobalTransform>, Changed<Projection>)>),
     >,
-    destination_query: Query<
-        &GlobalTransform,
-        With<PortalDestination>,
-    >,
+    destination_query: Query<&GlobalTransform, With<PortalDestination>>,
 ) {
     // For every portal parts
     for (portal_parts_entity, portal_parts) in portal_parts_query.iter() {
         // Portal camera
-        if let Ok((
-            portal_camera,
-            portal_camera_global_transform,
-            mut frustum,
-            projection,
-        )) = portal_cameras.get_mut(portal_parts.portal_camera) {
-
+        if let Ok((portal_camera, portal_camera_global_transform, mut frustum, projection)) =
+            portal_cameras.get_mut(portal_parts.portal_camera)
+        {
             // Destination
-            let destination_global_transform =
-                match destination_query.get(portal_parts.destination) {
-                    Ok(result) => result,
-                    Err(query_error) => {
-                        deal_with_part_query_error(
-                            &mut commands,
-                            portal_parts,
-                            portal_parts_entity,
-                            &strategy,
-                            query_error,
-                            "Destination",
-                        );
-                        continue;
-                    }
-                };
+            let destination_global_transform = match destination_query.get(portal_parts.destination)
+            {
+                Ok(result) => result,
+                Err(query_error) => {
+                    deal_with_part_query_error(
+                        &mut commands,
+                        portal_parts,
+                        portal_parts_entity,
+                        &strategy,
+                        query_error,
+                        "Destination",
+                    );
+                    continue;
+                }
+            };
 
             // Update frustum
             let new_frustum = get_frustum(
