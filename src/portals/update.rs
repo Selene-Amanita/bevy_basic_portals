@@ -11,6 +11,7 @@ use bevy_render::{
     prelude::*,
     primitives::{Frustum, HalfSpace},
     render_resource::Extent3d,
+    view::VisibilitySystems,
 };
 use bevy_transform::prelude::*;
 use bevy_window::{PrimaryWindow, Window, WindowRef};
@@ -22,7 +23,10 @@ use super::*;
 pub(super) fn build_update(app: &mut App) {
     app.add_systems(
         PostUpdate,
-        update_portal_cameras.after(bevy_transform::TransformSystem::TransformPropagate),
+        (
+            update_portal_cameras.after(bevy_transform::TransformSystem::TransformPropagate).before(VisibilitySystems::UpdateFrusta),
+            update_portal_camera_frusta.after(VisibilitySystems::UpdateFrusta),
+        )
     );
 }
 
@@ -37,8 +41,7 @@ pub fn update_portal_cameras(
             &PortalCamera,
             &mut Transform,
             &mut GlobalTransform,
-            &mut Frustum,
-            &PortalProjection,
+            &mut Projection,
         ),
         With<Camera>,
     >,
@@ -49,7 +52,7 @@ pub fn update_portal_cameras(
     >,
     destination_query: Query<
         (Ref<GlobalTransform>, &PortalDestination),
-        (With<PortalDestination>, Without<Camera>),
+        Without<Camera>,
     >,
     mut resize_params: PortalImageSizeParams,
     mut materials: ResMut<Assets<PortalMaterial>>,
@@ -61,8 +64,7 @@ pub fn update_portal_cameras(
             portal_camera,
             mut portal_camera_transform,
             mut portal_camera_global_transform,
-            mut frustum,
-            projection,
+            mut projection,
         ) = match portal_cameras.get_mut(portal_parts.portal_camera) {
             Ok(result) => result,
             Err(query_error) => {
@@ -74,7 +76,7 @@ pub fn update_portal_cameras(
                     query_error,
                     "Portal Camera",
                 );
-                return;
+                continue;
             }
         };
 
@@ -91,7 +93,7 @@ pub fn update_portal_cameras(
                         query_error,
                         "Main Camera",
                     );
-                    return;
+                    continue;
                 }
             };
 
@@ -108,7 +110,7 @@ pub fn update_portal_cameras(
                     query_error,
                     "Portal",
                 );
-                return;
+                continue;
             }
         };
 
@@ -125,7 +127,7 @@ pub fn update_portal_cameras(
                         query_error,
                         "Destination",
                     );
-                    return;
+                    continue;
                 }
             };
 
@@ -137,6 +139,10 @@ pub fn update_portal_cameras(
             portal_material,
             &mut materials,
         );
+
+        if portal_image_resized {
+            projection.set_changed(); // Triggers a Frustum refresh
+        }
 
         let should_update_transform = portal_global_transform.is_changed()
             || destination_global_transform.is_changed()
@@ -157,19 +163,72 @@ pub fn update_portal_cameras(
             // 2) The portal camera should not be in a hierarchy in theory (?)
             *portal_camera_global_transform = new_portal_camera_global_transform;
         }
+    }
+}
 
-        if portal_image_resized || should_update_transform {
+/// Updates the frustum of each portal camera if needed:
+///  - when it moved
+///  - when the projection changed
+///  - when the image was resized in update_portal_camera, so when the main
+///    camera render target's dimensions changed (which triggers a projection change flag) 
+/// 
+/// Should always do something at the same frame that update_frusta does
+/// and override the Frustum set by it.
+#[allow(clippy::type_complexity)]
+pub fn update_portal_camera_frusta(
+    mut commands: Commands,
+    strategy: Res<PortalPartsDespawnStrategy>,
+    portal_parts_query: Query<(Entity, &PortalParts)>,
+    mut portal_cameras: Query<
+        (
+            &PortalCamera,
+            &GlobalTransform,
+            &mut Frustum,
+            &Projection,
+        ),
+        (With<Camera>, Or<(Changed<GlobalTransform>, Changed<Projection>)>),
+    >,
+    destination_query: Query<
+        &GlobalTransform,
+        With<PortalDestination>,
+    >,
+) {
+    // For every portal parts
+    for (portal_parts_entity, portal_parts) in portal_parts_query.iter() {
+        // Portal camera
+        if let Ok((
+            portal_camera,
+            portal_camera_global_transform,
+            mut frustum,
+            projection,
+        )) = portal_cameras.get_mut(portal_parts.portal_camera) {
+
+            // Destination
+            let destination_global_transform =
+                match destination_query.get(portal_parts.destination) {
+                    Ok(result) => result,
+                    Err(query_error) => {
+                        deal_with_part_query_error(
+                            &mut commands,
+                            portal_parts,
+                            portal_parts_entity,
+                            &strategy,
+                            query_error,
+                            "Destination",
+                        );
+                        continue;
+                    }
+                };
+
             // Update frustum
             let new_frustum = get_frustum(
                 portal_camera,
-                &portal_camera_global_transform,
-                &destination_global_transform,
+                portal_camera_global_transform,
+                destination_global_transform,
                 projection,
             );
             *frustum = new_frustum;
-        }
-
-        // TODO: Check if camera should update
+        };
     }
 }
 
@@ -218,7 +277,7 @@ fn get_frustum(
     portal_camera: &PortalCamera,
     portal_camera_transform: &GlobalTransform,
     destination_transform: &GlobalTransform,
-    projection: &PortalProjection,
+    projection: &Projection,
 ) -> Frustum {
     let view_projection =
         projection.get_clip_from_view() * portal_camera_transform.compute_matrix().inverse();
@@ -291,11 +350,11 @@ pub(super) fn get_viewport_size(
         Some(viewport) => Some(viewport.physical_size),
         None => match &main_camera.target {
             RenderTarget::Window(window_ref) => (match window_ref {
-                WindowRef::Primary => primary_window_query.get_single().ok(),
+                WindowRef::Primary => primary_window_query.single().ok(),
                 WindowRef::Entity(entity) => windows_query.get(*entity).ok(),
             })
             .map(|window| UVec2::new(window.physical_width(), window.physical_height())),
-            RenderTarget::Image(handle) => images.get(handle).map(|image| image.size()),
+            RenderTarget::Image(image) => images.get(image.handle.id()).map(|image| image.size()),
             RenderTarget::TextureView(handle) => texture_views
                 .get(handle)
                 .map(|texture_view| texture_view.size),

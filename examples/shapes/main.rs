@@ -48,6 +48,7 @@ fn setup(
     commands.insert_resource(AmbientLight {
         color: Color::WHITE,
         brightness: 500.,
+        affects_lightmapped_meshes: true,
     });
 
     commands.insert_resource(ClearColor(Color::srgb(0., 0., 0.)));

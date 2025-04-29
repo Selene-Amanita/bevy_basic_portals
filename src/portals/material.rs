@@ -1,7 +1,7 @@
 //! Material for portal rendering
 
 use bevy_app::App;
-use bevy_asset::prelude::*;
+use bevy_asset::{prelude::*, weak_handle};
 use bevy_image::Image;
 use bevy_pbr::prelude::*;
 use bevy_pbr::{MaterialPipeline, MaterialPipelineKey};
@@ -41,7 +41,7 @@ pub struct PortalMaterial {
 }
 
 pub const PORTAL_SHADER_HANDLE: Handle<Shader> =
-    Handle::weak_from_u128(0x1EA3049777A909BDFFEB794905C6D106);
+    weak_handle!("1EA3049777A909BDFFEB794905C6D106");
 
 impl Material for PortalMaterial {
     fn fragment_shader() -> ShaderRef {

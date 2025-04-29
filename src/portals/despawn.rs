@@ -5,9 +5,7 @@ use bevy_ecs::{
     prelude::*,
     query::QueryEntityError,
     system::{EntityCommand, SystemState},
-    world::Command,
 };
-use bevy_hierarchy::DespawnRecursiveExt;
 use tracing::warn;
 
 use super::*;
@@ -53,26 +51,29 @@ impl Command for DespawnPortalPartsCommand {
 pub struct DespawnPortalPartsEntityCommand(PortalPartsDespawnStrategy);
 
 impl EntityCommand for DespawnPortalPartsEntityCommand {
-    fn apply(self, entity: Entity, world: &mut World) {
-        let mut system_state =
-            SystemState::<(Commands, Query<&PortalPart>, Query<&PortalParts>)>::new(world);
-        let (mut commands, portal_part_query, portal_parts_query) = system_state.get_mut(world);
+    fn apply(self, mut entity_world: EntityWorldMut) {
+        let entity = entity_world.id();
+        entity_world.world_scope(move |world: &mut World| {
+            let mut system_state =
+                SystemState::<(Commands, Query<&PortalPart>, Query<&PortalParts>)>::new(world);
+            let (mut commands, portal_part_query, portal_parts_query) = system_state.get_mut(world);
 
-        let portal_parts = portal_part_query.get(entity).map_or_else(
-            |_| portal_parts_query.get(entity).ok(),
-            |p| portal_parts_query.get(p.parts).ok(),
-        );
+            let portal_parts = portal_part_query.get(entity).map_or_else(
+                |_| portal_parts_query.get(entity).ok(),
+                |p| portal_parts_query.get(p.parts).ok(),
+            );
 
-        if let Some(portal_parts) = portal_parts {
-            despawn_portal_parts(&mut commands, portal_parts, &self.0);
-        } else {
-            warn!(
-                "DespawnPortalPartsEntityCommand called on entity {} which is not a portal part nor a portal parts entity, or is a portal part but referencing a despawned portal parts",
-                entity.index()
-            )
-        }
+            if let Some(portal_parts) = portal_parts {
+                despawn_portal_parts(&mut commands, portal_parts, &self.0);
+            } else {
+                warn!(
+                    "DespawnPortalPartsEntityCommand called on entity {} which is not a portal part nor a portal parts entity, or is a portal part but referencing a despawned portal parts",
+                    entity.index()
+                )
+            }
 
-        system_state.apply(world);
+            system_state.apply(world);
+        });
     }
 }
 
@@ -134,12 +135,12 @@ fn despawn_portal_part(
     entity_type: &str,
 ) {
     if strategy.should_despawn() {
-        if let Some(mut camera_commands) = commands.get_entity(entity) {
+        if let Ok(mut camera_commands) = commands.get_entity(entity) {
             if strategy.should_warn() {
                 warn!("{entity_type} {error_message}");
             }
             if strategy.should_despawn_children() {
-                camera_commands.despawn_descendants();
+                camera_commands.despawn_related::<Children>();
             }
             camera_commands.despawn();
         }
@@ -205,11 +206,12 @@ pub(super) fn deal_with_part_query_error(
             name_of_part,
             entity.index() // TODO: reproduce format_archetype's behavior
         ),
-        QueryEntityError::NoSuchEntity(entity) => format!(
-            "is a part of portal parts {} where {} #{} has despawned",
+        QueryEntityError::EntityDoesNotExist(error) => format!(
+            "is a part of portal parts {} where {} #{} has despawned (details: {})",
             parts_entity,
             name_of_part,
-            entity.index()
+            error.entity.index(),
+            error.details,
         ),
         QueryEntityError::AliasedMutability(entity) =>
         // Shouldn't happen

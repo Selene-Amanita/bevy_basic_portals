@@ -11,7 +11,6 @@ use bevy_ecs::{
     prelude::*,
     system::{EntityCommand, SystemParam, SystemState},
 };
-use bevy_hierarchy::prelude::*;
 use bevy_image::Image;
 use bevy_math::prelude::*;
 use bevy_pbr::prelude::*;
@@ -99,30 +98,33 @@ pub struct CreatePortalCommand {
 }
 
 impl EntityCommand for CreatePortalCommand {
-    fn apply(self, id: Entity, world: &mut World) {
-        let (portal_transform, mesh) = world.query::<(&Transform, &Mesh3d)>().get(world, id)//TODO revert !dbg()
-            .expect("You must provide a GlobalTransform and Handle<Mesh> components to the entity before using a CreatePortalCommand");
-        let portal_transform = *portal_transform;
-        let mesh = mesh.clone();
+    fn apply(self, mut entity_world: EntityWorldMut) {
+        let id = entity_world.id();
+        entity_world.world_scope(move |world: &mut World| {
+            let (portal_transform, mesh) = world.query::<(&Transform, &Mesh3d)>().get(world, id)
+                .expect("You must provide a GlobalTransform and Handle<Mesh> components to the entity before using a CreatePortalCommand");
+            let portal_transform = *portal_transform;
+            let mesh = mesh.clone();
 
-        let portal_create = match self.config {
-            Some(config) => config,
-            None => world.query::<&CreatePortal>().get(world, id)
-                .expect("You must provide a CreatePortal component to the entity or to the CreatePortalCommand itself before using it").clone()
-        };
+            let portal_create = match self.config {
+                Some(config) => config,
+                None => world.query::<&CreatePortal>().get(world, id)
+                    .expect("You must provide a CreatePortal component to the entity or to the CreatePortalCommand itself before using it").clone()
+            };
 
-        let mut system_state = SystemState::<CreatePortalParams>::new(world);
-        let mut create_params = system_state.get_mut(world);
+            let mut system_state = SystemState::<CreatePortalParams>::new(world);
+            let mut create_params = system_state.get_mut(world);
 
-        create_portal(
-            &mut create_params,
-            id,
-            &portal_create,
-            &portal_transform,
-            &mesh,
-        );
+            create_portal(
+                &mut create_params,
+                id,
+                &portal_create,
+                &portal_transform,
+                &mesh,
+            );
 
-        system_state.apply(world);
+            system_state.apply(world);
+        });
     }
 }
 
@@ -137,7 +139,7 @@ pub fn create_portal_on_add(
     mut create_params: CreatePortalParams,
     portal_query: Query<(&CreatePortal, &Transform, &Mesh3d)>, //TODO revert !dbg()
 ) {
-    let portal_entity = trigger.entity();
+    let portal_entity = trigger.target();
     let Ok((portal_create, portal_transform, mesh)) = portal_query.get(portal_entity) else {
         error!("Entity with CreatePortal lacks the other required components");
         return;
@@ -248,18 +250,18 @@ fn create_portal(
                 PortalDestination { mirror },
             ));
             if let Some(parent) = parent {
-                destination_commands.set_parent(parent);
+                destination_commands.insert(ChildOf(parent));
             }
             (destination_commands.id(), mirror_u, mirror_v)
         }
         PortalDestinationSource::CreateMirror => {
-            let mut destination_commands = commands.spawn((
+            let destination_commands = commands.spawn((
                 Transform::from_rotation(Quat::from_axis_angle(Vec3::Y, PI)),
                 PortalDestination {
                     mirror: Some((Vec3::ZERO, Dir3::X)),
                 },
+                ChildOf(portal_entity),
             ));
-            destination_commands.set_parent(portal_entity);
             (destination_commands.id(), true, false)
         }
     };
@@ -273,10 +275,6 @@ fn create_portal(
     });
 
     // Create the portal camera
-    let projection: PortalProjection = main_camera_projection
-        .cloned()
-        .unwrap_or_else(Projection::default)
-        .into();
     let portal_camera_entity = commands
         .spawn((
             main_camera_camera3d
@@ -284,10 +282,12 @@ fn create_portal(
                 .unwrap_or_else(Camera3d::default),
             Camera {
                 order: -1,
-                target: RenderTarget::Image(portal_image.clone()),
+                target: RenderTarget::Image(portal_image.clone().into()),
                 ..Camera::default()
             },
-            projection,
+            main_camera_projection
+                .cloned()
+                .unwrap_or_else(Projection::default),
             main_camera_tonemapping
                 .cloned()
                 .unwrap_or_else(Tonemapping::default),
@@ -302,6 +302,10 @@ fn create_portal(
                 .unwrap_or_else(Exposure::default),
             Visibility::Hidden,
             create_portal.render_layer.clone(),
+            PortalCamera {
+                image: portal_image,
+                portal_mode: create_portal.portal_mode.clone(),
+            },
             // TOFIX set the exact value of Transform and GlobalTransform to avoid black screen at spawn
             // let portal_camera_transform = get_portal_camera_transform(main_camera_transform, portal_transform, &destination_transform);
             // This requires an extra Query to get destination_transform when AsPortalDestination::Entity/CreateMirror
@@ -309,7 +313,6 @@ fn create_portal(
             //transform: portal_camera_transform,
             //global_transorm: GlobalTransform::from(portal_camera_transform),
         ))
-        .remove::<Projection>() // Required component of `Camera3d`, but in this specific case we don't want it
         .id();
 
     // Add portal components
@@ -331,10 +334,6 @@ fn create_portal(
     ));
 
     commands.entity(portal_camera_entity).insert((
-        PortalCamera {
-            image: portal_image,
-            portal_mode: create_portal.portal_mode.clone(),
-        },
         PortalPart { parts },
     ));
 

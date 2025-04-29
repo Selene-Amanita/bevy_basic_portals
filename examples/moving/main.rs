@@ -113,9 +113,9 @@ fn move_portal_and_destination(
     let destination_rotation2_start: Quat = Quat::from_axis_angle(Vec3::Z, 0.);
     let destination_rotation2_end: Quat = Quat::from_axis_angle(Vec3::Z, 0.5);
 
-    let mut portal_transform = portal_query.get_single_mut().unwrap();
-    let mut destination_transform = destination_query.get_single_mut().unwrap();
-    let mut camera_transform = camera_query.get_single_mut().unwrap();
+    let mut portal_transform = portal_query.single_mut().unwrap();
+    let mut destination_transform = destination_query.single_mut().unwrap();
+    let mut camera_transform = camera_query.single_mut().unwrap();
 
     let time = time.elapsed().as_millis() % TIME_STOP;
     let (portal_translation, portal_rotation, destination_translation, destination_rotation, camera_scale) =

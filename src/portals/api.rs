@@ -45,7 +45,6 @@ impl PortalsPlugin {
 impl Plugin for PortalsPlugin {
     fn build(&self, app: &mut App) {
         build_material(app);
-        build_projection(app);
         build_create(app);
         build_update(app);
         build_despawn(
