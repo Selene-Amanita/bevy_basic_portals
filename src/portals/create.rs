@@ -1,10 +1,11 @@
 //! Components, systems and command for the creation of portals
 
+use bevy_camera::{Camera, Camera3d, Exposure, Projection, RenderTarget, visibility::Visibility};
+use bevy_mesh::{Mesh, Mesh3d};
 use bevy_app::prelude::*;
 use bevy_asset::prelude::*;
 use bevy_color::Alpha;
 use bevy_core_pipeline::{
-    prelude::*,
     tonemapping::{DebandDither, Tonemapping},
 };
 use bevy_ecs::{
@@ -16,8 +17,6 @@ use bevy_math::prelude::*;
 use bevy_pbr::prelude::*;
 use bevy_reflect::Reflect;
 use bevy_render::{
-    camera::{Exposure, RenderTarget},
-    prelude::*,
     render_resource::{
         Extent3d, TextureDescriptor, TextureDimension, TextureFormat, TextureUsages,
     },
@@ -135,7 +134,7 @@ impl EntityCommand for CreatePortalCommand {
 /// It will also create debug elements if needed.
 /// It will then remove the [CreatePortal] component.
 pub fn create_portal_on_add(
-    trigger: Trigger<OnAdd, CreatePortal>,
+    trigger: Trigger<Add, CreatePortal>,
     mut create_params: CreatePortalParams,
     portal_query: Query<(&CreatePortal, &Transform, &Mesh3d)>, //TODO revert !dbg()
 ) {
@@ -356,7 +355,7 @@ fn create_portal(
                         _ => "Portal camera debug",
                     })
                     .to_owned(),
-                    resolution: WindowResolution::new(size.width as f32, size.height as f32),
+                    resolution: WindowResolution::new(size.width, size.height),
                     ..Window::default()
                 })
                 .id();
@@ -383,7 +382,7 @@ fn create_portal(
                 .insert(Visibility::default())
                 .with_children(|parent| {
                     parent.spawn((
-                        Mesh3d(meshes.add(Sphere::new(0.1).mesh().ico(5).unwrap())),
+                        Mesh3d(meshes.add(Sphere::new(0.1))),
                         MeshMaterial3d(materials.add(debug_color)),
                         create_portal.render_layer.clone(),
                     ));
@@ -413,7 +412,7 @@ fn create_portal(
                 .entity(portal_camera_entity)
                 .with_children(|parent| {
                     parent.spawn((
-                        Mesh3d(meshes.add(Sphere::new(0.1).mesh().ico(5).unwrap())),
+                        Mesh3d(meshes.add(Sphere::new(0.1))),
                         MeshMaterial3d(materials.add(debug_color)),
                         Visibility::Visible,
                         create_portal.render_layer.clone(),

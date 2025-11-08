@@ -2,16 +2,14 @@
 
 use bevy_app::prelude::*;
 use bevy_asset::{Assets, Handle};
+use bevy_camera::{RenderTarget, prelude::*, primitives::{Frustum, HalfSpace}, visibility::VisibilitySystems};
 use bevy_ecs::{prelude::*, system::SystemParam};
 use bevy_image::Image;
 use bevy_math::{Dir3, UVec2, Vec3};
 use bevy_pbr::MeshMaterial3d;
 use bevy_render::{
-    camera::{CameraProjection, ManualTextureViews, RenderTarget},
     prelude::*,
-    primitives::{Frustum, HalfSpace},
     render_resource::Extent3d,
-    view::VisibilitySystems,
 };
 use bevy_transform::prelude::*;
 use bevy_window::{PrimaryWindow, Window, WindowRef};
@@ -25,7 +23,7 @@ pub(super) fn build_update(app: &mut App) {
         PostUpdate,
         (
             update_portal_cameras
-                .after(bevy_transform::TransformSystem::TransformPropagate)
+                .after(TransformSystems::Propagate)
                 .before(VisibilitySystems::UpdateFrusta),
             update_portal_camera_frusta.after(VisibilitySystems::UpdateFrusta),
         ),
@@ -270,7 +268,7 @@ fn get_frustum(
     projection: &Projection,
 ) -> Frustum {
     let view_projection =
-        projection.get_clip_from_view() * portal_camera_transform.compute_matrix().inverse();
+        projection.get_clip_from_view() * portal_camera_transform.to_matrix().inverse();
 
     let mut frustum = Frustum::from_clip_from_world_custom_far(
         &view_projection,
@@ -348,6 +346,7 @@ pub(super) fn get_viewport_size(
             RenderTarget::TextureView(handle) => texture_views
                 .get(handle)
                 .map(|texture_view| texture_view.size),
+            RenderTarget::None { size } => Some(*size),
         },
     }
 }
