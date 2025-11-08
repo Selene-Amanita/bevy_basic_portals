@@ -55,11 +55,11 @@ fn setup(
 }
 
 fn on_event_change_color<E: std::fmt::Debug + Clone + Reflect, const MAKE_GREEN: bool>(
-    event: Trigger<Pointer<E>>,
+    trigger: On<Pointer<E>>,
     material_query: Query<&MeshMaterial3d<StandardMaterial>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
-    let material_handle = material_query.get(event.entity()).unwrap();
+    let material_handle = material_query.get(trigger.event().entity).unwrap();
     let material = materials.get_mut(material_handle).unwrap();
     material.base_color = Color::Srgba(if MAKE_GREEN { GREEN } else { RED });
 }
