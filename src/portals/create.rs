@@ -134,11 +134,11 @@ impl EntityCommand for CreatePortalCommand {
 /// It will also create debug elements if needed.
 /// It will then remove the [CreatePortal] component.
 pub fn create_portal_on_add(
-    trigger: Trigger<Add, CreatePortal>,
+    trigger: On<Add, CreatePortal>,
     mut create_params: CreatePortalParams,
     portal_query: Query<(&CreatePortal, &Transform, &Mesh3d)>, //TODO revert !dbg()
 ) {
-    let portal_entity = trigger.target();
+    let portal_entity = trigger.event().entity;
     let Ok((portal_create, portal_transform, mesh)) = portal_query.get(portal_entity) else {
         error!("Entity with CreatePortal lacks the other required components");
         return;

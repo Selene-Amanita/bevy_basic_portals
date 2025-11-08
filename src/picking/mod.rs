@@ -23,11 +23,11 @@ impl Plugin for PortalPickingBackendPlugin {
 }
 
 fn add_pointer(
-    trigger: Trigger<Add, PortalCamera>,
+    trigger: On<Add, PortalCamera>,
     mut commands: Commands,
     portal_cameras: Query<&PortalCamera>,
 ) {
-    let portal_camera_entity = trigger.target();
+    let portal_camera_entity = trigger.event().entity;
     let portal_camera = portal_cameras.get(portal_camera_entity).unwrap();
 
     commands.entity(portal_camera_entity).insert((
@@ -44,7 +44,7 @@ pub fn pick_through_portals(
     portals: Query<(&PortalPart, &GlobalTransform), With<Portal>>,
     portal_parts: Query<&PortalParts>,
     portal_cameras: Query<(&PointerId, &PointerLocation), With<PortalCamera>>,
-    pointer_events: EventWriter<PointerInput>,
+    pointer_events: MessageWriter<PointerInput>,
 ) {
     /*for (pointer_id, hits) in hovers.iter() {
         for (entity, hit_data) in hits {
