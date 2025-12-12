@@ -6,8 +6,6 @@ use bevy_color::palettes::basic::*;
 
 #[path = "../../helpers/pivot_cameras.rs"]
 mod pivot_cameras;
-#[path = "../../helpers/textures.rs"]
-mod textures;
 
 fn main() {
     App::new()
