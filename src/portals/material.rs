@@ -1,16 +1,17 @@
 //! Material for portal rendering
 
+use bevy_mesh::MeshVertexBufferLayoutRef;
+use bevy_shader::ShaderRef;
+use bevy_shader::Shader;
 use bevy_app::App;
-use bevy_asset::{prelude::*, weak_handle};
+use bevy_asset::{prelude::*, uuid_handle};
 use bevy_image::Image;
 use bevy_pbr::prelude::*;
 use bevy_pbr::{MaterialPipeline, MaterialPipelineKey};
 use bevy_reflect::TypePath;
 use bevy_render::{
-    mesh::MeshVertexBufferLayoutRef,
-    prelude::*,
     render_resource::{
-        AsBindGroup, Face, RenderPipelineDescriptor, ShaderRef, SpecializedMeshPipelineError,
+        AsBindGroup, Face, RenderPipelineDescriptor, SpecializedMeshPipelineError,
     },
 };
 
@@ -40,7 +41,7 @@ pub struct PortalMaterial {
     pub cull_mode: Option<Face>,
 }
 
-pub const PORTAL_SHADER_HANDLE: Handle<Shader> = weak_handle!("1EA3049777A909BDFFEB794905C6D106");
+pub const PORTAL_SHADER_HANDLE: Handle<Shader> = uuid_handle!("1EA3049777A909BDFFEB794905C6D106");
 
 impl Material for PortalMaterial {
     fn fragment_shader() -> ShaderRef {
@@ -48,7 +49,7 @@ impl Material for PortalMaterial {
     }
 
     fn specialize(
-        _: &MaterialPipeline<Self>,
+        _: &MaterialPipeline,
         descriptor: &mut RenderPipelineDescriptor,
         _: &MeshVertexBufferLayoutRef,
         key: MaterialPipelineKey<Self>,

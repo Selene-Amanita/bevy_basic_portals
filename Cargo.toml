@@ -1,6 +1,6 @@
 [package]
 name = "bevy_basic_portals"
-version = "0.8.0"
+version = "0.9.0"
 edition = "2024"
 categories = ["game-engines", "graphics", "rendering"]
 keywords = ["bevy", "portal", "mirror", "gamedev"]
@@ -11,30 +11,33 @@ repository = "https://github.com/Selene-Amanita/bevy_basic_portals"
 authors = ["Selene Amanita"]
 
 [dependencies]
-bevy_app = "0.16"
-bevy_asset = "0.16"
-bevy_color = "0.16"
-bevy_core_pipeline = "0.16"
-bevy_ecs = "0.16"
-bevy_image = "0.16"
-bevy_math = "0.16"
-bevy_pbr = "0.16"
-bevy_picking = { version = "0.16", optional = true }
-bevy_reflect = "0.16" # Could potentially be under a feature?
-bevy_render = "0.16"
-bevy_transform = "0.16"
-bevy_window = "0.16"
+bevy_app = "0.17"
+bevy_asset = "0.17"
+bevy_camera = "0.17"
+bevy_color = "0.17"
+bevy_core_pipeline = "0.17"
+bevy_ecs = "0.17"
+bevy_image = { version = "0.17", features = ["zstd_rust"] }
+bevy_math = "0.17"
+bevy_mesh = "0.17"
+bevy_pbr = "0.17"
+bevy_picking = { version = "0.17", optional = true }
+bevy_reflect = "0.17" # Could potentially be under a feature?
+bevy_render = "0.17"
+bevy_shader = "0.17"
+bevy_transform = "0.17"
+bevy_window = "0.17"
 tracing = { version = "0.1", default-features = false, features = ["std"] } # From bevy_utils
 uuid = { version = "1.11.0", features = ["v4"], optional = true }
 # All of the above can be replaced by:
-# bevy = { version = "0.16", default-features = false, features = ["bevy_asset", "bevy_core_pipeline", "bevy_pbr", "bevy_render", ] }
+# bevy = { version = "0.17", default-features = false, features = ["bevy_asset", "bevy_core_pipeline", "bevy_pbr", "bevy_render", ] }
 
 [features]
 default = ["picking_backend"]
 picking_backend = ["dep:bevy_picking", "dep:uuid"]
 
 [dev-dependencies]
-bevy = { version = "0.16", default-features = false, features = [
+bevy = { version = "0.17", default-features = false, features = [
     "bevy_asset",
     "bevy_core_pipeline",
     "bevy_pbr",
@@ -45,8 +48,7 @@ bevy = { version = "0.16", default-features = false, features = [
     "bevy_winit",
     "x11",
     "tonemapping_luts",
-    "ktx2",
-    "zstd",
+    "ktx2"
 ] }
 
 [profile.dev]

@@ -2,9 +2,9 @@
 use bevy::{
     prelude::*,
     render::{
-        render_asset::RenderAssetUsages,
         render_resource::{Extent3d, Face, TextureDimension, TextureFormat},
     },
+    asset::RenderAssetUsages,
 };
 
 /// Creates a colorful test pattern (copied from bevy's 3d_shape example)

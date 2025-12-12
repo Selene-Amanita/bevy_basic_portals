@@ -5,7 +5,8 @@
 use bevy::{
     color::palettes::basic::*,
     prelude::*,
-    render::{render_resource::Face, view::RenderLayers},
+    render::{render_resource::Face},
+    camera::visibility::RenderLayers,
 };
 
 use bevy_basic_portals::*;

@@ -2,13 +2,13 @@
 #import bevy_pbr::mesh_bindings
 #import bevy_pbr::forward_io::VertexOutput
 
-@group(2) @binding(0)
+@group(#{MATERIAL_BIND_GROUP}) @binding(0)
 var texture: texture_2d<f32>;
-@group(2) @binding(1)
+@group(#{MATERIAL_BIND_GROUP}) @binding(1)
 var texture_sampler: sampler;
-@group(2) @binding(2)
+@group(#{MATERIAL_BIND_GROUP}) @binding(2)
 var<uniform> mirror_u: u32;
-@group(2) @binding(3)
+@group(#{MATERIAL_BIND_GROUP}) @binding(3)
 var<uniform> mirror_v: u32;
 
 @fragment

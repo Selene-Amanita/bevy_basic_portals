@@ -116,8 +116,8 @@ fn update_pivot_cameras(
     time: Res<Time>,
     keyboard_input: Res<ButtonInput<KeyCode>>,
     mouse_input: Res<ButtonInput<MouseButton>>,
-    mut motion_evr: EventReader<MouseMotion>,
-    mut scroll_evr: EventReader<MouseWheel>,
+    mut motion_evr: MessageReader<MouseMotion>,
+    mut scroll_evr: MessageReader<MouseWheel>,
     mut pivot_camera_query: Query<(&mut Transform, &PivotCamera)>,
 ) {
     let still = Move::default();

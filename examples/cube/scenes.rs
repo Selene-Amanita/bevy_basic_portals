@@ -1,4 +1,4 @@
-use bevy::{prelude::*, render::view::RenderLayers};
+use bevy::{prelude::*, camera::visibility::RenderLayers};
 use bevy_basic_portals::*;
 use std::f32::consts::PI;
 
