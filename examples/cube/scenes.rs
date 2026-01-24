@@ -29,6 +29,9 @@ pub fn setup_portal_cube_face(
         render_layer,
         debug: Some(DebugPortal {
             show_portal_texture: DebugPortalTextureView::Widget(0.2),
+            show_portal_copy: false,
+            show_destination_point: false,
+            show_portal_camera_point: false,
             ..default()
         }),
         ..default()
