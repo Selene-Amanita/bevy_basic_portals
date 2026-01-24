@@ -1,13 +1,10 @@
 //! Components, systems and command for the creation of portals
 
-use bevy_camera::{prelude::*, Exposure, RenderTarget};
-use bevy_mesh::prelude::*;
 use bevy_app::prelude::*;
 use bevy_asset::prelude::*;
+use bevy_camera::{Exposure, RenderTarget, prelude::*};
 use bevy_color::Alpha;
-use bevy_core_pipeline::{
-    tonemapping::{DebandDither, Tonemapping},
-};
+use bevy_core_pipeline::tonemapping::{DebandDither, Tonemapping};
 use bevy_ecs::{
     prelude::*,
     system::{SystemParam, SystemState},
@@ -16,6 +13,7 @@ use bevy_image::Image;
 #[cfg(feature = "debug_no_shadow")]
 use bevy_light::NotShadowCaster;
 use bevy_math::prelude::*;
+use bevy_mesh::prelude::*;
 use bevy_pbr::prelude::*;
 use bevy_reflect::Reflect;
 use bevy_render::{
@@ -196,8 +194,8 @@ fn create_portal(
         main_camera_query.iter().next().unwrap()
     };
 
-    let main_camera_viewport_size =
-        get_viewport_size(main_camera, main_camera_target, size_params).unwrap_or_else(|| {
+    let main_camera_viewport_size = get_viewport_size(main_camera, main_camera_target, size_params)
+        .unwrap_or_else(|| {
             error!("Viewport size not found, creating portal with default sized image");
             UVec2::new(100, 100)
         });
@@ -370,19 +368,17 @@ fn create_portal(
                         ..Window::default()
                     })
                     .id();
-                commands
-                    .entity(portal_camera_entity)
-                    .with_child((
-                        Camera3d::default(),
-                        Camera {
-                            order: -1,
-                            ..Camera::default()
-                        },
-                        RenderTarget::Window(WindowRef::Entity(debug_window)),
-                        PortalDebugCamera {},
-                        create_portal.render_layer.clone(),
-                    ));
-            },
+                commands.entity(portal_camera_entity).with_child((
+                    Camera3d::default(),
+                    Camera {
+                        order: -1,
+                        ..Camera::default()
+                    },
+                    RenderTarget::Window(WindowRef::Entity(debug_window)),
+                    PortalDebugCamera {},
+                    create_portal.render_layer.clone(),
+                ));
+            }
             #[cfg(feature = "debug_ui")]
             DebugPortalTextureView::Widget(ratio) => {
                 // Same but in a UI Node
@@ -393,18 +389,22 @@ fn create_portal(
 
                 if let Some(root) = match debug_ui_root_query.single() {
                     Ok(root) => Some(root),
-                    Err(QuerySingleError::NoEntities(_)) => Some(commands.spawn((
-                        PortalDebugUIRootNode,
-                        Node {
-                            height: Val::Percent(100.),
-                            width: Val::Percent(100.),
-                            flex_wrap: FlexWrap::Wrap,
-                            flex_direction: FlexDirection::Column,
-                            align_content: AlignContent::SpaceBetween,
-                            justify_content: JustifyContent::SpaceBetween,
-                            ..Node::default()
-                        },
-                    )).id()),
+                    Err(QuerySingleError::NoEntities(_)) => Some(
+                        commands
+                            .spawn((
+                                PortalDebugUIRootNode,
+                                Node {
+                                    height: Val::Percent(100.),
+                                    width: Val::Percent(100.),
+                                    flex_wrap: FlexWrap::Wrap,
+                                    flex_direction: FlexDirection::Column,
+                                    align_content: AlignContent::SpaceBetween,
+                                    justify_content: JustifyContent::SpaceBetween,
+                                    ..Node::default()
+                                },
+                            ))
+                            .id(),
+                    ),
                     Err(QuerySingleError::MultipleEntities(_)) => {
                         error!("Multiple Portal Debug UI Root entities.");
                         None
@@ -416,39 +416,38 @@ fn create_portal(
                         TextureFormat::Bgra8UnormSrgb,
                         RenderAssetUsages::all(),
                     );
-                    image.texture_descriptor.usage =
-                        TextureUsages::TEXTURE_BINDING | TextureUsages::COPY_DST | TextureUsages::RENDER_ATTACHMENT;
+                    image.texture_descriptor.usage = TextureUsages::TEXTURE_BINDING
+                        | TextureUsages::COPY_DST
+                        | TextureUsages::RENDER_ATTACHMENT;
                     let image_handle = size_params.images.add(image);
-                    let camera = commands.spawn((
-                        Camera3d::default(),
-                        Camera {
-                            order: -1,
-                            ..Camera::default()
-                        },
-                        RenderTarget::Image(image_handle.clone().into()),
-                        PortalDebugCamera {},
-                        create_portal.render_layer.clone(),
-                    )).id();
-                    commands
-                        .entity(portal_camera_entity)
-                        .add_child(camera);
-
-                    commands
-                        .entity(root)
-                        .with_child((
-                            Node {
-                                position_type: PositionType::Relative,
-                                width: Val::Percent(ratio * 100.),
-                                height: Val::Percent(ratio * 100.),
-                                border: UiRect::all(Val::Px(2.)),
-                                ..Node::default()
+                    let camera = commands
+                        .spawn((
+                            Camera3d::default(),
+                            Camera {
+                                order: -1,
+                                ..Camera::default()
                             },
-                            BorderColor::all(Color::WHITE),
-                            ViewportNode::new(camera),
-                            UiTargetCamera(main_camera_entity),
-                        ));
+                            RenderTarget::Image(image_handle.clone().into()),
+                            PortalDebugCamera {},
+                            create_portal.render_layer.clone(),
+                        ))
+                        .id();
+                    commands.entity(portal_camera_entity).add_child(camera);
+
+                    commands.entity(root).with_child((
+                        Node {
+                            position_type: PositionType::Relative,
+                            width: Val::Percent(ratio * 100.),
+                            height: Val::Percent(ratio * 100.),
+                            border: UiRect::all(Val::Px(2.)),
+                            ..Node::default()
+                        },
+                        BorderColor::all(Color::WHITE),
+                        ViewportNode::new(camera),
+                        UiTargetCamera(main_camera_entity),
+                    ));
                 }
-            },
+            }
             DebugPortalTextureView::None => {}
         }
 
@@ -471,32 +470,28 @@ fn create_portal(
         if debug.show_portal_copy {
             let mut portal_copy_material: StandardMaterial = debug_transparent_color.into();
             portal_copy_material.cull_mode = create_portal.cull_mode;
-            commands
-                .entity(destination_entity)
-                .with_child((
-                    Mesh3d(portal_mesh.clone()),
-                    MeshMaterial3d(materials.add(portal_copy_material)),
-                    // So that it can still be seen through the portal,
-                    // despite rounding frustum mismatch
-                    Transform::from_xyz(0., 0., -0.001),
-                    create_portal.render_layer.clone(),
-                    #[cfg(feature = "debug_no_shadow")]
-                    NotShadowCaster,
-                ));
+            commands.entity(destination_entity).with_child((
+                Mesh3d(portal_mesh.clone()),
+                MeshMaterial3d(materials.add(portal_copy_material)),
+                // So that it can still be seen through the portal,
+                // despite rounding frustum mismatch
+                Transform::from_xyz(0., 0., -0.001),
+                create_portal.render_layer.clone(),
+                #[cfg(feature = "debug_no_shadow")]
+                NotShadowCaster,
+            ));
         }
 
         // Put a sphere at the portal camera position, as a child of the portal camera.
         if debug.show_portal_camera_point {
-            commands
-                .entity(portal_camera_entity)
-                .with_child((
-                    Mesh3d(meshes.add(Sphere::new(0.1))),
-                    MeshMaterial3d(materials.add(debug_color)),
-                    Visibility::Visible,
-                    create_portal.render_layer.clone(),
-                    #[cfg(feature = "debug_no_shadow")]
-                    NotShadowCaster,
-                ));
+            commands.entity(portal_camera_entity).with_child((
+                Mesh3d(meshes.add(Sphere::new(0.1))),
+                MeshMaterial3d(materials.add(debug_color)),
+                Visibility::Visible,
+                create_portal.render_layer.clone(),
+                #[cfg(feature = "debug_no_shadow")]
+                NotShadowCaster,
+            ));
         }
     }
 }

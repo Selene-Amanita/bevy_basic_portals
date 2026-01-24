@@ -2,15 +2,17 @@
 
 use bevy_app::prelude::*;
 use bevy_asset::{Assets, Handle};
-use bevy_camera::{RenderTarget, prelude::*, primitives::{Frustum, HalfSpace}, visibility::VisibilitySystems};
+use bevy_camera::{
+    RenderTarget,
+    prelude::*,
+    primitives::{Frustum, HalfSpace},
+    visibility::VisibilitySystems,
+};
 use bevy_ecs::{prelude::*, system::SystemParam};
 use bevy_image::Image;
 use bevy_math::{Dir3, UVec2, Vec3};
 use bevy_pbr::MeshMaterial3d;
-use bevy_render::{
-    prelude::*,
-    render_resource::Extent3d,
-};
+use bevy_render::{prelude::*, render_resource::Extent3d};
 use bevy_transform::prelude::*;
 use bevy_window::{PrimaryWindow, Window, WindowRef};
 use tracing::warn;
@@ -232,7 +234,9 @@ fn resize_image_if_needed(
 ) -> bool {
     let portal_image = size_params.images.get(&portal_camera.image).unwrap();
     let portal_image_size = portal_image.size();
-    let Some(main_camera_viewport_size) = get_viewport_size(main_camera, main_camera_target, size_params) else {
+    let Some(main_camera_viewport_size) =
+        get_viewport_size(main_camera, main_camera_target, size_params)
+    else {
         warn!("Viewport size not found, skipping portal resize");
         return false;
     };

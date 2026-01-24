@@ -7,7 +7,9 @@ use bevy_camera::NormalizedRenderTarget;
 use bevy_ecs::prelude::*;
 use bevy_math::Vec2;
 use bevy_picking::{
-    backend::prelude::*, hover::HoverMap, pointer::{Location, PointerInput}
+    backend::prelude::*,
+    hover::HoverMap,
+    pointer::{Location, PointerInput},
 };
 use bevy_transform::prelude::*;
 use tracing::debug;
@@ -17,7 +19,10 @@ pub(crate) struct PortalPickingBackendPlugin;
 
 impl Plugin for PortalPickingBackendPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(PreUpdate, pick_through_portals.in_set(PickingSystems::Backend));
+        app.add_systems(
+            PreUpdate,
+            pick_through_portals.in_set(PickingSystems::Backend),
+        );
         app.add_observer(add_pointer);
     }
 }

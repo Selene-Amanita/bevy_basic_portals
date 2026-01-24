@@ -1,19 +1,17 @@
 //! Material for portal rendering
 
-use bevy_mesh::MeshVertexBufferLayoutRef;
-use bevy_shader::ShaderRef;
-use bevy_shader::Shader;
 use bevy_app::App;
 use bevy_asset::{prelude::*, uuid_handle};
 use bevy_image::Image;
+use bevy_mesh::MeshVertexBufferLayoutRef;
 use bevy_pbr::prelude::*;
 use bevy_pbr::{MaterialPipeline, MaterialPipelineKey};
 use bevy_reflect::TypePath;
-use bevy_render::{
-    render_resource::{
-        AsBindGroup, Face, RenderPipelineDescriptor, SpecializedMeshPipelineError,
-    },
+use bevy_render::render_resource::{
+    AsBindGroup, Face, RenderPipelineDescriptor, SpecializedMeshPipelineError,
 };
+use bevy_shader::Shader;
+use bevy_shader::ShaderRef;
 
 /// Add the material logic to [PortalsPlugin](super::PortalsPlugin)
 pub(super) fn build_material(app: &mut App) {

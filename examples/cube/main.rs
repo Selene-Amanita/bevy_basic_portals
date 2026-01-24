@@ -3,10 +3,8 @@
 //! (This is what this crate was created for originally)
 
 use bevy::{
-    color::palettes::basic::*,
-    prelude::*,
-    render::{render_resource::Face},
-    camera::visibility::RenderLayers,
+    camera::visibility::RenderLayers, color::palettes::basic::*, prelude::*,
+    render::render_resource::Face,
 };
 
 use bevy_basic_portals::*;
@@ -238,7 +236,7 @@ fn setup(
 
 fn hide_debug_ui_root(
     mut commands: Commands,
-    mut root_query: Query<&mut Node, With<PortalDebugUIRootNode>>
+    mut root_query: Query<&mut Node, With<PortalDebugUIRootNode>>,
 ) {
     if let Ok(mut root) = root_query.single_mut() {
         root.display = Display::None;
@@ -248,7 +246,7 @@ fn hide_debug_ui_root(
 
 fn toggle_debug_ui_root(
     keyboard_input: Res<ButtonInput<KeyCode>>,
-    mut root_query: Query<&mut Node, With<PortalDebugUIRootNode>>
+    mut root_query: Query<&mut Node, With<PortalDebugUIRootNode>>,
 ) {
     if let Ok(mut root) = root_query.single_mut() {
         if keyboard_input.just_pressed(KeyCode::KeyD) {
