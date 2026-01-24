@@ -312,8 +312,8 @@ pub struct DebugPortal {
     pub name: Option<String>,
     /// Color used by debug elements, defaults to gray.
     pub color: Color,
-    /// If true, shows a debug window, it will use a copy of the [PortalCamera] marked with [PortalDebugCamera].
-    pub show_window: bool,
+    /// Can show a copy of what is rendered through the portal using a copy of the [PortalCamera] marked with [PortalDebugCamera].
+    pub show_portal_texture: DebugPortalTextureView,
     /// If true, displays a small sphere at the destination.
     pub show_destination_point: bool,
     /// If true, displays a copy of the portal mesh at the destination.
@@ -327,10 +327,23 @@ impl Default for DebugPortal {
         DebugPortal {
             name: Default::default(),
             color: GRAY.into(),
-            show_window: true,
+            show_portal_texture: DebugPortalTextureView::None,
             show_destination_point: true,
             show_portal_copy: true,
             show_portal_camera_point: true,
         }
     }
+}
+
+/// Configuration of displaying a copy of what the portal camera renders.
+#[derive(Clone)]
+pub enum DebugPortalTextureView {
+    /// Don't display what the portal camera renders.
+    None,
+    /// Display what the portal camera renders in a separate window.
+    Window,
+    /// Display what the portal camera renders in a UI Node with a ratio of the window's resolution.
+    /// Needs the ui_debug feature.
+    #[cfg(feature = "debug_ui")]
+    Widget(f32),
 }

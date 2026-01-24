@@ -30,7 +30,7 @@ fn setup(
                 ..default()
             }),
             debug: Some(DebugPortal {
-                show_window: false,
+                show_portal_texture: DebugPortalTextureView::None,
                 ..default()
             }),
             ..default()
@@ -48,7 +48,7 @@ fn setup(
         .observe(on_event_change_color::<Over, true>)
         .observe(on_event_change_color::<Out, false>);
 
-    commands.insert_resource(AmbientLight {
+    commands.insert_resource(GlobalAmbientLight {
         brightness: 500.,
         ..default()
     });

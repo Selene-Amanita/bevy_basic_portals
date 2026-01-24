@@ -45,7 +45,7 @@ fn setup(
         .id();
 
     // Lights
-    commands.insert_resource(AmbientLight {
+    commands.insert_resource(GlobalAmbientLight {
         color: Color::WHITE,
         brightness: 500.,
         affects_lightmapped_meshes: true,
@@ -124,7 +124,7 @@ fn setup_object_and_portal(
             portal_mode,
             cull_mode,
             debug: Some(DebugPortal {
-                show_window: false,
+                //show_portal_texture: DebugPortalTexture::Widget(0.2),
                 ..default()
             }),
             ..default()

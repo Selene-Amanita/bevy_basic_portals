@@ -26,6 +26,8 @@ fn main() {
             pivot_cameras::PivotCamerasPlugin::default(),
         ))
         .add_systems(Startup, setup)
+        .add_systems(PostStartup, hide_debug_ui_root)
+        .add_systems(Update, toggle_debug_ui_root)
         .run();
 }
 
@@ -50,7 +52,7 @@ fn setup(
         .id();
 
     // Lights
-    commands.insert_resource(AmbientLight {
+    commands.insert_resource(GlobalAmbientLight {
         color: Color::WHITE,
         brightness: 10.,
         affects_lightmapped_meshes: true,
@@ -232,4 +234,29 @@ fn setup(
         portal_mesh.clone(),
         false,
     );
+}
+
+fn hide_debug_ui_root(
+    mut commands: Commands,
+    mut root_query: Query<&mut Node, With<PortalDebugUIRootNode>>
+) {
+    if let Ok(mut root) = root_query.single_mut() {
+        root.display = Display::None;
+        commands.spawn(Text::new("D: Debug views"));
+    }
+}
+
+fn toggle_debug_ui_root(
+    keyboard_input: Res<ButtonInput<KeyCode>>,
+    mut root_query: Query<&mut Node, With<PortalDebugUIRootNode>>
+) {
+    if let Ok(mut root) = root_query.single_mut() {
+        if keyboard_input.just_pressed(KeyCode::KeyD) {
+            if root.display == Display::None {
+                root.display = Display::DEFAULT
+            } else {
+                root.display = Display::None
+            }
+        }
+    }
 }

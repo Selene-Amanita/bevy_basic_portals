@@ -56,7 +56,7 @@ fn setup(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>) {
         CreatePortal {
             main_camera: Some(main_camera),
             debug: Some(DebugPortal {
-                show_window: false,
+                show_portal_texture: DebugPortalTextureView::Widget(0.2),
                 ..default()
             }),
             ..default()
@@ -71,7 +71,7 @@ fn setup(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>) {
         CUBE_TRANSFORM,
     ));
 
-    commands.insert_resource(AmbientLight {
+    commands.insert_resource(GlobalAmbientLight {
         brightness: 500.,
         ..default()
     });

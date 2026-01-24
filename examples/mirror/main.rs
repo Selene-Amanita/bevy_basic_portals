@@ -24,7 +24,7 @@ fn setup(
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     // Light
-    commands.insert_resource(AmbientLight {
+    commands.insert_resource(GlobalAmbientLight {
         color: Color::WHITE,
         brightness: 400.,
         affects_lightmapped_meshes: true,
@@ -88,8 +88,8 @@ fn setup(
             main_camera: Some(main_camera),
             destination: PortalDestinationSource::CreateMirror,
             debug: Some(DebugPortal {
-                // Set to true to see what the portal camera really sees
-                show_window: false,
+                // Set to `Widget` to see what the portal camera really sees
+                show_portal_texture: DebugPortalTextureView::None,
                 ..default()
             }),
             // Uncomment the following two lines to have a double-sided mirror

@@ -45,7 +45,7 @@ pub fn update_portal_cameras(
         ),
         With<Camera>,
     >,
-    main_camera_query: Query<(Ref<GlobalTransform>, &Camera), Without<PortalCamera>>,
+    main_camera_query: Query<(Ref<GlobalTransform>, &Camera, &RenderTarget), Without<PortalCamera>>,
     portal_query: Query<
         (Ref<GlobalTransform>, &MeshMaterial3d<PortalMaterial>),
         (With<Portal>, Without<Camera>),
@@ -78,7 +78,7 @@ pub fn update_portal_cameras(
         };
 
         // Main Camera
-        let (main_camera_global_transform, main_camera) =
+        let (main_camera_global_transform, main_camera, main_camera_target) =
             match main_camera_query.get(portal_parts.main_camera) {
                 Ok(result) => result,
                 Err(query_error) => {
@@ -132,6 +132,7 @@ pub fn update_portal_cameras(
         let portal_image_resized = resize_image_if_needed(
             portal_camera,
             main_camera,
+            main_camera_target,
             &mut resize_params,
             portal_material,
             &mut materials,
@@ -224,13 +225,14 @@ pub fn update_portal_camera_frusta(
 fn resize_image_if_needed(
     portal_camera: &PortalCamera,
     main_camera: &Camera,
+    main_camera_target: &RenderTarget,
     size_params: &mut PortalImageSizeParams,
     portal_material: &Handle<PortalMaterial>,
     materials: &mut Assets<PortalMaterial>,
 ) -> bool {
     let portal_image = size_params.images.get(&portal_camera.image).unwrap();
     let portal_image_size = portal_image.size();
-    let Some(main_camera_viewport_size) = get_viewport_size(main_camera, size_params) else {
+    let Some(main_camera_viewport_size) = get_viewport_size(main_camera, main_camera_target, size_params) else {
         warn!("Viewport size not found, skipping portal resize");
         return false;
     };
@@ -327,6 +329,7 @@ fn get_frustum(
 /// Helper function to get the size of the viewport of the main camera, to be used for the size of the render image.
 pub(super) fn get_viewport_size(
     main_camera: &Camera,
+    main_camera_target: &RenderTarget,
     PortalImageSizeParams {
         images,
         primary_window_query,
@@ -336,7 +339,7 @@ pub(super) fn get_viewport_size(
 ) -> Option<UVec2> {
     match main_camera.viewport.as_ref() {
         Some(viewport) => Some(viewport.physical_size),
-        None => match &main_camera.target {
+        None => match &main_camera_target {
             RenderTarget::Window(window_ref) => (match window_ref {
                 WindowRef::Primary => primary_window_query.single().ok(),
                 WindowRef::Entity(entity) => windows_query.get(*entity).ok(),

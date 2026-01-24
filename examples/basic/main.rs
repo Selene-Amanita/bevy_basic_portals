@@ -27,7 +27,7 @@ fn setup(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>) {
             }),
             // Uncomment this to see the portal
             /*debug: Some(DebugPortal {
-                show_window: false,
+                show_portal_texture: DebugPortalTextureView::Widget(0.2),
                 ..default()
             }),*/
             ..default()

@@ -206,12 +206,11 @@ pub(super) fn deal_with_part_query_error(
             name_of_part,
             entity.index() // TODO: reproduce format_archetype's behavior
         ),
-        QueryEntityError::EntityDoesNotExist(error) => format!(
-            "is a part of portal parts {} where {} #{} has despawned (details: {})",
+        QueryEntityError::NotSpawned(error) => format!(
+            "is a part of portal parts {} where {} #{} has not spawned.",
             parts_entity,
             name_of_part,
-            error.entity.index(),
-            error.details,
+            error.entity().index(),
         ),
         QueryEntityError::AliasedMutability(entity) =>
         // Shouldn't happen
