@@ -65,7 +65,7 @@ More complex examples are available in the examples folder.
 ## Known limitations
 (may be fixed in the future)
 - portals created by this crate are uni-directionnal, you can only look from one space to the other,
-if you want a bidirectional portal you can crate two portals manually
+if you want a bidirectional portal you can create two portals manually
 - this crate doesn't handle "portal recursion", as in viewing a portal through another portal
 - portals created by this crate have no visible borders (not counting aliasing artifacts), you can "see" them with `DebugPortal`
 - this crate doesn't handle moving stuff through the portal, it is only visual, more like a crystal ball
@@ -76,6 +76,8 @@ if you want a bidirectional portal you can crate two portals manually
 ## Bevy versions
 | Bevy version | Bevy Basic Portals recommended version |
 |--------------|----------------------------------------|
+| 0.19.*       | 0.11.0                                 |
+| 0.18.*       | 0.10.0                                 |
 | 0.17.*       | 0.9.0                                  |
 | 0.16.*       | 0.8.0                                  |
 | 0.15.*       | 0.7.1                                  |

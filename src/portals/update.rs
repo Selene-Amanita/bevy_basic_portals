@@ -5,12 +5,12 @@ use bevy_asset::{Assets, Handle};
 use bevy_camera::{
     RenderTarget,
     prelude::*,
-    primitives::{Frustum, HalfSpace},
+    primitives::Frustum,
     visibility::VisibilitySystems,
 };
 use bevy_ecs::{prelude::*, system::SystemParam};
 use bevy_image::Image;
-use bevy_math::{Dir3, UVec2, Vec3};
+use bevy_math::prelude::*;
 use bevy_pbr::MeshMaterial3d;
 use bevy_render::{prelude::*, render_resource::Extent3d};
 use bevy_transform::prelude::*;
@@ -249,7 +249,7 @@ fn resize_image_if_needed(
             height: main_camera_viewport_size.y,
             ..Extent3d::default()
         };
-        if let (Some(portal_image), Some(_)) = (
+        if let (Some(mut portal_image), Some(_)) = (
             size_params.images.get_mut(&portal_camera.image),
             // This is needed so that the material is aware the image changed,
             // see https://github.com/bevyengine/bevy/issues/8767
@@ -276,12 +276,12 @@ fn get_frustum(
     let view_projection =
         projection.get_clip_from_view() * portal_camera_transform.to_matrix().inverse();
 
-    let mut frustum = Frustum::from_clip_from_world_custom_far(
+    let mut frustum = Frustum(ViewFrustum::from_clip_from_world_custom_far(
         &view_projection,
         &portal_camera_transform.translation(),
         &portal_camera_transform.back(),
         projection.far(),
-    );
+    ));
 
     match portal_camera.portal_mode {
         PortalMode::MaskedImageHalfSpaceFrustum((half_space, switch_normal)) => {

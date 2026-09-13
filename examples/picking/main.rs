@@ -60,6 +60,6 @@ fn on_event_change_color<E: std::fmt::Debug + Clone + Reflect, const MAKE_GREEN:
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     let material_handle = material_query.get(trigger.event().entity).unwrap();
-    let material = materials.get_mut(material_handle).unwrap();
+    let mut material = materials.get_mut(material_handle).unwrap();
     material.base_color = Color::Srgba(if MAKE_GREEN { GREEN } else { RED });
 }

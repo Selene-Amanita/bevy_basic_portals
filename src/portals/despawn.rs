@@ -7,6 +7,7 @@ use bevy_ecs::{
     system::{EntityCommand, SystemState},
 };
 use tracing::warn;
+use tracing::error;
 
 use super::*;
 
@@ -36,13 +37,18 @@ pub struct DespawnPortalPartsCommand {
 }
 
 impl Command for DespawnPortalPartsCommand {
+    type Out = ();
+
     fn apply(self, world: &mut World) {
         let mut system_state = SystemState::<Commands>::new(world);
-        let mut commands = system_state.get_mut(world);
+        match system_state.get_mut(world) {
+            Ok(mut commands) => {
+                despawn_portal_parts(&mut commands, &self.portal_parts, &self.strategy);
 
-        despawn_portal_parts(&mut commands, &self.portal_parts, &self.strategy);
-
-        system_state.apply(world);
+                system_state.apply(world);
+            },
+            Err(e) => error!("Error despawning portal parts: invalid system params\n{}",e)
+        }
     }
 }
 
@@ -51,28 +57,33 @@ impl Command for DespawnPortalPartsCommand {
 pub struct DespawnPortalPartsEntityCommand(PortalPartsDespawnStrategy);
 
 impl EntityCommand for DespawnPortalPartsEntityCommand {
+    type Out = ();
+
     fn apply(self, mut entity_world: EntityWorldMut) {
         let entity = entity_world.id();
         entity_world.world_scope(move |world: &mut World| {
             let mut system_state =
                 SystemState::<(Commands, Query<&PortalPart>, Query<&PortalParts>)>::new(world);
-            let (mut commands, portal_part_query, portal_parts_query) = system_state.get_mut(world);
+            match system_state.get_mut(world) {
+                Ok((mut commands, portal_part_query, portal_parts_query)) => {
+                    let portal_parts = portal_part_query.get(entity).map_or_else(
+                        |_| portal_parts_query.get(entity).ok(),
+                        |p| portal_parts_query.get(p.parts).ok(),
+                    );
 
-            let portal_parts = portal_part_query.get(entity).map_or_else(
-                |_| portal_parts_query.get(entity).ok(),
-                |p| portal_parts_query.get(p.parts).ok(),
-            );
+                    if let Some(portal_parts) = portal_parts {
+                        despawn_portal_parts(&mut commands, portal_parts, &self.0);
+                    } else {
+                        warn!(
+                            "DespawnPortalPartsEntityCommand called on entity {} which is not a portal part nor a portal parts entity, or is a portal part but referencing a despawned portal parts",
+                            entity.index()
+                        )
+                    }
 
-            if let Some(portal_parts) = portal_parts {
-                despawn_portal_parts(&mut commands, portal_parts, &self.0);
-            } else {
-                warn!(
-                    "DespawnPortalPartsEntityCommand called on entity {} which is not a portal part nor a portal parts entity, or is a portal part but referencing a despawned portal parts",
-                    entity.index()
-                )
-            }
-
-            system_state.apply(world);
+                    system_state.apply(world);
+                },
+                Err(e) => error!("Error despawning portal parts: invalid system params\n{}",e)
+            };
         });
     }
 }

@@ -88,7 +88,7 @@ pub fn setup_scene_test(
                     color,
                     intensity: 9_000_000.0,
                     range: DESTINATION_DISTANCE - PORTAL_SIZE,
-                    shadows_enabled: true,
+                    shadow_maps_enabled: true,
                     ..default()
                 },
                 light_transform,

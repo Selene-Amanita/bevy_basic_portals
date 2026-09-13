@@ -14,6 +14,7 @@ const CAMERA_SCALE_START: Vec3 = Vec3::ONE;
 const CAMERA_SCALE_END: Vec3 = Vec3::new(2., 2., 2.);
 
 const CUBE_TRANSFORM: Transform = Transform::from_xyz(20., 0., -5.);
+const SPHERE_TRANSFORM: Transform = Transform::from_xyz(10., 0., -5.);
 
 const TIME0: u128 = 0;
 const TIME1: u128 = 1000;
@@ -69,6 +70,13 @@ fn setup(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>) {
         Mesh3d(cube_mesh),
         MeshMaterial3d::<StandardMaterial>::default(),
         CUBE_TRANSFORM,
+    ));
+
+    let sphere_mesh = meshes.add(Sphere::new(3.).mesh());
+    commands.spawn((
+        Mesh3d(sphere_mesh),
+        MeshMaterial3d::<StandardMaterial>::default(),
+        SPHERE_TRANSFORM,
     ));
 
     commands.insert_resource(GlobalAmbientLight {

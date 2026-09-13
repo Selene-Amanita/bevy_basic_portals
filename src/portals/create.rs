@@ -101,6 +101,8 @@ pub struct CreatePortalCommand {
 }
 
 impl EntityCommand for CreatePortalCommand {
+    type Out = ();
+
     fn apply(self, mut entity_world: EntityWorldMut) {
         let id = entity_world.id();
         entity_world.world_scope(move |world: &mut World| {
@@ -116,17 +118,20 @@ impl EntityCommand for CreatePortalCommand {
             };
 
             let mut system_state = SystemState::<CreatePortalParams>::new(world);
-            let mut create_params = system_state.get_mut(world);
+            match system_state.get_mut(world) {
+                Ok(mut create_params) => {
+                    create_portal(
+                        &mut create_params,
+                        id,
+                        &portal_create,
+                        &portal_transform,
+                        &mesh,
+                    );
 
-            create_portal(
-                &mut create_params,
-                id,
-                &portal_create,
-                &portal_transform,
-                &mesh,
-            );
-
-            system_state.apply(world);
+                    system_state.apply(world);
+                }
+                Err(e) => {error!("Error creating a portal: invalid system params\n{}", e);}
+            }
         });
     }
 }

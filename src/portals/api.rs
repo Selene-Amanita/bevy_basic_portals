@@ -1,7 +1,7 @@
 //! Components and structs to create portals without caring about their implementation
 
 use bevy_app::prelude::*;
-use bevy_camera::{primitives::HalfSpace, visibility::RenderLayers};
+use bevy_camera::visibility::RenderLayers;
 use bevy_color::{Color, palettes::basic::GRAY};
 use bevy_ecs::prelude::*;
 use bevy_math::prelude::*;
