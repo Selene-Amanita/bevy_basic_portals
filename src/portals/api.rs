@@ -8,6 +8,7 @@ use bevy_math::prelude::*;
 use bevy_mesh::Mesh3d;
 use bevy_reflect::Reflect;
 use bevy_render::render_resource::Face;
+use bevy_shape::prelude::*;
 use bevy_transform::prelude::*;
 
 use super::*;

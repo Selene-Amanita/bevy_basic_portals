@@ -10,16 +10,15 @@ use bevy_reflect::TypePath;
 use bevy_render::render_resource::{
     AsBindGroup, Face, RenderPipelineDescriptor, SpecializedMeshPipelineError,
 };
-use bevy_shader::Shader;
-use bevy_shader::ShaderRef;
+use bevy_shader::{ShaderRef, prelude::*};
 
 /// Add the material logic to [PortalsPlugin](super::PortalsPlugin)
 pub(super) fn build_material(app: &mut App) {
     bevy_asset::load_internal_asset!(
         app,
         PORTAL_SHADER_HANDLE,
-        concat!(env!("CARGO_MANIFEST_DIR"), "/assets/portal.wgsl"),
-        Shader::from_wgsl
+        concat!(env!("CARGO_MANIFEST_DIR"), "/assets/portal.wesl"),
+        Shader::from_wesl
     );
 
     app.add_plugins(MaterialPlugin::<PortalMaterial>::default());

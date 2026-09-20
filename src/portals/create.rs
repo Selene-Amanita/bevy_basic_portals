@@ -22,6 +22,7 @@ use bevy_render::{
     },
     view::ColorGrading,
 };
+use bevy_shape::prelude::*;
 use bevy_transform::prelude::*;
 use bevy_window::{Window, WindowRef, WindowResolution};
 use std::f32::consts::PI;
@@ -143,7 +144,7 @@ impl EntityCommand for CreatePortalCommand {
 /// It will also create debug elements if needed.
 /// It will then remove the [CreatePortal] component.
 pub fn create_portal_on_add(
-    trigger: On<Add, CreatePortal>,
+    trigger: On<Add<CreatePortal>>,
     mut create_params: CreatePortalParams,
     portal_query: Query<(&CreatePortal, &Transform, &Mesh3d)>, //TODO revert !dbg()
 ) {

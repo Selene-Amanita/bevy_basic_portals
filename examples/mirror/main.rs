@@ -1,8 +1,7 @@
 //! This example illustrates how to create a mirror
 
-use bevy::prelude::*;
+use bevy::{color::palettes::basic::*, prelude::*};
 use bevy_basic_portals::*;
-use bevy_color::palettes::basic::*;
 
 #[path = "../../helpers/pivot_cameras.rs"]
 mod pivot_cameras;

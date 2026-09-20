@@ -6,8 +6,7 @@ use bevy_ecs::{
     query::QueryEntityError,
     system::{EntityCommand, SystemState},
 };
-use tracing::warn;
-use tracing::error;
+use tracing::{error, warn};
 
 use super::*;
 
@@ -46,8 +45,11 @@ impl Command for DespawnPortalPartsCommand {
                 despawn_portal_parts(&mut commands, &self.portal_parts, &self.strategy);
 
                 system_state.apply(world);
-            },
-            Err(e) => error!("Error despawning portal parts: invalid system params\n{}",e)
+            }
+            Err(e) => error!(
+                "Error despawning portal parts: invalid system params\n{}",
+                e
+            ),
         }
     }
 }

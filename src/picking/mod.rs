@@ -28,7 +28,7 @@ impl Plugin for PortalPickingBackendPlugin {
 }
 
 fn add_pointer(
-    trigger: On<Add, PortalCamera>,
+    trigger: On<Add<PortalCamera>>,
     mut commands: Commands,
     portal_cameras: Query<&PortalCamera>,
 ) {

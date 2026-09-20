@@ -2,17 +2,13 @@
 
 use bevy_app::prelude::*;
 use bevy_asset::{Assets, Handle};
-use bevy_camera::{
-    RenderTarget,
-    prelude::*,
-    primitives::Frustum,
-    visibility::VisibilitySystems,
-};
+use bevy_camera::{RenderTarget, prelude::*, primitives::Frustum, visibility::VisibilitySystems};
 use bevy_ecs::{prelude::*, system::SystemParam};
 use bevy_image::Image;
 use bevy_math::prelude::*;
 use bevy_pbr::MeshMaterial3d;
 use bevy_render::{prelude::*, render_resource::Extent3d};
+use bevy_shape::prelude::*;
 use bevy_transform::prelude::*;
 use bevy_window::{PrimaryWindow, Window, WindowRef};
 use tracing::warn;
@@ -249,12 +245,13 @@ fn resize_image_if_needed(
             height: main_camera_viewport_size.y,
             ..Extent3d::default()
         };
-        if let (Some(mut portal_image), Some(_)) = (
+        if let (Some(mut portal_image), Some(portal_material)) = (
             size_params.images.get_mut(&portal_camera.image),
-            // This is needed so that the material is aware the image changed,
-            // see https://github.com/bevyengine/bevy/issues/8767
             materials.get_mut(portal_material),
         ) {
+            // This is needed so that the material is aware the image changed,
+            // see https://github.com/bevyengine/bevy/issues/8767
+            let _ = portal_material.into_inner();
             portal_image.texture_descriptor.size = size;
             portal_image.resize(size);
         } else {

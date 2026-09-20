@@ -1,6 +1,6 @@
 [package]
 name = "bevy_basic_portals"
-version = "0.11.0"
+version = "0.12.0"
 edition = "2024"
 categories = ["game-engines", "graphics", "rendering"]
 keywords = ["bevy", "portal", "mirror", "gamedev"]
@@ -11,24 +11,25 @@ repository = "https://github.com/Selene-Amanita/bevy_basic_portals"
 authors = ["Selene Amanita"]
 
 [dependencies]
-bevy_app = "0.19"
-bevy_asset = "0.19"
-bevy_camera = "0.19"
-bevy_color = "0.19"
-bevy_core_pipeline = "0.19"
-bevy_ecs = "0.19"
-bevy_image = { version = "0.19", features = ["zstd_rust"] }
-bevy_light = { version = "0.19", optional = true }
-bevy_math = "0.19"
-bevy_mesh = "0.19"
-bevy_pbr = "0.19"
-bevy_picking = { version = "0.19", optional = true }
-bevy_reflect = "0.19" # Could potentially be under a feature?
-bevy_render = "0.19"
-bevy_shader = "0.19"
-bevy_transform = "0.19"
-bevy_ui = { version = "0.19", optional = true }
-bevy_window = "0.19"
+bevy_app = "0.20.0-rc.1"
+bevy_asset = "0.20.0-rc.1"
+bevy_camera = "0.20.0-rc.1"
+bevy_color = "0.20.0-rc.1"
+bevy_core_pipeline = "0.20.0-rc.1"
+bevy_ecs = "0.20.0-rc.1"
+bevy_image = { version = "0.20.0-rc.1", features = ["zstd_rust"] }
+bevy_light = { version = "0.20.0-rc.1", optional = true }
+bevy_math = "0.20.0-rc.1"
+bevy_mesh = "0.20.0-rc.1"
+bevy_pbr = "0.20.0-rc.1"
+bevy_picking = { version = "0.20.0-rc.1", optional = true }
+bevy_reflect = "0.20.0-rc.1" # Could potentially be under a feature?
+bevy_render = "0.20.0-rc.1"
+bevy_shader = "0.20.0-rc.1"
+bevy_shape = "0.20.0-rc.1"
+bevy_transform = "0.20.0-rc.1"
+bevy_ui = { version = "0.20.0-rc.1", optional = true }
+bevy_window = "0.20.0-rc.1"
 tracing = { version = "0.1", default-features = false, features = ["std"] } # From bevy_log
 uuid = { version = ">=1", features = ["v4"], optional = true }
 # All of the above can be replaced by:
@@ -46,7 +47,7 @@ debug_no_shadow = ["dep:bevy_light"]
 debug_ui = ["dep:bevy_ui"]
 
 [dev-dependencies]
-bevy = { version = "0.19", default-features = false, features = [
+bevy = { version = "0.20.0-rc.1", default-features = false, features = [
     "bevy_asset",
     "bevy_core_pipeline",
     "bevy_pbr",
@@ -56,6 +57,7 @@ bevy = { version = "0.19", default-features = false, features = [
     "bevy_ui_render",
     "bevy_window",
     "bevy_winit",
+    "bevy_log",
     "default_font",
     "ktx2",
     "mesh_picking",
